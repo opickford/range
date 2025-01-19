@@ -12,5 +12,3 @@ add_compile_options(/W3) # Enable max warnings. TODO: Switch to W4.
 # Include sub-projects.
 add_subdirectory ("engine")
 add_subdirectory ("range")
-add_subdirectory ("tools/lightmaptool")
-
