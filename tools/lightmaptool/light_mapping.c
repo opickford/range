@@ -6,8 +6,62 @@
 
 #define TEXELS_PER_METER 16
 
+/*
+For now unwrapping the uvs may be too complex. Eventually I would like to probably implement 
+some unwrapping myself as it seems quite interesting, or at least doing a naive method.
+
+For now, just create unwrap uvs with 'lightmap pack' in blender, delete the inital uv map
+then export and take the vts.
+
+TODO: Not sure how I want to import these per model.
+
+
+*/
+
 void do_light_mapping(Engine* engine)
 {
+	// Hardcoded cube lightmap uvs.
+	// The UVs are wrote in blender in order for each face for each vertex, so I think here
+	// we can just maintain this.
+
+	float temp_uvs[] = {
+		0.667668, 0.331331,
+		0.997998, 0.001001,
+		0.667668, 0.001001,
+		0.998999, 0.002002,
+		0.668669, 0.332332,
+		0.998999, 0.332332,
+		0.001001, 0.331331,
+		0.331331, 0.001001,
+		0.001001, 0.001001,
+		0.332332, 0.335335,
+		0.002002, 0.665666,
+		0.332332, 0.665666,
+		0.001001, 0.664665,
+		0.331331, 0.334334,
+		0.001001, 0.334334,
+		0.332332, 0.002002,
+		0.002002, 0.332332,
+		0.332332, 0.332332,
+		0.331331, 0.667668,
+		0.001001, 0.667668,
+		0.001001, 0.997998,
+		0.002002, 0.998999,
+		0.332332, 0.998999,
+		0.332332, 0.668669,
+		0.335335, 0.332332,
+		0.665666, 0.332332,
+		0.665666, 0.002002,
+		0.664665, 0.334334,
+		0.334334, 0.334334,
+		0.334334, 0.664665,
+		0.664665, 0.001001,
+		0.334334, 0.001001,
+		0.334334, 0.331331,
+		0.335335, 0.665666,
+		0.665666, 0.665666,
+		0.665666, 0.335335 };
+
 	Scene scene = engine->scenes[engine->current_scene_id];
 	Models models = scene.models;
 	log_info("Generating lightmaps for %d mis.", scene.models.mis_count);
@@ -23,6 +77,7 @@ void do_light_mapping(Engine* engine)
 	float* wsps = models.view_space_positions;
 	
 	int positions_offset = 0;
+	int normals_offset = 0;
 
 	// TODO: model_to_view_space should write out the positions offsets so
 	//		 we can easily read the vsps of a given mi.
@@ -30,7 +85,7 @@ void do_light_mapping(Engine* engine)
 	{
 		int mb_index = models.mis_base_ids[mi];
 
-		float total_surface_area = 0.f;
+		float surface_area = 0.f;
 
 		// For each position in the mi.
 		for (int j = 0; j < models.mbs_faces_counts[mi]; ++j)
@@ -49,137 +104,111 @@ void do_light_mapping(Engine* engine)
 			const V3 v1 = v3_read(wsps + index_parts_v1);
 			const V3 v2 = v3_read(wsps + index_parts_v2);
 
-			
 			// Calculate area of the triangle.
-			// The magintude of the cross product equals the area of the parallelogram 
+			// The magnitude of the cross product equals the area of the parallelogram 
 			// spanned by u and v. We can ignore the direction here.
 			V3 u = v3_sub_v3(v1, v0);
 			V3 v = v3_sub_v3(v2, v0);
 
-			V3 dir = cross(u, v);
-			
 			// This is twice the size, but we can half later.
-			//surface_area += ;
-			float surface_area = sqrtf(size(dir) * 0.5f);
-			int lightmap_size = (int)(surface_area * TEXELS_PER_METER);
-
-			normalise(&dir);
-
-			Canvas lightmap;
-			canvas_init(&lightmap, lightmap_size, lightmap_size);
-			
-
-			log_info("surface_area: %f", surface_area);
-			log_info("lightmap_size: %d", lightmap_size);
-			
-			// Calculate center vertex.
-			V3 v3 = v3_mul_f(v3_add_v3(v0, v3_add_v3(v1, v2)), 1 / 3.f);
-
-			V3 inv_dir = v3_mul_f(dir, -1);
-			
-			// TODO: How much do we need to move back to see the face? 
-			//	     For now just try the surface area who knows...
-			
-			V3 from = v3_add_v3(v3, v3_mul_f(inv_dir, surface_area));
-
-			printf("inv_dir %s\n", v3_to_str(inv_dir));
-
-			printf("pos: test: %s\n", v3_to_str(v3_mul_f(from, -1)));
-
-			M4 view_matrix;
-			//m4_identity(view_matrix);
-
-
-			V3 pos = v3_mul_f(from, -1);
-
-			look_at(pos, inv_dir, view_matrix);
-
-			printf("m4: %s\n", m4_to_str(view_matrix));
-
-			// TODO: Find the correct one, this just ignores z,
-			//		 could be fine.
-			M4 othrographic = {
-				1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 0, 0,
-				0, 0, 0, 1
-			};
-
-			
-			M4 combined;
-			m4_mul_m4(othrographic, view_matrix, combined);
-			
-			
-			V4 v0_proj, v1_proj, v2_proj;
-			m4_mul_v4(combined, v3_to_v4(v0, 1.f), &v0_proj);
-			m4_mul_v4(combined, v3_to_v4(v1, 1.f), &v1_proj);
-			m4_mul_v4(combined, v3_to_v4(v2, 1.f), &v2_proj);
-
-
-			printf("v0: %s\n", v4_to_str(v0_proj));
-			printf("v1: %s\n", v4_to_str(v1_proj));
-			printf("v2: %s\n", v4_to_str(v2_proj));
-			
-
-			
-			
-			/*
-			TODO: My plan is to project each face onto it's own mini map and just combine them.
-				  If performance is super bad I can probably just import from blender, but I dont
-				  see why this would work too badly.
-
-
-			Potential method of projection is:
-
-			set view matrix look at dir in the opposite direction of the face, so we're looking directly at it.
-
-			use orthographic projection matrix 
-			
-			TODO: ^^^
-
-			Figure out the orthographic projection or find an alternative.
-
-			TODO: Look at chatgpt most recent chat. LOOKS REALLY USEFUL.
-
-			Thinking about it, the graphics im really aiming for are unturned. Most of the lighting is just ambient
-			and looks fine, so I could definitely get away with that, it would be nice to have this though and i still
-			do want shadows so static will have to be the way forward with that, because then if its night i can have
-			cool little red/orangey lights for good atmosphere. Thinking about it I really don't need dynamic lights
-			and don't care about them much unless we wanted a sun moving, but i think instead of that just lerp ambient lighting.
-
-
-			*/
-
-
-
-
-
-			printf("\n");
+			surface_area += size(cross(u, v));
 		}
 
+		surface_area *= 0.5f;
+		int lightmap_size = (int)(sqrtf(surface_area) * TEXELS_PER_METER);
 
-		// Round the lightmap size to 4 TODO: is this necessary?
-		//lightmap_size += lightmap_size % 4;
+		Canvas lightmap;
+		canvas_init(&lightmap, lightmap_size, lightmap_size);
 
-		
-
-		// UV Unwrapping seems to be extremely complex
-
-		// TODO: I'm going to do a very naive method of rendering each face as it's own mini lightmap and combining
-		//		 all of these into 1 larger one per mesh.
-
-		/*
-		Surely UV unwrapping is as simple as finding faces with similar normals and writing them next to each ot
-		*/
+		log_info("surface_area: %f", surface_area);
+		log_info("lightmap_size: %d", lightmap_size);
 
 
+
+		// Remember, view matrix is indentity here, so these are world space.
+		const float* wsns = models.view_space_normals;
+
+
+		// TODO: Now must draw each face of the triangle, but actually render in uv space given the uv
+		//		 from blender.
+		// For each world space position in the mi.
+		for (int j = 0; j < models.mbs_faces_counts[mi]; ++j)
+		{
+			int face_index = (models.mbs_faces_offsets[mi] + j) * STRIDE_FACE_VERTICES;
+
+			const int index_v0 = models.mbs_face_position_indices[face_index] + positions_offset;
+			const int index_v1 = models.mbs_face_position_indices[face_index + 1] + positions_offset;
+			const int index_v2 = models.mbs_face_position_indices[face_index + 2] + positions_offset;
+
+			const int index_parts_v0 = index_v0 * STRIDE_POSITION;
+			const int index_parts_v1 = index_v1 * STRIDE_POSITION;
+			const int index_parts_v2 = index_v2 * STRIDE_POSITION;
+
+			const V3 v0 = v3_read(wsps + index_parts_v0);
+			const V3 v1 = v3_read(wsps + index_parts_v1);
+			const V3 v2 = v3_read(wsps + index_parts_v2);
+
+			const int index_n0 = models.mbs_face_normal_indices[face_index] + normals_offset;
+			const int index_n1 = models.mbs_face_normal_indices[face_index + 1] + normals_offset;
+			const int index_n2 = models.mbs_face_normal_indices[face_index + 2] + normals_offset;
+
+			int index_parts_n0 = index_n0 * STRIDE_NORMAL;
+			int index_parts_n1 = index_n1 * STRIDE_NORMAL;
+			int index_parts_n2 = index_n2 * STRIDE_NORMAL;
+
+			const V3 n0 = v3_read(wsns + index_parts_n0);
+			const V3 n1 = v3_read(wsns + index_parts_n1);
+			const V3 n2 = v3_read(wsns + index_parts_n2);
+
+			// TODO: Gotta think of how to attach the second channel of uvs to
+			//		 my models. 
+			//		 For now just dealing with the 1 cube so can just access the 
+			//		 hardcoded ones.
+
+			float lm_u0 = temp_uvs[j * 6];
+			float lm_v0 = temp_uvs[j * 6 + 1];
+
+			float lm_u1 = temp_uvs[j * 6 + 2];
+			float lm_v1 = temp_uvs[j * 6 + 3];
+
+			float lm_u2 = temp_uvs[j * 6 + 4];
+			float lm_v2 = temp_uvs[j * 6 + 5];
+
+			// Draw the triangle with uv to draw to the triangle.
+
+			// TODO: For testing purposes, just render the triangles so hopefully
+			//		 we get the same image as in blender.
+			float min_x = min(lm_u0, min(lm_u1, lm_u2));
+			float min_y = min(lm_v0, min(lm_v1, lm_v2));
+			float max_x = max(lm_u0, max(lm_u1, lm_u2));
+			float max_y = max(lm_v0, max(lm_v1, lm_v2));
+
+			// TODO: TEMP: Just drawing rect to check.
+
+			for (int y = min_y; y < max_y; ++y)
+			{
+				for (int x = min_x; x < max_x; ++x)
+				{
+					int i = y * lightmap_size * lightmap_size + x * lightmap_size;
+
+					lightmap.pixels[i] = 0xFF00FF00;
+				}
+			}
+		}
+
+		// TODO: check that the rect's were drawn as expected ^.
+
+		// TODO: 
 
 
 
 
 
 		positions_offset += models.mbs_positions_counts[mi];
+		normals_offset += models.mbs_normals_counts[mi];
 	}
+
+
 
 
 

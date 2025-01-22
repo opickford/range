@@ -2473,7 +2473,8 @@ void render(
 	Scene* scene, 
 	const Resources* resources,
 	const M4 view_matrix)
-{	
+{
+	return;
 	/*
 	RenderTarget rt = renderer->target;
 	Canvas canvas = rt.canvas;
