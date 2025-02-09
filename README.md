@@ -14,6 +14,10 @@ repository and developed separately.
 
 - [ ] Gameplay
 
+## Installation
+
+TODO
+
 ## Licence 
 
 TODO
