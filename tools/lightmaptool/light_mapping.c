@@ -13,13 +13,23 @@ some unwrapping myself as it seems quite interesting, or at least doing a naive 
 For now, just create unwrap uvs with 'lightmap pack' in blender, delete the inital uv map
 then export and take the vts.
 
-TODO: Not sure how I want to import these per model.
-
-
+TODO: Not sure how I want to import these per model. - we should only ever
+	  need two textures per model instance, so maybe just have a separate uv
+	  channel that isn't optional. We can just load them separately?
 */
 
 void do_light_mapping(Engine* engine)
 {
+	// TODO: Before all of this, should create shadow maps for
+	//		 each light, should make them high resolution and
+	//		 even can perform blurring when sampling them, must
+	//		 remember that performance is not an issue here.
+	//		 On this note, for point lights, literally just convert
+	//		 it to 6 ones facing in the proper directions, again, not
+	//		 and issue here.
+
+
+
 	// Hardcoded cube lightmap uvs.
 	// The UVs are wrote in blender in order for each face for each vertex, so I think here
 	// we can just maintain this.
@@ -117,13 +127,13 @@ void do_light_mapping(Engine* engine)
 		surface_area *= 0.5f;
 		int lightmap_size = (int)(sqrtf(surface_area) * TEXELS_PER_METER);
 
+		lightmap_size += lightmap_size % 4;
+
 		Canvas lightmap;
 		canvas_init(&lightmap, lightmap_size, lightmap_size);
 
 		log_info("surface_area: %f", surface_area);
 		log_info("lightmap_size: %d", lightmap_size);
-
-
 
 		// Remember, view matrix is indentity here, so these are world space.
 		const float* wsns = models.view_space_normals;
@@ -178,39 +188,48 @@ void do_light_mapping(Engine* engine)
 
 			// TODO: For testing purposes, just render the triangles so hopefully
 			//		 we get the same image as in blender.
-			float min_x = min(lm_u0, min(lm_u1, lm_u2));
-			float min_y = min(lm_v0, min(lm_v1, lm_v2));
-			float max_x = max(lm_u0, max(lm_u1, lm_u2));
-			float max_y = max(lm_v0, max(lm_v1, lm_v2));
+			int min_x = (int)(min(lm_u0, min(lm_u1, lm_u2)) * lightmap_size);
+			int min_y = (int)(min(lm_v0, min(lm_v1, lm_v2)) * lightmap_size);
+			int max_x = (int)(max(lm_u0, max(lm_u1, lm_u2)) * lightmap_size);
+			int max_y = (int)(max(lm_v0, max(lm_v1, lm_v2)) * lightmap_size);
 
+			printf("%d %d %d %d\n", min_x, min_y, max_x, max_y);
 			// TODO: TEMP: Just drawing rect to check.
-
 			for (int y = min_y; y < max_y; ++y)
 			{
 				for (int x = min_x; x < max_x; ++x)
 				{
-					int i = y * lightmap_size * lightmap_size + x * lightmap_size;
-
+					int i = y * lightmap_size + x;
 					lightmap.pixels[i] = 0xFF00FF00;
 				}
 			}
+
+
+			Status status = canvas_write_to_bitmap(&lightmap, "C:\\Users\\olive\\source\\repos\\range\\out.bmp");
+			if (STATUS_OK != status)
+			{
+				log_error("Failed to canvas_write_to_bitmap");
+			}
+			return;
+
+			// TODO: TEMP: Just writing out one file.
+			
+
+			// TODO: Implement phong shading (per pixel with ambient,
+			//		 diffuse and specular).
+
+			
+
+			// TODO: Use barycentric coordinates for triangle rasterization
+			//		 to make the lerp code more simple, as again, perf is
+			//		 not an issue or priority here.
+
+
 		}
 
 		// TODO: check that the rect's were drawn as expected ^.
 
-		// TODO: 
-
-
-
-
-
 		positions_offset += models.mbs_positions_counts[mi];
 		normals_offset += models.mbs_normals_counts[mi];
 	}
-
-
-
-
-
-
 }
