@@ -193,8 +193,7 @@ void do_light_mapping(Engine* engine)
 			int max_x = (int)(max(lm_u0, max(lm_u1, lm_u2)) * lightmap_size);
 			int max_y = (int)(max(lm_v0, max(lm_v1, lm_v2)) * lightmap_size);
 
-			printf("%d %d %d %d\n", min_x, min_y, max_x, max_y);
-			// TODO: TEMP: Just drawing rect to check.
+			// TODO: TEMP: Just drawing rect to check. - it works! Can move past.
 			for (int y = min_y; y < max_y; ++y)
 			{
 				for (int x = min_x; x < max_x; ++x)
@@ -204,21 +203,14 @@ void do_light_mapping(Engine* engine)
 				}
 			}
 
-
-			Status status = canvas_write_to_bitmap(&lightmap, "C:\\Users\\olive\\source\\repos\\range\\out.bmp");
+			Status status = canvas_write_to_bitmap(&lightmap, "C:\\Users\\olive\\source\\repos\\range\\res\\lightmaps\\out.bmp");
 			if (STATUS_OK != status)
 			{
 				log_error("Failed to canvas_write_to_bitmap");
 			}
-			return;
-
-			// TODO: TEMP: Just writing out one file.
-			
 
 			// TODO: Implement phong shading (per pixel with ambient,
 			//		 diffuse and specular).
-
-			
 
 			// TODO: Use barycentric coordinates for triangle rasterization
 			//		 to make the lerp code more simple, as again, perf is
@@ -226,8 +218,6 @@ void do_light_mapping(Engine* engine)
 
 
 		}
-
-		// TODO: check that the rect's were drawn as expected ^.
 
 		positions_offset += models.mbs_positions_counts[mi];
 		normals_offset += models.mbs_normals_counts[mi];
