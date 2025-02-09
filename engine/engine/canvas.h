@@ -24,4 +24,6 @@ void canvas_destroy(Canvas* canvas);
 
 Status canvas_init_from_bitmap(Canvas* canvas, const char* file);
 
+Status canvas_write_to_bitmap(const Canvas* canvas, const char* file);
+
 #endif
