@@ -17,6 +17,9 @@
 
 typedef struct
 {
+	// TODO: Realistically, most of these can be global, there isn't any reason they shouldn't be
+	//		 in my opinion. We will NEVER need multiple UIs etc right?
+
 	// Engine components.
 	Window window;
 	UI ui;

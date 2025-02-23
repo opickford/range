@@ -184,6 +184,8 @@ Status canvas_write_to_bitmap(const Canvas* canvas, const char* file)
     }
 
     fclose(imageFile);
+
+    return STATUS_OK;
 }
 
 Status canvas_resize(Canvas* canvas, int width, int height)

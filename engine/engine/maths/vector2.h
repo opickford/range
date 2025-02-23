@@ -1,6 +1,8 @@
 #ifndef VECTOR2_H
 #define VECTOR2_H
 
+#include "utils/str_utils.h"
+
 typedef struct
 {
 	float x, y;
@@ -17,6 +19,17 @@ inline void v2_swap(V2* v0, V2* v1)
 inline V2 v2_read(const float* in)
 {
 	return (V2) { in[0], in[1] };
+}
+
+inline V2 v2_mul_f(V2 v, float f)
+{
+	return (V2) { v.x * f, v.y * f };
+}
+
+
+inline char* v2_to_str(V2 v)
+{
+	return format_str("%f %f", v.x, v.y);
 }
 
 #endif
