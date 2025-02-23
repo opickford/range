@@ -201,10 +201,6 @@ void do_light_mapping(Engine* engine)
 			V2 lm_uv2_pixels = v2_mul_f(lm_uv2, lightmap_side_len);
 
 			// Draw the triangle with uv to draw to the triangle.
-
-			// TODO: For testing purposes, just render the triangles so hopefully
-			//		 we get the same image as in blender.
-
 			const int min_x = (int)(min(lm_uv0_pixels.x, min(lm_uv1_pixels.x, lm_uv2_pixels.x)));
 			const int min_y = (int)(min(lm_uv0_pixels.y, min(lm_uv1_pixels.y, lm_uv2_pixels.y)));
 			const int max_x = (int)(max(lm_uv0_pixels.x, max(lm_uv1_pixels.x, lm_uv2_pixels.x)));
@@ -222,14 +218,6 @@ void do_light_mapping(Engine* engine)
 			printf("total_area: %f\n", abc_area);
 
 			int colour = float_rgb_to_int(random_float(), random_float(), random_float());
-
-			/*
-			draw_line(&lightmap, lm_uv0_pixels.x, lm_uv0_pixels.y, lm_uv1_pixels.x, lm_uv1_pixels.y, colour);
-			draw_line(&lightmap, lm_uv0_pixels.x, lm_uv0_pixels.y, lm_uv2_pixels.x, lm_uv2_pixels.y, colour);
-			draw_line(&lightmap, lm_uv1_pixels.x, lm_uv1_pixels.y, lm_uv2_pixels.x, lm_uv2_pixels.y, colour);
-			*/
-			// TODO: Outlines are correct, something going wrong with filling.
-			//	     it seems like the triangles are overwritting each other, 
 
 			// TODO: Use barycentric coordinates for triangle rasterization
 			//		 to make the lerp code more simple, as again, perf is
@@ -261,7 +249,6 @@ void do_light_mapping(Engine* engine)
 			//		 diffuse and specular).
 		}
 
-		// TODO: Is the behaviour where I can just keep writing intended?
 		Status status = canvas_write_to_bitmap(&lightmap, "C:\\Users\\olive\\source\\repos\\range\\res\\lightmaps\\out.bmp");
 		if (STATUS_OK != status)
 		{
