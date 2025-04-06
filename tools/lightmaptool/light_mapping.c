@@ -1,6 +1,5 @@
 #include "light_mapping.h"
 
-// TODO: Use <> or "" ?
 #include <engine/engine.h>
 
 // TODO: The utils/common are a little confusing maybe?
@@ -13,24 +12,72 @@
 // TODO: Surely we need to clamp the size yes?
 // TODO: Using such a small area may cause issues because the gaps between the faces 
 //		 on the lightmap may overlap? How can I sort this?
-#define TEXELS_PER_METER 16
+//#define TEXELS_PER_METER 16
+#define TEXELS_PER_METER 128
 
 /*
-For now unwrapping the uvs may be too complex. Eventually I would like to probably implement 
-some unwrapping myself as it seems quite interesting, or at least doing a naive method.
-
-For now, just create unwrap uvs with 'lightmap pack' in blender, delete the inital uv map
-then export and take the vts.
-
-TODO: Not sure how I want to import these per model. - we should only ever
-	  need two textures per model instance, so maybe just have a separate uv
-	  channel that isn't optional. We can just load them separately?
+I could even implement ray tracing for the static lighting one day.
 */
 
+// TODO: It would be nice to have an editor for everything... one day you may.
+
+/*
+TODO: UV Unwrapping.
+
+- I thought I was getting there but actually we must implement some sort of unwrapping, even if it's terrible.
+
+Must generate unique UVs for lightmapping
+
+
+
+- All three vertices must be on a plane. This plane is then the 2D texture. Planar Projection?
+
+Steps:
+- Find normal of triangle.
+
+
+*/
 
 
 void do_light_mapping(Engine* engine)
 {
+	/*
+	Steps:
+
+	- Make shadow maps.
+
+	- Find surface area of model
+
+	- Create lightmap
+
+	- Calculate uvs for model
+
+	- Pack uvs into lightmap
+
+	- Actually render to lightmap
+	
+	
+	
+	*/
+
+	/*
+	UV Unwrapping:
+
+	Steps:
+	- Either split mesh up into flatter parts
+	  OR
+	  Just per face. - i think this is fine for now.
+
+	- Map 3D vertices to 2D UVs.
+
+	- Pack UVs into atlas.
+	
+	
+	
+	*/
+
+
+
 
 	// TODO: Before all of this, should create shadow maps for
 	//		 each light, should make them high resolution and
@@ -39,6 +86,7 @@ void do_light_mapping(Engine* engine)
 	//		 On this note, for point lights, literally just convert
 	//		 it to 6 ones facing in the proper directions, again, not
 	//		 an issue here.
+
 
 
 
@@ -84,6 +132,15 @@ void do_light_mapping(Engine* engine)
 		0.665666, 0.665666,
 		0.665666, 0.335335 };
 
+
+	float* gen_uvs = malloc(engine->scenes[0].models.mbs_faces_counts[0] * 6 * sizeof(float));
+	if (!gen_uvs)
+	{
+		log_error("failed to alloc for gen_uvs.\n");
+	}
+	
+
+	// TODO: Need to look into how this works, surely this has just made a copy of the entire scene.
 	Scene scene = engine->scenes[engine->current_scene_id];
 	Models models = scene.models;
 	log_info("Generating lightmaps for %d mis.", scene.models.mis_count);
@@ -105,14 +162,19 @@ void do_light_mapping(Engine* engine)
 	//		 we can easily read the vsps of a given mi.
 	for (int mi = 0; mi < models.mis_count; ++mi)
 	{
-		int mb_index = models.mis_base_ids[mi];
+		const int mb_index = models.mis_base_ids[mi];
 
+		// SECTION: Lightmap canvas creation.
+		
+		// Calculate the whole surface area of the model so we can create a 
+		// lightmap that is appropriately sized, we will have to clamp this at 
+		// some point. TODO: Clamp size.
 		float surface_area = 0.f;
 
 		// For each position in the mi.
 		for (int j = 0; j < models.mbs_faces_counts[mi]; ++j)
 		{
-			int face_index = (models.mbs_faces_offsets[mi] + j) * STRIDE_FACE_VERTICES;
+			const int face_index = (models.mbs_faces_offsets[mi] + j) * STRIDE_FACE_VERTICES;
 
 			const int index_v0 = models.mbs_face_position_indices[face_index] + positions_offset;
 			const int index_v1 = models.mbs_face_position_indices[face_index + 1] + positions_offset;
@@ -129,8 +191,8 @@ void do_light_mapping(Engine* engine)
 			// Calculate area of the triangle.
 			// The magnitude of the cross product equals the area of the parallelogram 
 			// spanned by u and v. We can ignore the direction here.
-			V3 u = v3_sub_v3(v1, v0);
-			V3 v = v3_sub_v3(v2, v0);
+			const V3 u = v3_sub_v3(v1, v0);
+			const V3 v = v3_sub_v3(v2, v0);
 
 			// This is twice the size, but we can half later.
 			surface_area += size(cross(u, v));
@@ -138,9 +200,9 @@ void do_light_mapping(Engine* engine)
 
 		surface_area *= 0.5f;
 
-
 		int lightmap_side_len = (int)(sqrtf(surface_area) * TEXELS_PER_METER);
-
+			
+		// Make the size a multiple of 4 so the bitmap is aligned properly.
 		lightmap_side_len += lightmap_side_len % 4;
 
 		Canvas lightmap;
@@ -149,9 +211,155 @@ void do_light_mapping(Engine* engine)
 		log_info("surface_area: %f", surface_area);
 		log_info("lightmap_side_len: %d", lightmap_side_len);
 
+		// END
+
 		// Remember, view matrix is indentity here, so these are world space.
 		const float* wsns = models.view_space_normals;
 
+
+		typedef struct 
+		{
+			V2 v0, v1, v2;
+		} UVTriangle;
+
+		UVTriangle* uv_tris = malloc(models.mbs_faces_counts[mi] * sizeof(UVTriangle));
+
+		// SECTION: UV Unwrapping
+		for (int j = 0; j < models.mbs_faces_counts[mi]; ++j)
+		{
+			// Unpack vertices, again, TODO: Shouldn't have to do all of this.
+			// precalculating will save performance and effort. Better to read the indices!
+			int face_index = (models.mbs_faces_offsets[mi] + j) * STRIDE_FACE_VERTICES;
+
+			const int index_v0 = models.mbs_face_position_indices[face_index] + positions_offset;
+			const int index_v1 = models.mbs_face_position_indices[face_index + 1] + positions_offset;
+			const int index_v2 = models.mbs_face_position_indices[face_index + 2] + positions_offset;
+
+			const int index_parts_v0 = index_v0 * STRIDE_POSITION;
+			const int index_parts_v1 = index_v1 * STRIDE_POSITION;
+			const int index_parts_v2 = index_v2 * STRIDE_POSITION;
+
+			V3 v0 = v3_read(wsps + index_parts_v0);
+			V3 v1 = v3_read(wsps + index_parts_v1);
+			V3 v2 = v3_read(wsps + index_parts_v2);
+			
+			// Find the normal of the face and the plane.
+			const V3 normal = tri_normal(v0, v1, v2);
+
+			// We now want to find two perpendicular vectors to form a 2D
+			// coordinate system on the plane, the tangent and bitangent.
+
+			// There are infinite number of tangents and bitangents right?
+			// So for now, just pick randomly essentially. Although this 
+			// might cause me problems.
+
+			// Calculate a vector along the face to be the tangent.
+			const V3 tangent = normalised(v3_sub_v3(v1, v0));
+			
+			// Cross product between normal and tangent should give bitangent.
+			const V3 bitangent = normalised(cross(normal, tangent));
+
+			// TODO: Is normalising the correct behaviour? Defintiely not. as we then lose the scale, we must normalise based on what? 
+			//		 the TEXELS_PER_METER?
+
+			V2 P_uv0 = {
+				0, 0
+			};
+
+			V3 AB = v3_sub_v3(v1, v0);
+			V2 P_uv1 = {
+				dot(AB, tangent),
+				dot(AB, bitangent)
+			};
+
+
+			V3 AC = v3_sub_v3(v2, v0);
+			V2 P_uv2 = {
+				dot(AC, tangent),
+				dot(AC, bitangent)
+			};
+
+			printf("ab: %f\n", v2_size(v2_sub_v2(P_uv1, P_uv0)));
+			printf("bc: %f\n", v2_size(v2_sub_v2(P_uv2, P_uv1)));
+			printf("ca: %f\n", v2_size(v2_sub_v2(P_uv0, P_uv2)));
+
+			//v2_normalise(&P_uv0);
+			//v2_normalise(&P_uv1);
+			//v2_normalise(&P_uv2);
+
+
+			float scale = (float)lightmap_side_len / TEXELS_PER_METER;
+
+			P_uv0.x /= scale;
+			P_uv0.y /= scale;
+
+			P_uv1.x /= scale;
+			P_uv1.y /= scale;
+
+			P_uv2.x /= scale;
+			P_uv2.y /= scale;
+
+
+
+			printf("P_uv0: %s\n", v2_to_str(P_uv0));
+			printf("P_uv1: %s\n", v2_to_str(P_uv1));
+			printf("P_uv2: %s\n", v2_to_str(P_uv2));
+
+
+			/*
+			int uv_index = j * 6;
+
+			gen_uvs[uv_index] = P_uv0.x;
+			gen_uvs[++uv_index] = P_uv0.y;
+			gen_uvs[++uv_index] = P_uv1.x;
+			gen_uvs[++uv_index] = P_uv1.y;
+			gen_uvs[++uv_index] = P_uv2.x;
+			gen_uvs[++uv_index] = P_uv2.y;
+			*/
+
+			uv_tris[j] = (UVTriangle){ P_uv0, P_uv1, P_uv2 };
+
+			/*
+			TODO:
+
+			Gotta think about how we scale these uvs. 
+
+			We get the UVs, but they should be scaled relative to the world space size of the light map in metres?
+
+			*/
+
+
+		}
+
+		// SECTION: UV Packing
+		for (int j = 0; j < models.mbs_faces_counts[mi]; ++j)
+		{
+			// TODO: 
+			UVTriangle tri = uv_tris[j];
+
+
+
+
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		// END
+
+		// SECTION: Rendering lightmaps
+
+		
 
 		// TODO: Now must draw each face of the triangle, but actually render in uv space given the uv
 		//		 from blender.
@@ -159,6 +367,8 @@ void do_light_mapping(Engine* engine)
 
 		for (int j = 0; j < models.mbs_faces_counts[mi]; ++j)
 		{
+			// TODO: This code each time I access a face is annoying, the indices will help,
+			//		 should think about that properly.
 			int face_index = (models.mbs_faces_offsets[mi] + j) * STRIDE_FACE_VERTICES;
 			
 			const int index_v0 = models.mbs_face_position_indices[face_index] + positions_offset;
@@ -192,9 +402,27 @@ void do_light_mapping(Engine* engine)
 			//		 For now just dealing with the 1 cube so can just access the 
 			//		 hardcoded ones.
 
+			/*
 			V2 lm_uv0 = v2_read(temp_uvs + j * 6);
 			V2 lm_uv1 = v2_read(temp_uvs + j * 6 + 2);
-			V2 lm_uv2 = v2_read(temp_uvs + j * 6 + 4);
+			V2 lm_uv2 = v2_read(temp_uvs + j * 6 + 4);*/
+
+
+			V2 lm_uv0 = v2_read(gen_uvs + j * 6);
+			V2 lm_uv1 = v2_read(gen_uvs + j * 6 + 2);
+			V2 lm_uv2 = v2_read(gen_uvs + j * 6 + 4);
+
+			/*
+			V2 lm_uv0 = { 0.581111, 0.581111 };
+			V2 lm_uv1 = { 0.382149, 0.617851 };
+			V2 lm_uv2 = { 0.418889, 0.581111 };
+			*/
+ 
+			printf("P_uv0: %s\n", v2_to_str(lm_uv0));
+			printf("P_uv1: %s\n", v2_to_str(lm_uv1));
+			printf("P_uv2: %s\n", v2_to_str(lm_uv2));
+				 
+				 
 
 			V2 lm_uv0_pixels = v2_mul_f(lm_uv0, lightmap_side_len);
 			V2 lm_uv1_pixels = v2_mul_f(lm_uv1, lightmap_side_len);
@@ -205,8 +433,6 @@ void do_light_mapping(Engine* engine)
 			const int min_y = (int)(min(lm_uv0_pixels.y, min(lm_uv1_pixels.y, lm_uv2_pixels.y)));
 			const int max_x = (int)(max(lm_uv0_pixels.x, max(lm_uv1_pixels.x, lm_uv2_pixels.x)));
 			const int max_y = (int)(max(lm_uv0_pixels.y, max(lm_uv1_pixels.y, lm_uv2_pixels.y)));
-
-			printf("%d %d %d %d\n", min_x, min_y, max_x, max_y);
 
 			// TODO: Rasterise in UV space, LERP world space coordinates.
 
@@ -237,7 +463,6 @@ void do_light_mapping(Engine* engine)
 					// u + v + w = 1.f if P in triangle.
 					float w = 1.f - u - v;
 
-					
 					if (u < 0.f || u > 1.0f || v < 0.f || v > 1.0f || w < 0.f || w > 1.0f)
 						continue;
 
@@ -247,14 +472,50 @@ void do_light_mapping(Engine* engine)
 
 			// TODO: Implement phong shading (per pixel with ambient,
 			//		 diffuse and specular).
-		}
 
-		Status status = canvas_write_to_bitmap(&lightmap, "C:\\Users\\olive\\source\\repos\\range\\res\\lightmaps\\out.bmp");
+			// Save the lightmap.
+			const char* fmt = "C:\\Users\\olive\\source\\repos\\range\\res\\lightmaps\\out_%d.bmp";
+
+			int length = snprintf(NULL, 0, fmt, j);
+			char* out = malloc(length + 1);
+			snprintf(out, length + 1, fmt, j);
+
+			Status status = canvas_write_to_bitmap(&lightmap, out);
+			if (STATUS_OK != status)
+			{
+				log_error("Failed to canvas_write_to_bitmap");
+			}
+
+			free(out);
+
+			canvas_fill(&lightmap, 0);
+			
+		}
+		/*
+		// Save the lightmap.
+		//char* out = "C:\\Users\\olive\\source\\repos\\range\\res\\lightmaps\\out.bmp";
+		char* out = "C:\\Users\\olive\\source\\repos\\range\\res\\lightmaps\\";
+
+		int length = snprintf(NULL, 0, "out_%d", j);
+		char* num_str = malloc(length + 1);
+		snprintf(num_str, length + 1, "out_%d", j);
+		
+			
+		snprintf(str, size, "%d", x);
+
+
+		strcat_s(out, strlen(out) + strlen(num_str)
+		Status status = canvas_write_to_bitmap(&lightmap, );
 		if (STATUS_OK != status)
 		{
 			log_error("Failed to canvas_write_to_bitmap");
 		}
 
+		free(num_str);
+		*/
+		// END
+
+		// TODO: Again instead of this, should write these out to a buffer.
 		positions_offset += models.mbs_positions_counts[mi];
 		normals_offset += models.mbs_normals_counts[mi];
 	}

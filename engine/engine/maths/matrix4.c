@@ -142,7 +142,7 @@ void look_at(V3 position, V3 direction, M4 out)
 	{
 		// If direction.y == -1, the cross product will return 0,0,0. 
 		// So hardcode the x axis to the world right?
-		x_axis = (V3){ 1,0,0 };
+		x_axis = (V3){ 1, 0, 0 };
 	}
 	else
 	{

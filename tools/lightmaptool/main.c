@@ -21,6 +21,8 @@ void create_map(Engine* engine)
 
     // Create centre cube
     mi_set_transform(&scene->models, 0, (V3) { 0, 0, -5 }, (V3) { 0, 0, 0 }, (V3) { 1, 1, 1 });
+    mi_set_transform(&scene->models, 0, (V3) { 0, 0, 0 }, (V3) { 0, 0, 0 }, (V3) { 1, 1, 1 });
+
 
     // Test point light
     point_lights_create(&scene->point_lights, rbs, (V3) { 0, 0, -3 }, (V3) { 1, 1, 1 }, 1.f);

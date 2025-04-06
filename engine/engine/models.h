@@ -47,8 +47,14 @@ TODO: Gotta think about the buffers again. Do I really need this many? Surely I 
 
 	  Need to think about this more though. Not really sure tbf.
 
+	  Or at least this doesn't need to be one big struct of them right? IDRK.
+
+TODO: I also hate how all of this works really, I'm sure there is some stuff that could be structs where we access it together constantly.
+	  Need to learn more about memory. 'What every programmer should know about memory'
+
 
 */
+
 
 typedef struct
 {	
@@ -84,6 +90,7 @@ typedef struct
 	float* mbs_object_space_positions;	// Original vertex positions without any transforms applied.
 	float* mbs_object_space_normals;
 	float* mbs_uvs;
+	float* mbs_lightmap_uvs;
 	float* mbs_object_space_centres;
 
 	// Instance data
@@ -105,10 +112,7 @@ typedef struct
 	// Transform results buffers.
 	// TODO: These are specific to mis, should prefix. - or move to RenderBuffers.
 	float* view_space_positions;
-	float* view_space_normals;
-
-	float* mis_vsp_offsets; 
-	
+	float* view_space_normals;	
 	
 	
 } Models;

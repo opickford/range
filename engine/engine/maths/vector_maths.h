@@ -24,11 +24,18 @@ inline V4 v3_read_to_v4(const float* in, float w)
 	return (V4) { in[0], in[1], in[2], w };
 }
 
+// TODO: Rename ?
 inline float double_signed_area(V2 a, V2 b, V2 c)
 {
 	// Returns double the signed area of a triangle a,b,c.
 	// Uses the shoelace formula with the abs and half omitted.
 	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+// TODO: Just normal( ?
+inline V3 tri_normal(V3 v0, V3 v1, V3 v2)
+{
+	return normalised(cross(v3_sub_v3(v1, v0), v3_sub_v3(v2, v0)));
 }
 
 #endif
