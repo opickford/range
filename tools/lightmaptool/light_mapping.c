@@ -332,6 +332,54 @@ void do_light_mapping(Engine* engine)
 		}
 
 		// SECTION: UV Packing
+		/*
+		TODO: I'm not so sure about how to do this to be honest.
+
+		A simple way is to pack the largest triangles first into the map.
+		but need to think about this stuff properly as probably not that easys
+
+		I think the idea might be to essentially try and line up triangle edges.
+		and rotate the triangles until they fit with the desired gap between?
+		
+
+
+
+		Pseudocode:
+		sorted = sort triangles from largest to smallest
+
+		# we now want to pair the triangles, obviously, if we take the largest, we can use it 
+		# to create a square, then the second largest will fit inside of that square. and keep doing this.
+		# NOTE: the issue would then be a large change in size, where multiple triangles could fit inside 
+		#		an existing cell. - but for now this is fine i think.
+
+
+		
+
+
+		for tri in tris_sorted_largest_to_smallest:
+			search for 
+
+			assign a square/cell for the triangle to go into
+
+
+
+
+
+		*/
+
+		/*
+		# TODO: Look at this seems better
+		https://gamedev.stackexchange.com/questions/137656/triangle-texture-packing-problem
+
+		Idea seems to be:
+
+		- place biggest in middle 
+		- next biggest line up largest edges
+		- repeat for all triangles
+
+		
+		
+		*/
 		for (int j = 0; j < models.mbs_faces_counts[mi]; ++j)
 		{
 			// TODO: 
@@ -357,7 +405,7 @@ void do_light_mapping(Engine* engine)
 
 		// END
 
-		// SECTION: Rendering lightmaps
+		// SECTION: Baking lightmaps
 
 		
 
@@ -519,4 +567,7 @@ void do_light_mapping(Engine* engine)
 		positions_offset += models.mbs_positions_counts[mi];
 		normals_offset += models.mbs_normals_counts[mi];
 	}
+
+
+	// TODO: Should lightmaps be packed together?
 }
