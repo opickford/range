@@ -11,13 +11,20 @@
 #include <math.h>
 
 /*
-TODO: Again why am I going crazy with the structs.
 
-Does this need to be a struct or could it be global?
+Must think about this render buffers struct.
 
-Or at least a global struct would make most sense. no need to pass around.
+Maybe we start with the render pipeline though, think about the task as transformations on data.
+
+so what data does each stage need.
+
+if data is accessed together at the same time, should probably be structs.
+
+
+
 
 */
+
 
 typedef struct
 {

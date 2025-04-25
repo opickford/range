@@ -22,15 +22,15 @@ void create_map(Engine* engine)
     engine->current_scene_id = 0;
     ++engine->scenes_count;
 
-    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
+    //resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
 
     mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");
     mi_create(&scene->models, &engine->renderer.buffers, 0, 1);
     mi_set_transform(&scene->models, 0, (V3) { 0, 0, -5 }, (V3) { 0, 0, 0 }, (V3) { 5, 5, 5 });
 
-    scene->models.mis_texture_ids[0] = 0;
+    //scene->models.mis_texture_ids[0] = 0;
 
-    scene->ambient_light = (V3){ 1,1,1 };
+    scene->ambient_light = (V3){ 0.1,0.1,0.1 };
 
 
     // TODO: Also this should just be done by a flag so at the start of the render,

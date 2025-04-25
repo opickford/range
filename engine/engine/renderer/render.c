@@ -25,6 +25,8 @@
 
 
 // TODO: Consider global render target.
+// TODO: Think about my DOD. Should use structs rather than float* because will compile to the same thing.
+// TODO: Something important would be to make the buffer accesses easier.
 
 void debug_draw_point_lights(Canvas* canvas, const RenderSettings* settings, PointLights* point_lights)
 {
@@ -269,6 +271,8 @@ void debug_draw_mi_normals(Canvas* canvas, const RenderSettings* settings, const
 		}
 	}*/
 }
+
+
 
 void draw_scanline(RenderTarget* rt,
 	RenderBuffers* rbs,
@@ -1264,6 +1268,8 @@ void draw_depth_triangle(DepthBuffer* db, V4 v0, V4 v1, V4 v2)
 	draw_depth_flat_top_triangle(db, v1, v3, v2);
 	draw_depth_flat_bottom_triangle(db, v0, v1, v3);
 }
+
+
 
 float calculate_diffuse_factor(const V3 v, const V3 n, const V3 light_pos, float a, float b)
 {
@@ -2517,10 +2523,6 @@ void render(
 	// TODO: I still don't really like the render pipeline here. I think this could be refactored to be 
 	//		 much cleaner.
 
-	//		 It would be nicer for it to be in more stages. Also, do we really need such huge arrays?
-	//		 The issue must be from the clipping array, I feel like we don't need this. Have a think about
-	//		 it.
-	
 	Timer t = timer_start();
 	
 	// Transform object space positions to view space.
@@ -2572,6 +2574,44 @@ void render(
 	{
 		debug_draw_mi_normals(&renderer->target.canvas, &renderer->settings, &scene->models, 0);
 	}
+}
+
+void calculate_model_matrices()
+{
+	/*
+	for (int i = 0; i < mis_count; ++i)
+	{
+		// Convert the model base object space positions to world space
+		// for the current model instance.
+		const int mb_index = mis_base_ids[i];
+		const int mb_positions_count = mbs_positions_counts[mb_index];
+		const int normals_count = mbs_normals_counts[mb_index];
+
+		// Calculate the new model/normal matrix from the mi's transform.
+		int transform_index = i * STRIDE_MI_TRANSFORM;
+
+		V3 position = v3_read(mis_transforms + transform_index);
+		V3 eulers = v3_read(mis_transforms + transform_index + 3);
+		V3 scale = v3_read(mis_transforms + transform_index + 6);
+
+		M4 model_matrix;
+		m4_model_matrix(position, eulers, scale, model_matrix);
+
+		M4 model_view_matrix;
+		m4_mul_m4(view_matrix, model_matrix, model_view_matrix);
+
+		M4 normal_matrix;
+		m4_normal_matrix(eulers, scale, normal_matrix);
+
+		M4 view_normal_matrix;
+		m4_mul_m4(view_matrix, normal_matrix, view_normal_matrix);
+
+	}
+	*/
+
+
+
+
 }
 
 void update_depth_maps(Renderer* renderer, const Scene* scene)

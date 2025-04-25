@@ -86,6 +86,13 @@ void project_and_draw_clipped(Renderer* renderer, Scene* scene, int mi_index, in
 
 void render(Renderer* renderer, Scene* scene, const Resources* resources, const M4 view_matrix);
 
+// REFACTORED PIPELINE
+
+void calculate_model_matrices();
+
+
+
+
 // TEMP
 
 
