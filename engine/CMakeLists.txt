@@ -7,10 +7,13 @@ add_library (engine STATIC
 "engine/canvas.c"
 "engine/engine.c"
 "engine/lights.c"
-"engine/models.c" 
+ 
 "engine/window.c"
 "engine/scene.c"
 "engine/strides.c"
+
+"engine/mesh_base.c" 
+"engine/mesh_instance.c" 
 
 "engine/maths/matrix4.c"
 "engine/maths/plane.c"
@@ -22,6 +25,7 @@ add_library (engine STATIC
 "engine/renderer/draw_2d.c"
 "engine/renderer/depth_buffer.c"
 "engine/renderer/texture.c"
+"engine/renderer/frame_data.c"
 
 "engine/ui/font.c"
 "engine/ui/text.c"
@@ -29,7 +33,7 @@ add_library (engine STATIC
 
 "engine/utils/memory_utils.c"
 "engine/utils/str_utils.c"
- )
+  )
 
 target_include_directories (engine PUBLIC "${CMAKE_SOURCE_DIR}/engine/engine")
 

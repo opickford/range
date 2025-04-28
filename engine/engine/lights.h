@@ -1,10 +1,13 @@
 #ifndef LIGHTS_H
 #define LIGHTS_H
 
-#include "renderer/render_buffers.h"
 #include "renderer/depth_buffer.h"
 
 #include "maths/vector3.h"
+
+#include "common/status.h"
+
+// TODO: Should this just be a point_light.h file?
 
 /*
 A point light can be defined by a:
@@ -18,31 +21,46 @@ a red colour.
 
 */
 
-// TODO: Not all point lights should cast shadows.
- 
 typedef struct
 {
-	int count;
+	V3 position;
+	V3 colour;
+	float strength;
 
-	// Data
-	// Keep separate for when we convert from world space
-	// to view space to avoid loading unncessary data into
-	// the cache. Also as we cache the view space positions, 
-	// we would not be accessing the world space positions again anyways.
-	float* world_space_positions;
-	float* attributes; // Strength and colour.
-	
-	// Cache the point light's view space position.
-	float* view_space_positions; 
+} PointLight;
+
+typedef struct
+{
+	V3 position;
+	V3 colour;
+	float strength;
 
 	DepthBuffer* depth_maps;
 
-} PointLights;
+} ShadowCastingPointLight;
 
+typedef struct
+{
+	int num_point_lights;
+	PointLight* point_lights;
 
-void point_lights_init(PointLights* point_lights);
+	int num_shadow_casting_point_lights;
+	ShadowCastingPointLight* shadow_casting_point_lights;
 
-void point_lights_create(PointLights* point_lights, RenderBuffers* rbs, V3 position, V3 colour, float strength);
+} Lights;
+
+Status lights_init(Lights* lights);
+void lights_destroy(Lights* lights);
+
+//Status lights_init(PointLights* point_lights);
+//void lights_destroy(PointLights* point_lights);
+
+// I think in terms of API for example, when creating shadow casting lights,
+// we just want the user to call this, and this can create the shadow map?
+//Status point_lights_add(PointLights* point_lights, PointLight point_light);
+//Status point_lights_add_shadow_casting(PointLights* point_lights, ShadowCastingPointLight point_light);
+
+//Status point_light_init(PointLight* light);
 
 // TODO: Destroy.
 

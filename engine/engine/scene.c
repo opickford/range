@@ -8,8 +8,9 @@ Status scene_init(Scene* scene)
 {
 	memset(scene, 0, sizeof(Scene));
 
-	models_init(&scene->models);
-	point_lights_init(&scene->point_lights);
+	mesh_bases_init(&scene->mesh_bases);
+	mesh_instances_init(&scene->mesh_instances);
+	lights_init(&scene->lights);
 
 	scene->ambient_light.x = 0.1f;
 	scene->ambient_light.y = 0.1f;

@@ -19,23 +19,44 @@ void create_map(Engine* engine)
     Status status = scene_init(scene);
 
     // TODO: Should really have a helper for this sort of thing?
+    // TODO: Do we even want to support multiple scenes.. probably not.
     engine->current_scene_id = 0;
     ++engine->scenes_count;
 
+    // TODO: Surely this MeshBase is going to get freed.. so where do i put
+    //       this.
+    
+    // TODO: Gotta think about this api.
+
+    // TODO: MB is null after this, should model bases be stored in the scene?
+    //       i think so.............
+    
+    MeshBase* cube_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(cube_base, "C:/Users/olive/source/repos/range/res/models/cube.obj");
+
+    MeshInstance* cube_instance = mesh_instances_add(&scene->mesh_instances);
+    mesh_instance_set_base(cube_instance, cube_base);
+    
+
+
     //resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
 
+    /*
     mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");
     mi_create(&scene->models, &engine->renderer.buffers, 0, 1);
     mi_set_transform(&scene->models, 0, (V3) { 0, 0, -5 }, (V3) { 0, 0, 0 }, (V3) { 5, 5, 5 });
-
+    */
     //scene->models.mis_texture_ids[0] = 0;
 
-    scene->ambient_light = (V3){ 0.1,0.1,0.1 };
+    scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
 
+    // TODO: Should the camera be part of the scene??
+    engine->renderer.camera.position = (V3) { 0, 0, 10.f };
+    
 
     // TODO: Also this should just be done by a flag so at the start of the render,
     //       the buffers are resized. Or even we check each time.
-    render_buffers_resize(&engine->renderer.buffers);
+    //render_buffers_resize(&engine->renderer.buffers);
 }
 
 void engine_on_init(Engine* engine)
@@ -128,7 +149,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
             random_float(),
             random_float()
         };
-
+        /*
         point_lights_create(&scene->point_lights, &engine->renderer.buffers, engine->renderer.camera.position, colour, 1);
 
         if (directions)
@@ -159,7 +180,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
 
 
         render_buffers_resize(&engine->renderer.buffers);
-
+        */
 
         break;
     }
@@ -170,10 +191,12 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     }
     case VK_F3:
     {
+        /*
         Scene* scene = &engine->scenes[engine->current_scene_id];
         engine->renderer.camera.position.x = scene->point_lights.world_space_positions[0];
         engine->renderer.camera.position.y = scene->point_lights.world_space_positions[1];
         engine->renderer.camera.position.z = scene->point_lights.world_space_positions[2];
+        */
         break;
     }
     case VK_F4:
@@ -183,10 +206,12 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     }
     case VK_F5:
     {
+        /*
         Scene* scene = &engine->scenes[engine->current_scene_id];
         scene->point_lights.attributes[0] = 0.f;
         scene->point_lights.attributes[1] = 0.f;
         scene->point_lights.attributes[2] = 0.f;
+        */
         break;
     }
     }
@@ -195,7 +220,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
 int main()
 {
 	Engine engine;
-	if (STATUS_OK == engine_init(&engine, 1600, 900))
+	if (STATUS_OK == engine_init(&engine, 800, 600))
 	{
 		engine_run(&engine);
 	}

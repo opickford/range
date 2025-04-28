@@ -30,13 +30,6 @@ Status renderer_init(Renderer* renderer, int width, int height)
 
 	renderer->camera.yaw = PI; // TODO: Gotta be able to set one or the other or have them update together...
 
-	// Initialise render buffers.
-	status = render_buffers_init(&renderer->buffers);
-	if (STATUS_OK != status)
-	{
-		return status;
-	}
-
 	// Create the view frustum.
 	view_frustum_init(&renderer->settings.view_frustum, renderer->settings.near_plane, renderer->settings.far_plane, renderer->settings.fov,
 		renderer->target.canvas.width / (float)(renderer->target.canvas.height));

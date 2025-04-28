@@ -3,8 +3,9 @@
 #include "logger.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 
-Status resize_int_buffer(int** out_buffer, const unsigned int len)
+Status resize_int_buffer(int** out_buffer, unsigned int len)
 {
 	// Realloc with size = 0 fails.
 	if (len == 0)
@@ -23,7 +24,7 @@ Status resize_int_buffer(int** out_buffer, const unsigned int len)
 	return STATUS_OK;
 }
 
-Status resize_float_buffer(float** out_buffer, const unsigned int len)
+Status resize_float_buffer(float** out_buffer, unsigned int len)
 {
 	// Realloc with size = 0 fails.
 	if (len == 0)
@@ -41,3 +42,24 @@ Status resize_float_buffer(float** out_buffer, const unsigned int len)
 	*out_buffer = temp_ptr;
 	return STATUS_OK;
 }
+
+
+Status resize_uint8_buffer(uint8_t** out_buffer, unsigned int len)
+{
+	// Realloc with size = 0 fails.
+	if (len == 0)
+	{
+		return STATUS_INVALID_ARGUMENT;
+	}
+
+	uint8_t* temp_ptr = realloc(*out_buffer, len * sizeof(uint8_t));
+	if (0 == temp_ptr)
+	{
+		log_error("Failed to resize_uint8_buffer.");
+		return STATUS_ALLOC_FAILURE;
+	}
+
+	*out_buffer = temp_ptr;
+	return STATUS_OK;
+}
+
