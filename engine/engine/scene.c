@@ -25,3 +25,21 @@ Status scene_destroy(Scene* scene)
 	log_warn("Need to implement scene_destroy.");
 	return STATUS_OK;
 }
+
+MeshBaseID scene_add_mesh_base(Scene* scene)
+{
+	return mesh_bases_add(&scene->mesh_bases);
+}
+
+MeshInstanceID scene_add_mesh_instance(Scene* scene)
+{
+	return mesh_instances_add(&scene->mesh_instances);
+}
+
+Status scene_mesh_instance_set_base(Scene* scene, MeshInstanceID mi_id, MeshBaseID mb_id)
+{
+	MeshInstance* mi = &scene->mesh_instances.instances[mi_id];
+	const MeshBase* mb = &scene->mesh_bases.bases[mb_id];
+
+	return mesh_instance_set_base(mi, mb);
+}

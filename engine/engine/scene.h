@@ -22,4 +22,13 @@ typedef struct
 Status scene_init(Scene* scene);
 Status scene_destroy(Scene* scene);
 
+// MeshBase API Wrappers
+MeshBaseID scene_add_mesh_base(Scene* scene);
+
+// MeshInstance API Wrappers
+MeshInstanceID scene_add_mesh_instance(Scene* scene);
+
+// TODO: These names are so long idk.
+Status scene_mesh_instance_set_base(Scene* scene, MeshInstanceID mi_id, MeshBaseID mb_id);
+
 #endif

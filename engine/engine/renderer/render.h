@@ -70,18 +70,6 @@ void draw_depth_triangle(DepthBuffer* db, V4 v0, V4 v1, V4 v2);
 // SECTION: Rendering Pipeline.
 void project(const Canvas* canvas, const M4 projection_matrix, V4 v, V4* out);
 
-//void model_to_view_space(Models* models, const M4 view_matrix);
-/*
-void lights_world_to_view_space(FrameData* frame_data, const PointLights* point_lights, const M4 view_matrix);
-
-void broad_phase_frustum_culling(Models* models, const ViewFrustum* view_frustum);
-
-void cull_backfaces(Renderer* renderer, const Scene* scene);
-
-void light_front_faces(Renderer* renderer, Scene* scene);
-
-void clip_to_screen(Renderer* renderer, const M4 view_matrix, Scene* scene, const Resources* resources);
-*/
 void project_and_draw_clipped(
 	Renderer* renderer,
 	RenderTarget* rt,
@@ -92,9 +80,17 @@ void render(Renderer* renderer, Scene* scene, const Resources* resources, const 
 
 // REFACTORED PIPELINE
 
-void model_to_view_space(FrameData* frame_data, MeshInstances* mis, const M4 view_matrix);
-
-
+void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matrix);
+void lights_world_to_view_space(FrameData* frame_data, const Scene* scene, const M4 view_matrix);
+void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum);
+void cull_backfaces(FrameData* frame_data, Scene* scene);
+void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient);
+void prepare_for_clipping(FrameData* frame_data, Scene* scene);
+void clip_project_and_draw(
+	Renderer* renderer,
+	RenderTarget* rt,
+	FrameData* frame_data,
+	Scene* scene);
 
 
 // TEMP

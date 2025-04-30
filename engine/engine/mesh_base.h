@@ -8,8 +8,12 @@
 
 #include <stdio.h>
 
+typedef int MeshBaseID;
+
 typedef struct
 {
+	MeshBaseID id; // The index of the mesh base in it's MeshBases container.
+
 	int num_faces;
 	int num_positions;
 	int num_normals;
@@ -43,7 +47,7 @@ void mesh_base_destroy(MeshBase* mb);
 
 // MeshBases API
 Status mesh_bases_init(MeshBases* mbs);
-MeshBase* mesh_bases_add(MeshBases* mbs);
+MeshBaseID mesh_bases_add(MeshBases* mbs);
 void mesh_bases_destroy(MeshBases* mbs);
 
 #endif

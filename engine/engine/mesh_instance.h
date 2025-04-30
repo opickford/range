@@ -10,9 +10,11 @@
 
 #include <stdint.h>
 
+typedef int MeshInstanceID;
+
 typedef struct
 {
-	MeshBase* mb; // TODO: Rename as base?
+	MeshBaseID mb_id; // TODO: Rename as base?
 	int texture_id;
 
 	// Transform
@@ -42,17 +44,27 @@ typedef struct
 	int count;
 	MeshInstance* instances;
 } MeshInstances;
+// TODO: I think the MeshInstances struct is a little confusing?
+/*
+I think it would be nicer to just have the raw array in the scene struct
+this way accessing stuff is easier, also less unnecessary abstraction. Also,
+when would we ever need the mesh instances outside of the scene......
+
+*/
 
 // MeshInstance API
 Status mesh_instance_init(MeshInstance* mi);
-Status mesh_instance_set_base(MeshInstance* mi, MeshBase* mb);
-void mesh_instance_set_albedo(MeshInstance* mi, V3 albedo);
 void mesh_instance_destroy(MeshInstance* mi);
+
+Status mesh_instance_set_base(MeshInstance* mi, const MeshBase* mb);
+void mesh_instance_set_albedo(MeshInstance* mi, const MeshBase* mb, V3 albedo);
 
 // MeshInstances API
 Status mesh_instances_init(MeshInstances* mis);
 void mesh_instances_destroy(MeshInstances* mis);
 
-MeshInstance* mesh_instances_add(MeshInstances* mis);
+// We cannot store pointers to the MeshInstance because if we add another,
+// the pointer could now be invalid after resizing the array.
+int mesh_instances_add(MeshInstances* mis);
 
 #endif

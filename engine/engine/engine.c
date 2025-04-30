@@ -123,7 +123,6 @@ void engine_run(Engine* engine)
         }
 
         snprintf(process_messages_str, sizeof(process_messages_str), "ProcMsgs: %d", timer_get_elapsed(&t));
-
        
         M4 view_matrix;
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
@@ -145,7 +144,6 @@ void engine_run(Engine* engine)
         timer_restart(&t);
         engine_handle_input(engine, dt);
         snprintf(handle_input_str, sizeof(handle_input_str), "HandleInput: %d", timer_get_elapsed(&t));
-
 
         // Fire the engine update event.
         timer_restart(&t);

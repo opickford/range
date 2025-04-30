@@ -12,15 +12,12 @@ Status mesh_instance_init(MeshInstance* mi)
 	memset(mi, 0, sizeof(MeshInstance));
 
 	mi->scale = (V3){ 1,1,1 };
-
-	
 	mi->has_scale_changed = 1; // TODO: Rename to recalc bounding sphere?
-
 
 	return STATUS_OK;
 }
 
-Status mesh_instance_set_base(MeshInstance* mi, MeshBase* mb)
+Status mesh_instance_set_base(MeshInstance* mi, const MeshBase* mb)
 {
 	// Grow the vertex albedos buffer, there should be one albedo
 	// per vertex.
@@ -28,18 +25,18 @@ Status mesh_instance_set_base(MeshInstance* mi, MeshBase* mb)
 
 	if (STATUS_OK == status)
 	{
-		mi->mb = mb;
+		mi->mb_id = mb->id;
 
 		// Default albedo to white.
-		mesh_instance_set_albedo(mi, (V3) { 1.f, 1.f, 1.f });
+		mesh_instance_set_albedo(mi, mb, (V3) { 1.f, 1.f, 1.f });
 	}
 
 	return status;
 }
 
-void mesh_instance_set_albedo(MeshInstance* mi, V3 albedo)
+void mesh_instance_set_albedo(MeshInstance* mi, const MeshBase* mb, V3 albedo)
 {
-	for (int i = 0; i < mi->mb->num_faces * STRIDE_FACE_VERTICES * STRIDE_COLOUR; i += STRIDE_COLOUR)
+	for (int i = 0; i < mb->num_faces * STRIDE_FACE_VERTICES * STRIDE_COLOUR; i += STRIDE_COLOUR)
 	{
 		mi->vertex_alebdos[i] = albedo.x;
 		mi->vertex_alebdos[i + 1] = albedo.y;
@@ -64,7 +61,7 @@ void mesh_instances_destroy(MeshInstances* mis)
 	free(mis->instances);
 }
 
-MeshInstance* mesh_instances_add(MeshInstances* mis)
+MeshInstanceID mesh_instances_add(MeshInstances* mis)
 {
 	// Create a new mesh instance and return a pointer to it.
 
@@ -78,7 +75,7 @@ MeshInstance* mesh_instances_add(MeshInstances* mis)
 		return 0;
 	}
 
-	const int mi_id = mis->count;
+	const MeshInstanceID mi_id = mis->count;
 
 	mis->instances = new_instances;
 	mis->count = new_count;
@@ -87,5 +84,5 @@ MeshInstance* mesh_instances_add(MeshInstances* mis)
 	MeshInstance* mi = &mis->instances[mi_id];
 	mesh_instance_init(mi);
 
-	return mi;
+	return mi_id;
 }

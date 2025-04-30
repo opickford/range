@@ -54,9 +54,6 @@ Status mesh_base_init(MeshBase* mb)
 
 Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 {
-	// Initialise the MeshBase incase it hasn't already been.
-	mesh_base_init(mb);
-
 	// TODO: Eventually could check the filetype.
 	FILE* file = fopen(filename, "r");
 
@@ -272,9 +269,10 @@ void mesh_base_destroy(MeshBase* mb)
 Status mesh_bases_init(MeshBases* mbs)
 {
 	memset(mbs, 0, sizeof(MeshBases));
+	return STATUS_OK;
 }
 
-MeshBase* mesh_bases_add(MeshBases* mbs)
+MeshBaseID mesh_bases_add(MeshBases* mbs)
 {
 	// Grow the array of mesh instances.
 	const int new_count = mbs->count + 1;
@@ -286,7 +284,7 @@ MeshBase* mesh_bases_add(MeshBases* mbs)
 		return STATUS_ALLOC_FAILURE;
 	}
 
-	const int mb_id = mbs->count;
+	const MeshBaseID mb_id = mbs->count;
 
 	mbs->bases = new_bases;
 	mbs->count = new_count;
@@ -294,8 +292,9 @@ MeshBase* mesh_bases_add(MeshBases* mbs)
 	// Initialise the new MeshBase.
 	MeshBase* mb = &mbs->bases[mb_id];
 	mesh_base_init(mb);
+	mb->id = mb_id;
 
-	return mb;
+	return mb_id;
 }
 
 void mesh_bases_destroy(MeshBases* mbs)

@@ -21,10 +21,10 @@ inline Timer timer_start()
 	return timer;
 }
 
-inline clock_t timer_get_elapsed(Timer* timer)
+inline int timer_get_elapsed(Timer* timer)
 {
 
-	return (clock() - timer->start) * 1000 / CLOCKS_PER_SEC;
+	return (int)((clock() - timer->start) * 1000 / CLOCKS_PER_SEC);
 }
 
 inline void timer_restart(Timer* timer)

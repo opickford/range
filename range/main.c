@@ -22,23 +22,30 @@ void create_map(Engine* engine)
     // TODO: Do we even want to support multiple scenes.. probably not.
     engine->current_scene_id = 0;
     ++engine->scenes_count;
-
-    // TODO: Surely this MeshBase is going to get freed.. so where do i put
-    //       this.
     
-    // TODO: Gotta think about this api.
+    MeshBaseID sphere_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[sphere_base], "C:/Users/olive/source/repos/range/res/models/sphere.obj");
 
-    // TODO: MB is null after this, should model bases be stored in the scene?
-    //       i think so.............
+    const int n = 100;
+
+    float offset = 1;
+    float x = -n * 0.5f * offset;
+    float z = 0;
+
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            MeshInstanceID sphere_instance = mesh_instances_add(&scene->mesh_instances);
+            scene_mesh_instance_set_base(scene, sphere_instance, sphere_base);
+            scene->mesh_instances.instances[sphere_instance].position.x = x;
+            scene->mesh_instances.instances[sphere_instance].position.z = z;
+            z -= offset;
+        }
+        z = 0;
+        x += offset;
+    }
     
-    MeshBase* cube_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(cube_base, "C:/Users/olive/source/repos/range/res/models/cube.obj");
-
-    MeshInstance* cube_instance = mesh_instances_add(&scene->mesh_instances);
-    mesh_instance_set_base(cube_instance, cube_base);
-    
-
-
     //resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
 
     /*
@@ -48,12 +55,11 @@ void create_map(Engine* engine)
     */
     //scene->models.mis_texture_ids[0] = 0;
 
-    scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
+    scene->ambient_light = (V3){ 0.1,0.1,0.1 };
 
     // TODO: Should the camera be part of the scene??
     engine->renderer.camera.position = (V3) { 0, 0, 10.f };
     
-
     // TODO: Also this should just be done by a flag so at the start of the render,
     //       the buffers are resized. Or even we check each time.
     //render_buffers_resize(&engine->renderer.buffers);
