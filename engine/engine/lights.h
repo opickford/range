@@ -30,6 +30,7 @@ typedef struct
 
 } PointLight;
 
+
 typedef struct
 {
 	V3 position;
@@ -45,15 +46,19 @@ typedef struct
 	int num_point_lights;
 	PointLight* point_lights;
 
+
+
+
+
+
 	int num_shadow_casting_point_lights;
 	ShadowCastingPointLight* shadow_casting_point_lights;
 
 	/*
 	
-	store an array of PointLightIDs to point light indices
+	we kind of want to do the same thing here as we did with the mesh_instance right?
 
-	so if we add a new PointLight, expand both arrays by 1, return the length of the array -1.
-
+    is there a way to make this nicer?
 
 
 
@@ -65,9 +70,6 @@ typedef struct
 
 Status lights_init(Lights* lights);
 void lights_destroy(Lights* lights);
-
-PointLightID lights_add_point_light(Lights* lights);
-void lights_add_shadow_casting_point_light(Lights* lights);
 
 // I think in terms of API for example, when creating shadow casting lights,
 // we just want the user to call this, and this can create the shadow map?

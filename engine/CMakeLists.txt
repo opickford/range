@@ -33,7 +33,7 @@ add_library (engine STATIC
 
 "engine/utils/memory_utils.c"
 "engine/utils/str_utils.c"
-  )
+     "engine/component_list.h" "engine/component_list.c")
 
 target_include_directories (engine PUBLIC "${CMAKE_SOURCE_DIR}/engine/engine")
 

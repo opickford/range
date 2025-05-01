@@ -113,3 +113,4 @@ void lights_destroy(Lights* lights)
 	free(lights->point_lights);
 	free(lights->shadow_casting_point_lights);
 }
+
