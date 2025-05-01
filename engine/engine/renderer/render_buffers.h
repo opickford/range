@@ -87,8 +87,8 @@ inline Status render_buffers_resize(RenderBuffers* rbs)
 
 	// Backface culling buffers.
 	const int STRIDE_FRONT_FACE = STRIDE_BASE_FRONT_FACE + rbs->lights_count * STRIDE_V4 * STRIDE_FACE_VERTICES;
-	resize_int_buffer(&rbs->front_faces_counts, rbs->instances_count);
-	resize_float_buffer(&rbs->front_faces, rbs->total_faces * STRIDE_FRONT_FACE);
+	resize_int_array(&rbs->front_faces_counts, rbs->instances_count);
+	resize_float_array(&rbs->front_faces, rbs->total_faces * STRIDE_FRONT_FACE);
 
 	// Clipping buffers.
 	// TODO: Should the render buffers define this stride?
@@ -100,13 +100,13 @@ inline Status render_buffers_resize(RenderBuffers* rbs)
 	const int STRIDE_CLIPPED = STRIDE_BASE_CLIPPED_FACE + rbs->lights_count * STRIDE_V4 * STRIDE_FACE_VERTICES;
 	const int max_clipped_tris = rbs->mbs_max_faces * MAX_TRIS_FACTOR * STRIDE_CLIPPED;
 
-	resize_float_buffer(&rbs->temp_clipped_faces_in, max_clipped_tris);
-	resize_float_buffer(&rbs->temp_clipped_faces_out, max_clipped_tris);
-	resize_float_buffer(&rbs->clipped_faces, max_clipped_tris);
+	resize_float_array(&rbs->temp_clipped_faces_in, max_clipped_tris);
+	resize_float_array(&rbs->temp_clipped_faces_out, max_clipped_tris);
+	resize_float_array(&rbs->clipped_faces, max_clipped_tris);
 
 	// TODO: CALCULATE THE SIZE OF THE STRIDE PROPERLY?
-	Status status = resize_float_buffer(&rbs->light_space_positions, rbs->total_faces * STRIDE_FACE_VERTICES * rbs->lights_count * STRIDE_V4); 
-	resize_float_buffer(&rbs->front_face_light_space_positions, rbs->total_faces * STRIDE_FACE_VERTICES * rbs->lights_count * STRIDE_V4);
+	Status status = resize_float_array(&rbs->light_space_positions, rbs->total_faces * STRIDE_FACE_VERTICES * rbs->lights_count * STRIDE_V4); 
+	resize_float_array(&rbs->front_face_light_space_positions, rbs->total_faces * STRIDE_FACE_VERTICES * rbs->lights_count * STRIDE_V4);
 
 	// Pos (V4), UV (V2), albedo (V3), light (V3)
 
@@ -115,14 +115,14 @@ inline Status render_buffers_resize(RenderBuffers* rbs)
 
 	// pos(v4), albedo(v3), light(v3)
 	const int vertex_components = (10 + rbs->lights_count * STRIDE_V4) * 4; // 4 vertices to allow for the split.
-	resize_float_buffer(&rbs->triangle_vertices, vertex_components);
+	resize_float_array(&rbs->triangle_vertices, vertex_components);
 
 
 	// Buffer for the light spaces for both edges.
-	resize_float_buffer(&rbs->scanline_light_space_positions, rbs->lights_count * STRIDE_V4 * 2); // interleaved buffer of lsp0_v0, lsp0_v1, ... 
-	resize_float_buffer(&rbs->light_space_pos_deltas, rbs->lights_count * STRIDE_V4 * 2); // interleaved buffer of dlsp0_dy_v0, dlsp0_dy_v1, ... 
-	resize_float_buffer(&rbs->scanline_light_space_pos_deltas, rbs->lights_count * STRIDE_V4); 
-	resize_float_buffer(&rbs->scanline_light_space_current_pos, rbs->lights_count * STRIDE_V4);
+	resize_float_array(&rbs->scanline_light_space_positions, rbs->lights_count * STRIDE_V4 * 2); // interleaved buffer of lsp0_v0, lsp0_v1, ... 
+	resize_float_array(&rbs->light_space_pos_deltas, rbs->lights_count * STRIDE_V4 * 2); // interleaved buffer of dlsp0_dy_v0, dlsp0_dy_v1, ... 
+	resize_float_array(&rbs->scanline_light_space_pos_deltas, rbs->lights_count * STRIDE_V4); 
+	resize_float_array(&rbs->scanline_light_space_current_pos, rbs->lights_count * STRIDE_V4);
 	
 	return status;
 }

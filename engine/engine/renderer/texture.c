@@ -53,7 +53,7 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
 
     // Read the image as an array of ints
     int* temp_pixels = 0;
-    Status status = resize_int_buffer(&temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
+    Status status = resize_int_array(&temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
     if (STATUS_OK != status || !temp_pixels)
     {
         return status;
@@ -80,8 +80,8 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
     }
 
     
-    //resize_float_buffer(&texture->data, texture->width * texture->height * 3);
-    resize_int_buffer(&texture->data, texture->width * texture->height * 3);
+    //resize_float_array(&texture->data, texture->width * texture->height * 3);
+    resize_int_array(&texture->data, texture->width * texture->height * 3);
 
     // TODO: Gotta test the texture a few ways, do we want r,g,b uint8? 3 floats? what.
     for (int i = 0; i < texture->width * texture->height; ++i)

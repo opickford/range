@@ -30,5 +30,6 @@ MeshInstanceID scene_add_mesh_instance(Scene* scene);
 
 // TODO: These names are so long idk.
 Status scene_mesh_instance_set_base(Scene* scene, MeshInstanceID mi_id, MeshBaseID mb_id);
+Status scene_mesh_instance_set_albedo(Scene* scene, MeshInstanceID mi_id, V3 albedo);
 
 #endif

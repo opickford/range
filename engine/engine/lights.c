@@ -17,15 +17,15 @@ void point_light_init(PointLight* light, V3 position, V3 colour, float strength)
 
 	// Resize the view positions buffers.
 	// TODO: I Would like to use STRIDE_POSITION without importing models.h.
-	resize_float_buffer(&point_lights->world_space_positions, new_count * STRIDE_POSITION);
-	resize_float_buffer(&point_lights->view_space_positions, new_count * STRIDE_POSITION);
+	resize_float_array(&point_lights->world_space_positions, new_count * STRIDE_POSITION);
+	resize_float_array(&point_lights->view_space_positions, new_count * STRIDE_POSITION);
 
 	// Copy the lights position.
 	v3_write(point_lights->world_space_positions + point_lights->count * STRIDE_POSITION, position);
 
 	// Resize the point lights buffer.
 	int old_size = point_lights->count * STRIDE_POINT_LIGHT_ATTRIBUTES;
-	resize_float_buffer(&point_lights->attributes, old_size + STRIDE_POINT_LIGHT_ATTRIBUTES);
+	resize_float_array(&point_lights->attributes, old_size + STRIDE_POINT_LIGHT_ATTRIBUTES);
 
 	// Copy the point light's attributes across.
 	point_lights->attributes[old_size] = colour.x;
@@ -106,4 +106,10 @@ Status point_lights_add(PointLights* point_lights, PointLight point_light)
 Status lights_init(Lights* lights)
 {
 	memset(lights, 0, sizeof(Lights));
+}
+
+void lights_destroy(Lights* lights)
+{
+	free(lights->point_lights);
+	free(lights->shadow_casting_point_lights);
 }

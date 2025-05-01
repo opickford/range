@@ -7,6 +7,8 @@
 
 float* directions;
 
+MeshBaseID sphere_base;
+
 // TODO: Switch to C compiler.
 // TODO: All of my code is C++ style C, why... Not good.
 
@@ -23,10 +25,11 @@ void create_map(Engine* engine)
     engine->current_scene_id = 0;
     ++engine->scenes_count;
     
-    MeshBaseID sphere_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(&scene->mesh_bases.bases[sphere_base], "C:/Users/olive/source/repos/range/res/models/sphere.obj");
+    sphere_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[sphere_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
 
-    const int n = 100;
+    /*
+    const int n = 10;
 
     float offset = 1;
     float x = -n * 0.5f * offset;
@@ -42,9 +45,14 @@ void create_map(Engine* engine)
             scene->mesh_instances.instances[sphere_instance].position.z = z;
             z -= offset;
         }
+
         z = 0;
         x += offset;
     }
+    */
+
+
+
     
     //resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
 
@@ -55,7 +63,8 @@ void create_map(Engine* engine)
     */
     //scene->models.mis_texture_ids[0] = 0;
 
-    scene->ambient_light = (V3){ 0.1,0.1,0.1 };
+    //scene->ambient_light = (V3){ 0.1,0.1,0.1 };
+    scene->ambient_light = (V3){ 1,1,1 };
 
     // TODO: Should the camera be part of the scene??
     engine->renderer.camera.position = (V3) { 0, 0, 10.f };
@@ -155,6 +164,18 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
             random_float(),
             random_float()
         };
+
+        const Camera* camera = &engine->renderer.camera;
+
+        const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
+
+        MeshInstanceID sphere_instance = mesh_instances_add(&scene->mesh_instances);
+        scene_mesh_instance_set_base(scene, sphere_instance, sphere_base);
+        scene_mesh_instance_set_albedo(scene, sphere_instance, colour);
+        mesh_instances_get(&scene->mesh_instances, sphere_instance)->position = pos;
+        
+
+
         /*
         point_lights_create(&scene->point_lights, &engine->renderer.buffers, engine->renderer.camera.position, colour, 1);
 
@@ -197,6 +218,13 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     }
     case VK_F3:
     {
+        Scene* scene = &engine->scenes[engine->current_scene_id];
+
+        if (scene->mesh_instances.count > 0)
+            mesh_instances_remove(&scene->mesh_instances, 
+                scene->mesh_instances.id_to_index[scene->mesh_instances.count - 1]);
+
+ 
         /*
         Scene* scene = &engine->scenes[engine->current_scene_id];
         engine->renderer.camera.position.x = scene->point_lights.world_space_positions[0];

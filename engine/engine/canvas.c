@@ -79,7 +79,7 @@ Status canvas_init_from_bitmap(Canvas* canvas, const char* file)
     bmi.bmiHeader.biCompression = BI_RGB; // Uncompressed RGB.
 
     // Allocate memory for pixels
-    Status status = resize_int_buffer(&canvas->pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
+    Status status = resize_int_array(&canvas->pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
     if (STATUS_OK != status)
     {
         return status;

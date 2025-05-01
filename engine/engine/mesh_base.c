@@ -70,14 +70,14 @@ Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 	parse_obj_counts(file, &mb->num_positions, &mb->num_uvs, &mb->num_normals, &mb->num_faces);
 
 	// Allocate the buffers.
-	resize_float_buffer(&mb->object_space_positions, mb->num_positions * STRIDE_POSITION);
-	resize_float_buffer(&mb->object_space_normals, mb->num_normals * STRIDE_NORMAL);
-	resize_float_buffer(&mb->uvs, mb->num_uvs * STRIDE_UV);
+	resize_float_array(&mb->object_space_positions, mb->num_positions * STRIDE_POSITION);
+	resize_float_array(&mb->object_space_normals, mb->num_normals * STRIDE_NORMAL);
+	resize_float_array(&mb->uvs, mb->num_uvs * STRIDE_UV);
 
 	const int num_vertices = mb->num_faces * STRIDE_FACE_VERTICES;
-	resize_int_buffer(&mb->position_indices, num_vertices);
-	resize_int_buffer(&mb->normal_indices, num_vertices);
-	resize_int_buffer(&mb->uv_indices, num_vertices);
+	resize_int_array(&mb->position_indices, num_vertices);
+	resize_int_array(&mb->normal_indices, num_vertices);
+	resize_int_array(&mb->uv_indices, num_vertices);
 
 
 	/* TODO: ?

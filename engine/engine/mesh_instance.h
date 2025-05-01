@@ -10,6 +10,23 @@
 
 #include <stdint.h>
 
+/*
+
+A MeshInstance is an instance of a MeshBase. All static data will be read from
+the base and the instance stores the non-shared data.
+
+TODO: In the future, a MeshInstance could be an entity component but will have 
+      to think about this more in the future.
+
+For O(1) adding/removing, two maps are used.
+- id_to_index maps a MeshInstanceID to the instance index, this allows us to 
+    actually get the MeshInstance from the ID.
+- index_to_id maps an instance index to it's MeshInstanceID, this allows us to 
+    keep the instances array tightly packed by swapping the last element with 
+    the one we're trying to remove.
+
+*/
+
 typedef int MeshInstanceID;
 
 typedef struct
@@ -27,8 +44,7 @@ typedef struct
 	// Per instance data
 	// TODO: Do we actually want per vertex albedos? I reckon per face at least
 	//		 makes more sense.
-	// TODO: How do we alloc for this?
-	float* vertex_alebdos; // Aligned with the mesh base positions
+	float* vertex_alebdos;
 
 	// Offsets into FrameData, these exist here as they are tied
 	// to the MeshInstance itself.
@@ -41,16 +57,21 @@ typedef struct
 
 typedef struct
 {
-	int count;
-	MeshInstance* instances;
-} MeshInstances;
-// TODO: I think the MeshInstances struct is a little confusing?
-/*
-I think it would be nicer to just have the raw array in the scene struct
-this way accessing stuff is easier, also less unnecessary abstraction. Also,
-when would we ever need the mesh instances outside of the scene......
+	int count;    // The number of valid MeshInstances
+    int capacity; // The size of the arrays.
 
-*/
+	MeshInstance* instances;
+
+    // Map MeshInstanceIDs to indices in instances.
+    int* id_to_index;
+    int* index_to_id;
+
+    // Maintain an array of old ids and reuse when possible.
+    int* free_ids;
+    int free_ids_capacity;
+    int free_ids_count;
+
+} MeshInstances;
 
 // MeshInstance API
 Status mesh_instance_init(MeshInstance* mi);
@@ -63,8 +84,14 @@ void mesh_instance_set_albedo(MeshInstance* mi, const MeshBase* mb, V3 albedo);
 Status mesh_instances_init(MeshInstances* mis);
 void mesh_instances_destroy(MeshInstances* mis);
 
+// This pointer is temporary, adding another instance will invalidate this 
+// pointer, therefore, store a MeshInstanceID instead and only use the pointer
+// for temporary convienience.
+MeshInstance* mesh_instances_get(MeshInstances* mis, MeshInstanceID mi_id);
+
 // We cannot store pointers to the MeshInstance because if we add another,
 // the pointer could now be invalid after resizing the array.
-int mesh_instances_add(MeshInstances* mis);
+MeshInstanceID mesh_instances_add(MeshInstances* mis);
+void mesh_instances_remove(MeshInstances* mis, MeshInstanceID mi_id);
 
 #endif

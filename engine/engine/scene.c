@@ -38,8 +38,18 @@ MeshInstanceID scene_add_mesh_instance(Scene* scene)
 
 Status scene_mesh_instance_set_base(Scene* scene, MeshInstanceID mi_id, MeshBaseID mb_id)
 {
-	MeshInstance* mi = &scene->mesh_instances.instances[mi_id];
+    // TODO: Helper for this?
+    MeshInstance* mi = mesh_instances_get(&scene->mesh_instances, mi_id);
 	const MeshBase* mb = &scene->mesh_bases.bases[mb_id];
 
 	return mesh_instance_set_base(mi, mb);
+}
+
+Status scene_mesh_instance_set_albedo(Scene* scene, MeshInstanceID mi_id, V3 albedo)
+{
+    MeshInstance* mi = mesh_instances_get(&scene->mesh_instances, mi_id);
+    const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
+    mesh_instance_set_albedo(mi, mb, albedo);
+
+    return STATUS_OK;
 }

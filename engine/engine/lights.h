@@ -7,8 +7,6 @@
 
 #include "common/status.h"
 
-// TODO: Should this just be a point_light.h file?
-
 /*
 A point light can be defined by a:
 - Position
@@ -20,6 +18,9 @@ therefore, if a white light shines on it, it will reflect more red if its
 a red colour. 
 
 */
+
+typedef int PointLightID;
+typedef int ShadowCastingPointLightID;
 
 typedef struct
 {
@@ -47,13 +48,26 @@ typedef struct
 	int num_shadow_casting_point_lights;
 	ShadowCastingPointLight* shadow_casting_point_lights;
 
+	/*
+	
+	store an array of PointLightIDs to point light indices
+
+	so if we add a new PointLight, expand both arrays by 1, return the length of the array -1.
+
+
+
+
+
+	
+	*/
+
 } Lights;
 
 Status lights_init(Lights* lights);
 void lights_destroy(Lights* lights);
 
-//Status lights_init(PointLights* point_lights);
-//void lights_destroy(PointLights* point_lights);
+PointLightID lights_add_point_light(Lights* lights);
+void lights_add_shadow_casting_point_light(Lights* lights);
 
 // I think in terms of API for example, when creating shadow casting lights,
 // we just want the user to call this, and this can create the shadow map?

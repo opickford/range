@@ -1444,7 +1444,6 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 	int out_index = 0;
 	float* vertex_lighting = frame_data->vertex_lighting;
 
-
 	int front_faces_offset = 0;
 	const PointLight* point_lights = lights->point_lights;
 
@@ -1466,7 +1465,7 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 			{
 				const V3 point = v3_read(vsps + vsp_offset + mb->position_indices[face_index + vi] * STRIDE_POSITION);
 				const V3 normal = v3_read(vsns + vsn_offset + mb->normal_indices[face_index + vi] * STRIDE_NORMAL);
-				const V3 albedo = v3_read(vertex_albedos + mb->position_indices[face_index + vi] * STRIDE_COLOUR);
+                const V3 albedo = v3_read(vertex_albedos + mb->position_indices[face_index + vi] * STRIDE_COLOUR);
 
 				V3 diffuse = { 0 };
 
@@ -1501,9 +1500,6 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 				//light.y = min(1.f, light.y);
 				//light.z = min(1.f, light.z);
 
-
-
-
 				vertex_lighting[out_index++] = light.x;
 				vertex_lighting[out_index++] = light.y;
 				vertex_lighting[out_index++] = light.z;
@@ -1529,6 +1525,8 @@ void prepare_for_clipping(FrameData* frame_data, Scene* scene)
 	const int num_visible_mis = frame_data->num_visible_mis;
 
 	const float* vertex_lighting = frame_data->vertex_lighting;
+    int vertex_lighting_in = 0;
+
 
 	// Output
 	float* faces_to_clip = frame_data->faces_to_clip;
@@ -1568,9 +1566,15 @@ void prepare_for_clipping(FrameData* frame_data, Scene* scene)
 			const V2 uv1 = v2_read(uvs + uv0_index);
 			const V2 uv2 = v2_read(uvs + uv0_index);
 			*/
-			const V3 lighting0 = v3_read(vertex_lighting + (front_faces_offset + j) * STRIDE_COLOUR);
-			const V3 lighting1 = v3_read(vertex_lighting + (front_faces_offset + j + 1) * STRIDE_COLOUR);
-			const V3 lighting2 = v3_read(vertex_lighting + (front_faces_offset + j + 2) * STRIDE_COLOUR);
+			
+            // TODO: NOt sure how great this way of reading lighting is.
+            //       but can't be terrible right??
+            // TODO: is lighting the wrong word here...
+            const V3 lighting0 = v3_read(vertex_lighting + vertex_lighting_in * STRIDE_COLOUR);
+            const V3 lighting1 = v3_read(vertex_lighting + (vertex_lighting_in + 1) * STRIDE_COLOUR);
+            const V3 lighting2 = v3_read(vertex_lighting + (vertex_lighting_in + 2) * STRIDE_COLOUR);
+
+            vertex_lighting_in += STRIDE_FACE_VERTICES;
 
 			// TODO: If doesn't have texture, shouldn't copy UVs.
 			//	     Try avoid branching per face.

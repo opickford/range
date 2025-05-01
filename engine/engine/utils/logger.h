@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-// TODO: Allow for formatting like with printf.
 inline void log_info(const char* format, ...)
 {
     va_list args;
@@ -18,6 +17,7 @@ inline void log_info(const char* format, ...)
 }
 
 
+// TODO: Log warning?
 inline void log_warn(const char* format, ...)
 {
     va_list args;

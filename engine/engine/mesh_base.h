@@ -4,9 +4,27 @@
 #include "maths/vector3.h"
 
 #include "common/status.h"
+
 #include "utils/memory_utils.h"
 
 #include <stdio.h>
+
+/*
+
+A MeshBase stores the static data of a Mesh. 
+Currently, it essentially is a struct for a parsed .obj file.
+
+A MeshInstance will store the ID of a MeshBase and read any static data from
+there, therefore, if the base's data was edited, all instances would also be
+updated.
+
+It doesn't make sense to iterate over each MeshBase, therefore, there is no
+need for use of DOD.
+
+It also doesn't really make sense to remove a MeshBase, so the MeshBaseID will
+always remain valid as an index without extra indirection logic.
+
+*/
 
 typedef int MeshBaseID;
 

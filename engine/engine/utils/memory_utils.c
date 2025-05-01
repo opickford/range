@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-Status resize_int_buffer(int** out_buffer, unsigned int len)
+Status resize_int_array(int** out_buffer, unsigned int len)
 {
 	// Realloc with size = 0 fails.
 	if (len == 0)
@@ -16,7 +16,7 @@ Status resize_int_buffer(int** out_buffer, unsigned int len)
 	int* temp_ptr = realloc(*out_buffer, len * sizeof(int));
 	if (0 == temp_ptr)
 	{
-		log_error("Failed to resize_int_buffer.");
+		log_error("Failed to resize_int_array.");
 		return STATUS_ALLOC_FAILURE;
 	}
 
@@ -24,7 +24,7 @@ Status resize_int_buffer(int** out_buffer, unsigned int len)
 	return STATUS_OK;
 }
 
-Status resize_float_buffer(float** out_buffer, unsigned int len)
+Status resize_float_array(float** out_buffer, unsigned int len)
 {
 	// Realloc with size = 0 fails.
 	if (len == 0)
@@ -35,7 +35,7 @@ Status resize_float_buffer(float** out_buffer, unsigned int len)
 	float* temp_ptr = realloc(*out_buffer, len * sizeof(float));
 	if (0 == temp_ptr)
 	{
-		log_error("Failed to resize_float_buffer.");
+		log_error("Failed to resize_float_array.");
 		return STATUS_ALLOC_FAILURE;
 	}
 
@@ -44,7 +44,7 @@ Status resize_float_buffer(float** out_buffer, unsigned int len)
 }
 
 
-Status resize_uint8_buffer(uint8_t** out_buffer, unsigned int len)
+Status resize_uint8_array(uint8_t** out_buffer, unsigned int len)
 {
 	// Realloc with size = 0 fails.
 	if (len == 0)
@@ -55,7 +55,7 @@ Status resize_uint8_buffer(uint8_t** out_buffer, unsigned int len)
 	uint8_t* temp_ptr = realloc(*out_buffer, len * sizeof(uint8_t));
 	if (0 == temp_ptr)
 	{
-		log_error("Failed to resize_uint8_buffer.");
+		log_error("Failed to resize_uint8_array.");
 		return STATUS_ALLOC_FAILURE;
 	}
 
