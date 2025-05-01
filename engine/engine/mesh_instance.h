@@ -64,7 +64,7 @@ typedef struct
 
     // Map MeshInstanceIDs to indices in instances.
     int* id_to_index;
-    int* index_to_id;
+    MeshInstanceID* index_to_id;
 
     // Maintain an array of old ids and reuse when possible.
     int* free_ids;
