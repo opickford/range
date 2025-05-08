@@ -29,17 +29,19 @@
 // TODO: Think about my DOD. Should use structs rather than float* because will compile to the same thing.
 // TODO: Something important would be to make the buffer accesses easier.
 
-#if 0
-void debug_draw_point_lights(Canvas* canvas, const RenderSettings* settings, PointLights* point_lights)
+
+void debug_draw_point_lights(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const ComponentList* point_lights)
 {
+    const float* vsps = frame_data->point_lights_view_space_positions;
+
 	// Debug draw point light icons as rects.
 	for (int i = 0; i < point_lights->count; ++i)
 	{
-		int idx_vsp = i * STRIDE_POSITION;
+		const int idx_vsp = i * STRIDE_POSITION;
 		V4 p = {
-			point_lights->view_space_positions[idx_vsp],
-			point_lights->view_space_positions[++idx_vsp],
-			point_lights->view_space_positions[++idx_vsp],
+			vsps[idx_vsp],
+			vsps[idx_vsp + 1],
+			vsps[idx_vsp + 2],
 			1.f
 		};
 
@@ -52,8 +54,9 @@ void debug_draw_point_lights(Canvas* canvas, const RenderSettings* settings, Poi
 		V4 projected;
 		project(canvas, settings->projection_matrix, p, &projected);
 
-		int idx_attr = i * STRIDE_POINT_LIGHT_ATTRIBUTES;
-		int colour = float_rgb_to_int(point_lights->attributes[idx_attr], point_lights->attributes[idx_attr + 1], point_lights->attributes[idx_attr + 2]);
+        V3 colour_v3 = PointLights_get(point_lights)[i].colour;
+
+		int colour = float_rgb_to_int(colour_v3.x, colour_v3.y, colour_v3.z);
 
 		// Scale the radius so it's at a maximum of 10.
 		const float radius = 10.f * (-settings->near_plane / p.z); // Square radius nice.
@@ -67,6 +70,90 @@ void debug_draw_point_lights(Canvas* canvas, const RenderSettings* settings, Poi
 		draw_rect(canvas, x0, y0, x1, y1, colour);
 	}
 }
+
+void debug_draw_view_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, int colour)
+{
+    // Convert from world space to screen space.
+    V4 vsp = v3_to_v4(point, 1.f);
+
+    // Don't draw points behind the camera.
+    if (vsp.z > -settings->near_plane)
+    {
+        return;
+    }
+
+    V4 ssp;
+    project(canvas, settings->projection_matrix, vsp, &ssp);
+
+    int n = 2;
+    int y0 = (int)(ssp.y - n);
+    int y1 = (int)(ssp.y + n);
+    int x0 = (int)(ssp.x - n);
+    int x1 = (int)(ssp.x + n);
+
+    draw_rect(canvas, x0, y0, x1, y1, colour);
+}
+
+void debug_draw_normals(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const Scene* scene)
+{
+    const MeshInstance* mis = scene->mesh_instances.instances;
+    const MeshBase* mbs = scene->mesh_bases.bases;
+
+    // TODO: Will need to calculate the actual stride of a vertex with the number of light space positions
+    //		 too. Maybe to simplify this for all of my functions, should calculate this and keep it in the renderer.
+
+    const int* visible_mi_indices = frame_data->visible_mi_indices;
+    const int num_visible_mis = frame_data->num_visible_mis;
+
+    const float* vsps = frame_data->view_space_positions;
+    const float* vsns = frame_data->view_space_normals;
+    const int* front_face_indices = frame_data->front_face_indices;
+
+    int front_faces_offset = 0;
+
+    for (int i = 0; i < num_visible_mis; ++i)
+    {
+        const MeshInstance* mi = &mis[visible_mi_indices[i]];
+        const MeshBase* mb = &mbs[mi->mb_id];
+
+        const int* position_indices = mb->position_indices;
+        const int* normal_indices = mb->normal_indices;
+        
+        const int vsp_offset = mi->view_space_positions_offset;
+        const int vsn_offset = mi->view_space_normals_offset;
+
+        for (int j = 0; j < mi->num_front_faces; ++j)
+        {
+            const int face_index = front_face_indices[front_faces_offset + j] * STRIDE_FACE_VERTICES;
+            for (int k = 0; k < STRIDE_FACE_VERTICES; ++k)
+            {
+                const int p_index = vsp_offset + position_indices[face_index + k] * STRIDE_POSITION;
+                const int n_index = vsn_offset + normal_indices[face_index + k] * STRIDE_NORMAL;
+
+                // TODO: Would just storing as a V3 be better?
+                const V3 p = v3_read(vsps + p_index);
+                const V3 n = v3_read(vsns + n_index);
+
+                const float length = 2.5f;
+
+                V3 end = v3_add_v3(p, v3_mul_f(n, length));
+
+                V4 start_v4 = v3_to_v4(p, 1.f);
+                V4 end_v4 = v3_to_v4(end, 1.f);
+
+                V4 ss_start, ss_end;
+                project(canvas, settings->projection_matrix, start_v4, &ss_start);
+                project(canvas, settings->projection_matrix, end_v4, &ss_end);
+
+                draw_line(canvas, (int)ss_start.x, (int)ss_start.y, (int)ss_end.x, (int)ss_end.y, COLOUR_LIME);
+               
+            }
+        }
+        front_faces_offset += mi->num_front_faces;
+    }
+}
+
+#if 0
 
 void debug_draw_bounding_spheres(Canvas* canvas, const RenderSettings* settings, const Models* models, const M4 view_matrix)
 {
@@ -146,30 +233,6 @@ void debug_draw_world_space_point(Canvas* canvas, const RenderSettings* settings
 	draw_rect(canvas, x0, y0, x1, y1, colour);
 }
 
-void debug_draw_view_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, int colour)
-{
-	// Convert from world space to screen space.
-	V4 vsp = v3_to_v4(point, 1.f);
-
-	// Don't draw points behind the camera.
-	if (vsp.z > -settings->near_plane)
-	{
-		return;
-	}
-
-	V4 ssp; 
-	project(canvas, settings->projection_matrix, vsp, &ssp);
-
-	// TODO: Could be a draw 2d rect function.
-	int n = 2;
-	int y0 = (int)(ssp.y - n);
-	int y1 = (int)(ssp.y + n);
-	int x0 = (int)(ssp.x - n);
-	int x1 = (int)(ssp.x + n);
-
-	draw_rect(canvas, x0, y0, x1, y1, colour);
-}
-
 void debug_draw_world_space_line(Canvas* canvas, const RenderSettings* settings, const M4 view_matrix, V3 v0, V3 v1, V3 colour)
 {
 	V4 ws_v0 = v3_to_v4(v0, 1.f);
@@ -219,60 +282,7 @@ void debug_draw_world_space_line(Canvas* canvas, const RenderSettings* settings,
 	draw_line(canvas, (int)ss_v0.x, (int)ss_v0.y, (int)ss_v1.x, (int)ss_v1.y, colour_int);
 }
 
-void debug_draw_mi_normals(Canvas* canvas, const RenderSettings* settings, const Models* models, int mi_index)
-{
-	// TODO: Gotta redo all.
 
-	/*
-	// TODO: How can we just access the data without this sort of loop??
-	//		 If we actually need this for something other than debugging,
-	//		 we should store offsets that are calculated per render call.
-	int front_faces_offset = 0;
-	for (int i = 0; i < mi_index; ++i)
-	{
-		front_faces_offset += models->front_faces_counts[i];
-	}*/
-
-
-	// TODO: Will need to calculate the actual stride of a vertex with the number of light space positions
-	//		 too. Maybe to simplify this for all of my functions, should calculate this and keep it in the renderer.
-
-	/*
-	for (int i = front_faces_offset; i < front_faces_offset + models->front_faces_counts[mi_index]; ++i)
-	{
-		int face_index = i * STRIDE_BASE_FRONT_FACE;
-
-		for (int j = 0; j < STRIDE_FACE_VERTICES; ++j)
-		{
-			int k = face_index + j * STRIDE_ENTIRE_VERTEX;
-			const V3 start = {
-				models->front_faces[k],
-				models->front_faces[k + 1],
-				models->front_faces[k + 2],
-			};
-
-			V3 normal = {
-				models->front_faces[k + 5],
-				models->front_faces[k + 6],
-				models->front_faces[k + 7],
-			};
-
-			const float length = 0.5f;
-
-			V3 dir = v3_mul_f(normal, length);
-			V3 end = v3_add_v3(start, dir);
-
-			V4 start_v4 = v3_to_v4(start, 1.f);
-			V4 end_v4 = v3_to_v4(end, 1.f);
-
-			V4 ss_start, ss_end; 
-			project(canvas, settings->projection_matrix, start_v4, &ss_start);
-			project(canvas, settings->projection_matrix, end_v4, &ss_end);
-
-			draw_line(canvas, (int)ss_start.x, (int)ss_start.y, (int)ss_end.x, (int)ss_end.y, COLOUR_LIME);
-		}
-	}*/
-}
 #endif
 
 
@@ -323,7 +333,7 @@ void draw_scanline(RenderTarget* rt,
 
 			// Calculate the colour of the vertex.
 			
-			*pixels = float_rgb_to_int(colour.x*w, colour.y*w, colour.z*w);
+            *pixels = float_rgb_to_int(colour.x * w, colour.y * w, colour.z * w);
 			
 			*depth_buffer = z;			
 		}
@@ -1028,11 +1038,12 @@ float calculate_diffuse_factor(const V3 v, const V3 n, const V3 light_pos, float
 	// calculate the direction of the light to the vertex
 	V3 light_dir = v3_sub_v3(light_pos, v);
 
+
 	float light_distance = size(light_dir);
 
 	v3_mul_eq_f(&light_dir, 1.f / light_distance);
-
-	// Calculate how much the vertex is lit
+	
+    // Calculate how much the vertex is lit
 	float diffuse_factor = max(0.0f, dot(light_dir, n));
 
 	// TODO: Just hardcode the attenuation factors here? Not sure we will need to change them.
@@ -1093,8 +1104,7 @@ void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matr
 	// TODO: Should this function really be defined as transform stage as 
 	//		 we also do the bounding sphere stuff.....
 
-	// Convert object space positions to view space and update the bounding
-	// sphere centre.
+	// Convert object space positions to view space and update the bounding sphere centre.
 	{
 		float* vsps = frame_data->view_space_positions;
 		float* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
@@ -1174,21 +1184,19 @@ void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matr
 			for (int j = 0; j < mb->num_normals; ++j)
 			{
 				const int normal_index = j * STRIDE_NORMAL;
-				const V4 osn = v3_read_to_v4(mb->object_space_normals + normal_index, 1.f);
+				const V4 osn = v3_read_to_v4(mb->object_space_normals + normal_index, 0.f);
 				
 				V4 vsn;
 				m4_mul_v4(view_normal_matrix, osn, &vsn);
 				
-				vsns[vsns_offset] = vsn.x;
-				vsns[vsns_offset + 1] = vsn.y;
-				vsns[vsns_offset + 2] = vsn.z;
-				
+                v3_write(vsns + vsns_offset, normalised(v4_xyz(vsn)));
+
 				vsns_offset += STRIDE_NORMAL;
 			}
 		}
 	}
 	
-	// Update the mesh instance's bounding sphere.
+	// Update the radius of each mesh instance bounding sphere.
 	{
 		const float* vsps = frame_data->view_space_positions;
 		float* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
@@ -1232,15 +1240,18 @@ void lights_world_to_view_space(FrameData* frame_data, const Scene* scene, const
 {
 	// This could be made more efficient by having an array of input world
 	// space positions, however, we will never be able to support enough lights
-	// to make this worthwhile.
+	// to make this worthwhile (i think).
+
+    const ComponentList* point_lights_list = &scene->lights.point_lights;
+    const PointLight* point_lights = (PointLight*)point_lights_list->elements;
 
 	// Transform the world space light positions.
 	float* view_space_positions = frame_data->point_lights_view_space_positions;
 
-	for (int i = 0; i < scene->lights.num_point_lights; ++i)
+	for (int i = 0; i < point_lights_list->count; ++i)
 	{
 		V4 v_view_space;
-		m4_mul_v4(view_matrix, v3_to_v4(scene->lights.point_lights[i].position, 1.f), 
+		m4_mul_v4(view_matrix, v3_to_v4(point_lights[i].position, 1.f), 
 			&v_view_space);
 
 		// There is no need to save the w component as it is always 1 until 
@@ -1429,8 +1440,10 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 
 	// Input
 	const Lights* lights = &scene->lights;
+    const ComponentList* point_lights_list = &scene->lights.point_lights;
+    const PointLight* point_lights = (PointLight*)point_lights_list->elements;
 	const MeshInstance* mis = scene->mesh_instances.instances;
-	MeshBase* mbs = scene->mesh_bases.bases;
+	const MeshBase* mbs = scene->mesh_bases.bases;
 
 	const int* front_face_indices = frame_data->front_face_indices;
 	const float* vsps = frame_data->view_space_positions;
@@ -1445,7 +1458,6 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 	float* vertex_lighting = frame_data->vertex_lighting;
 
 	int front_faces_offset = 0;
-	const PointLight* point_lights = lights->point_lights;
 
 	for (int i = 0; i < num_visible_mis; ++i)
 	{
@@ -1454,8 +1466,22 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 
 		const float* vertex_albedos = mi->vertex_alebdos;
 
-		int vsp_offset = mi->view_space_positions_offset;
-		int vsn_offset = mi->view_space_normals_offset;
+		const int vsp_offset = mi->view_space_positions_offset;
+		const int vsn_offset = mi->view_space_normals_offset;
+
+        /*
+        BUGFIX:
+
+        if i break after 1 vertex, and then i move back and forward whilst facing a face,
+        there is a tiny speck of colour on the vertex????? and it switches side???
+        
+        also why only 1 tiny spec of colour?????
+
+        this is the key to the issue obviously.
+
+        The issue is BEFORE the prepare_for_clipping.
+        
+        */
 
 		for (int j = 0; j < mi->num_front_faces; ++j)
 		{
@@ -1465,11 +1491,14 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 			{
 				const V3 point = v3_read(vsps + vsp_offset + mb->position_indices[face_index + vi] * STRIDE_POSITION);
 				const V3 normal = v3_read(vsns + vsn_offset + mb->normal_indices[face_index + vi] * STRIDE_NORMAL);
-                const V3 albedo = v3_read(vertex_albedos + mb->position_indices[face_index + vi] * STRIDE_COLOUR);
 
+                // Albedos are stored per vertex. 
+                // TODO: How do these line up when we cull faces????? They dont..... do they? could cause issues when setting albedo for specific vertices....
+
+                const V3 albedo = v3_read(vertex_albedos + (j * STRIDE_FACE_VERTICES + vi) * STRIDE_COLOUR);
 				V3 diffuse = { 0 };
-
-				for (int pl_index = 0; pl_index < lights->num_point_lights; ++pl_index)
+                
+				for (int pl_index = 0; pl_index < point_lights_list->count; ++pl_index)
 				{
 					const PointLight* pl = &point_lights[pl_index];
 
@@ -1479,7 +1508,7 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 					const float b = 0.01f / pl->strength;
 
 					const float df = calculate_diffuse_factor(point, normal, pl_vsp, a, b);
-
+                    
 					const V3 colour = v3_mul_f(pl->colour, df);
 
 					v3_add_eq_v3(&diffuse, colour);
@@ -1494,18 +1523,28 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 					albedo.z * (diffuse.z + ambient.z)
 				};
 
-				// TODO: Do we clip here? How does it work with shadows..
+				// TODO: Do we clamp here? How does it work with shadows..
+                
+                //i think the idea with the shadows this time will be to add
+                //their colour contribution if not in shadow.
+                
+                
 				// Clamp to max, should never be negative.
-				//light.x = min(1.f, light.x);
-				//light.y = min(1.f, light.y);
-				//light.z = min(1.f, light.z);
+				light.x = min(1.f, light.x);
+				light.y = min(1.f, light.y);
+				light.z = min(1.f, light.z);
+
 
 				vertex_lighting[out_index++] = light.x;
 				vertex_lighting[out_index++] = light.y;
 				vertex_lighting[out_index++] = light.z;
-			}
 
-			
+                // TODO: TEMP
+                //break;
+			}
+            // TODO: TEMP
+            //break;
+
 		}
 
 		front_faces_offset += mi->num_front_faces;
@@ -1526,7 +1565,6 @@ void prepare_for_clipping(FrameData* frame_data, Scene* scene)
 
 	const float* vertex_lighting = frame_data->vertex_lighting;
     int vertex_lighting_in = 0;
-
 
 	// Output
 	float* faces_to_clip = frame_data->faces_to_clip;
@@ -1636,8 +1674,7 @@ void clip_project_and_draw(
 
 	for (int i = 0; i < num_visible_mis; ++i)
 	{
-		const int mi_index = visible_mi_indices[i];
-		const MeshInstance* mi = &mis[mi_index];
+		const MeshInstance* mi = &mis[visible_mi_indices[i]];
 		const MeshBase* mb = &mbs[mi->mb_id];
 
 		const uint8_t num_planes_to_clip_against = intersected_planes[intersected_planes_index++];
@@ -1660,7 +1697,7 @@ void clip_project_and_draw(
 		}
 		else
 		{
-			log_info("not implemented");
+			log_error("not implemented");
 			/*
 			// TODO: The last mesh added is getting clipped when nowhere near it.
 			// TODO: I think it's actually clipping is overwriting something.
@@ -1975,11 +2012,6 @@ void project_and_draw_clipped(
 		project(&rt->canvas, renderer->settings.projection_matrix, p1, &ssp1);
 		project(&rt->canvas, renderer->settings.projection_matrix, p2, &ssp2);
 
-		//ssp0 = (V4){ 200, 200, -1, 1 };
-		//ssp1 = (V4){ 400, 200, -1, 1 };
-	//	ssp2 = (V4){ 400, 400, -1, 1 };
-	//	ssp2 = (V4){ 400, 400, -1, 1 };
-
 		//x,y,z,w,u,v,r,g,b
 		float vc0[VERTEX_COMPONENTS] = { 0 };
 		v4_write(vc0, ssp0);
@@ -2039,6 +2071,12 @@ void render(
 	prepare_for_clipping(&renderer->frame_data, scene);
 
 	clip_project_and_draw(renderer, &renderer->target, &renderer->frame_data, scene);
+
+    // DEBUGGING
+    debug_draw_point_lights(&renderer->target.canvas, &renderer->frame_data,
+        &renderer->settings, &scene->lights.point_lights);
+
+   // debug_draw_normals(&renderer->target.canvas, &renderer->frame_data, &renderer->settings, scene);
 }
 /*
 void update_depth_maps(Renderer* renderer, const Scene* scene)

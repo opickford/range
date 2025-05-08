@@ -63,8 +63,8 @@ void create_map(Engine* engine)
     */
     //scene->models.mis_texture_ids[0] = 0;
 
-    //scene->ambient_light = (V3){ 0.1,0.1,0.1 };
-    scene->ambient_light = (V3){ 1,1,1 };
+    scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
+    //scene->ambient_light = (V3){ 1.f,1.f,1.f };
 
     // TODO: Should the camera be part of the scene??
     engine->renderer.camera.position = (V3) { 0, 0, 10.f };
@@ -174,78 +174,56 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         scene_mesh_instance_set_albedo(scene, sphere_instance, colour);
         mesh_instances_get(&scene->mesh_instances, sphere_instance)->position = pos;
         
-
-
-        /*
-        point_lights_create(&scene->point_lights, &engine->renderer.buffers, engine->renderer.camera.position, colour, 1);
-
-        if (directions)
-        {
-             float* temp = realloc(directions, (size_t)scene->point_lights.count * 3 * sizeof(float));
-             if (temp)
-             {
-                 directions = temp;
-             }
-        }
-        else
-        {
-            directions = malloc((size_t)scene->point_lights.count * 3 * sizeof(float));
-        }
-
-        if (!directions)
-        {
-            printf("!directions.\n");
-            return;
-        }
-
-        int i = (scene->point_lights.count - 1) * 3;
-        directions[i] = engine->renderer.camera.direction.x;
-        directions[i + 1] = engine->renderer.camera.direction.y;
-        directions[i + 2] = engine->renderer.camera.direction.z;
-
-
-
-
-        render_buffers_resize(&engine->renderer.buffers);
-        */
-
         break;
     }
     case VK_F2:
     {
-        g_draw_normals = !g_draw_normals;
+        //g_draw_normals = !g_draw_normals;
+
+        Scene* scene = &engine->scenes[engine->current_scene_id];
+
+        if (scene->mesh_instances.count > 0)
+            mesh_instances_remove(&scene->mesh_instances,
+                scene->mesh_instances.id_to_index[scene->mesh_instances.count - 1]);
+
         break;
     }
     case VK_F3:
     {
-        Scene* scene = &engine->scenes[engine->current_scene_id];
+        V3 colour =
+        {
+            random_float(),
+            random_float(),
+            random_float()
+        };
 
-        if (scene->mesh_instances.count > 0)
-            mesh_instances_remove(&scene->mesh_instances, 
-                scene->mesh_instances.id_to_index[scene->mesh_instances.count - 1]);
-
- 
-        /*
         Scene* scene = &engine->scenes[engine->current_scene_id];
-        engine->renderer.camera.position.x = scene->point_lights.world_space_positions[0];
-        engine->renderer.camera.position.y = scene->point_lights.world_space_positions[1];
-        engine->renderer.camera.position.z = scene->point_lights.world_space_positions[2];
-        */
+        Camera* camera = &engine->renderer.camera;
+        PointLightID light = PointLights_add(&scene->lights.point_lights);
+
+        // TODO: I'm realy not sure about this 2 levels of indirection, but is there
+        //       a way around it??? Unless I actually update the ids in the 'entity'
+        //       or wherever we're storing it?
+        
+        //       Obviously in this case we could just access via index as count -1.
+        int index = scene->lights.point_lights.id_to_index[light];
+
+        // TODO: Helper for get?
+        PointLight* pl = &PointLights_get(&scene->lights.point_lights)[index];
+
+        point_light_init(pl);
+        pl->position = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
+        pl->colour = colour;
+        pl->strength = 1.f;
+
         break;
     }
     case VK_F4:
     {
-        g_debug_shadows = !g_debug_shadows;
-        break;
-    }
-    case VK_F5:
-    {
-        /*
         Scene* scene = &engine->scenes[engine->current_scene_id];
-        scene->point_lights.attributes[0] = 0.f;
-        scene->point_lights.attributes[1] = 0.f;
-        scene->point_lights.attributes[2] = 0.f;
-        */
+        if (scene->lights.point_lights.count > 0)
+            PointLights_remove(&scene->lights.point_lights, scene->lights.point_lights.index_to_id[0]);
+
         break;
     }
     }

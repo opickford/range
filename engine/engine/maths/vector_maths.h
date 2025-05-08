@@ -5,9 +5,8 @@
 #include "vector4.h"
 
 // TODO: Per function comments.
-
-
 // Avoid circular dependencies by having shared functions here.
+
 inline V3 v4_xyz(V4 v)
 {
 	return (V3) { .x = v.x, v.y, v.z };

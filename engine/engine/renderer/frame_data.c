@@ -11,6 +11,8 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
 	// TODO: A flag to determine if the scene has changed and therefore we 
 	//		 need to reinit the frame data buffer.
 
+    // TODO: These will be resizing buffers down as well, do we want that??
+
 	// Transform Stage
 	resize_float_array(&frame_data->view_space_bounding_spheres, STRIDE_SPHERE * scene->mesh_instances.count);
 
@@ -31,7 +33,7 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
 	// TODO: Fails in release?? heap corruption, so potentially from before?
 	resize_float_array(&frame_data->view_space_normals, total_normals * STRIDE_NORMAL);
 
-	resize_float_array(&frame_data->point_lights_view_space_positions, scene->lights.num_point_lights * STRIDE_POSITION);
+	resize_float_array(&frame_data->point_lights_view_space_positions, scene->lights.point_lights.count * STRIDE_POSITION);
 
 	// Broad Phase Frustum Culling
 	resize_int_array(&frame_data->visible_mi_indices, scene->mesh_instances.count);

@@ -7,6 +7,9 @@
 
 #include "common/status.h"
 
+// TODO: The component should probably be defined in a light_components file?
+#include "component_list.h"
+
 /*
 A point light can be defined by a:
 - Position
@@ -43,11 +46,11 @@ typedef struct
 
 typedef struct
 {
-	int num_point_lights;
-	PointLight* point_lights;
+	//int num_point_lights;
+	//PointLight* point_lights;
 
 
-
+    ComponentList point_lights;
 
 
 
@@ -71,14 +74,18 @@ typedef struct
 Status lights_init(Lights* lights);
 void lights_destroy(Lights* lights);
 
+
+
 // I think in terms of API for example, when creating shadow casting lights,
 // we just want the user to call this, and this can create the shadow map?
 //Status point_lights_add(PointLights* point_lights, PointLight point_light);
 //Status point_lights_add_shadow_casting(PointLights* point_lights, ShadowCastingPointLight point_light);
 
-//Status point_light_init(PointLight* light);
+Status point_light_init(PointLight* light);
 
 // TODO: Destroy.
+
+DECLARE_COMPONENT(PointLight)
 
 
 #endif

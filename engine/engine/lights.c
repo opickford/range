@@ -106,11 +106,29 @@ Status point_lights_add(PointLights* point_lights, PointLight point_light)
 Status lights_init(Lights* lights)
 {
 	memset(lights, 0, sizeof(Lights));
+
+    component_list_init(&lights->point_lights);
+
+    return STATUS_OK;
 }
 
 void lights_destroy(Lights* lights)
 {
-	free(lights->point_lights);
+	//free(lights->point_lights);
 	free(lights->shadow_casting_point_lights);
 }
+
+Status point_light_init(PointLight* light)
+{
+    memset(light, 0, sizeof(PointLight));
+    light->strength = 1.f;
+
+    return STATUS_OK;
+}
+
+void PointLight_destroy(PointLight* light)
+{
+}
+
+DEFINE_COMPONENT(PointLight)
 
