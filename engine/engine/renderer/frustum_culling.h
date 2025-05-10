@@ -5,6 +5,10 @@
 
 #define MAX_FRUSTUM_PLANES 6
 
+// TODO: Apparently this is the max 1 triangle can become, 
+//       figure out or test for myself.
+#define MAX_CLIPPED_TRIS_FACTOR 18
+
 typedef struct
 {
 	Plane planes[MAX_FRUSTUM_PLANES];

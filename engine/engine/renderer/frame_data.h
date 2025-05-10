@@ -50,18 +50,13 @@ typedef struct
 
 
 	// Clipping
-	float* faces_to_clip;
-	float* clipped_faces;
-	int num_clipped_faces;
-	/*
-	- we need everything here except from the normal right?
-	- at this point it makes sense to have everything interleaved, so i think
-	 a prep step is necessaryt
+	float* faces_to_clip;  // Input to clip.
+	float* clipped_faces;  // Clipping output.
+	int num_clipped_faces; // Number of faces in the output buffer.
 
-	 
-	
-	*/
-
+    // Intermediate buffers for clipping, alternate between per plane.
+    float* temp_clipped_faces0; 
+    float* temp_clipped_faces1;
 
 
 } FrameData;

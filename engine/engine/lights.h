@@ -83,7 +83,6 @@ void lights_destroy(Lights* lights);
 
 Status point_light_init(PointLight* light);
 
-// TODO: Destroy.
 
 DECLARE_COMPONENT(PointLight)
 

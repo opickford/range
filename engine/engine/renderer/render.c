@@ -295,6 +295,11 @@ void draw_scanline(RenderTarget* rt,
 {
 	// TODO: Globals could be used for the render target pixels and depth buffer to make faster? Maybe? Would need to profile idk.
 
+
+    if (y < 0 || y >= rt->canvas.height) log_error("invalid y %d \n", y);
+    if (x0 < 0 || x0 >= rt->canvas.width) log_error("invalid x0 %d \n",x0);
+    if (x1 < 0 || x1 >= rt->canvas.width) log_error("invalid x1 %d \n",x1);
+
 	if (x0 == x1) return;
 
 	// Precalculate deltas.
@@ -400,8 +405,8 @@ void draw_flat_bottom_triangle(RenderTarget* rt, float* vc0, float* vc1, float* 
 		float start_w = v0.w + dwdy0 * a;
 		float end_w = v0.w + dwdy1 * a;
 
-		int start_x = (int)(ceilf(x0 - 0.5f));
-		int end_x = (int)(ceilf(x1 - 0.5f));
+		int start_x = (int)((x0 - 0.5f));
+		int end_x = (int)((x1 - 0.5f));
 
 		V3 start_colour = v3_add_v3(c0, v3_mul_f(dcdy0, a));
 		V3 end_colour = v3_add_v3(c0, v3_mul_f(dcdy1, a));
@@ -463,8 +468,8 @@ void draw_flat_top_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2
 		float start_w = v0.w + dwdy0 * a;
 		float end_w = v1.w + dwdy1 * a;
 
-		int start_x = (int)(ceil(x0 - 0.5f));
-		int end_x = (int)(ceil(x1 - 0.5f));
+		int start_x = (int)((x0 - 0.5f));
+		int end_x = (int)((x1 - 0.5f));
 
 		V3 start_colour = v3_add_v3(c0, v3_mul_f(dcdy0, a));
 		V3 end_colour = v3_add_v3(c1, v3_mul_f(dcdy1, a));
@@ -1292,7 +1297,10 @@ void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const View
 			bounding_spheres[bounding_sphere_index + 2],
 		};
 
-		const float radius = bounding_spheres[bounding_sphere_index];
+		const float radius = bounding_spheres[bounding_sphere_index + 3];
+
+        // TODO: Bit flag would be a nicer way of doing this. 8 bits vs 
+        //       idk
 
 		// Store what planes need clipping against.
 		int clip_against_plane[MAX_FRUSTUM_PLANES] = { 0 };
@@ -1678,7 +1686,7 @@ void clip_project_and_draw(
 		const MeshBase* mb = &mbs[mi->mb_id];
 
 		const uint8_t num_planes_to_clip_against = intersected_planes[intersected_planes_index++];
-
+        
 		if (num_planes_to_clip_against == 0)
 		{			
 			// TODO: Hardcoded for now. WITH NO UVS
@@ -1697,16 +1705,16 @@ void clip_project_and_draw(
 		}
 		else
 		{
-			log_error("not implemented");
-			/*
-			// TODO: The last mesh added is getting clipped when nowhere near it.
-			// TODO: I think it's actually clipping is overwriting something.
+            // TODO: Hardcoded for now. WITH NO UVS
+            // x,y,z,r,g,b
+            const int VERTEX_COMPONENTS = 6;
 
+            
 			// Partially inside so must clip the vertices against the planes.
 
 			// Initially read from the front_faces buffer.
-			float* temp_clipped_faces_in = front_faces;
-			float* temp_clipped_faces_out = render_buffers->temp_clipped_faces_out;
+			float* temp_clipped_faces_in = frame_data->faces_to_clip;
+			float* temp_clipped_faces_out = frame_data->temp_clipped_faces1;
 
 			// Store the index to write out to, needs to be defined here so we can
 			// update the clipped_faces_index after writing to the clipped_faces buffer.
@@ -1714,7 +1722,7 @@ void clip_project_and_draw(
 
 			// After each plane, we will have a different number of faces to clip again.
 			// Initially set this to the number of front faces.
-			int num_faces_to_process = render_buffers->front_faces_counts[i];
+			int num_faces_to_process = mi->num_front_faces;
 
 			// This is needed as an offset into the front_faces buffer for the first plane.
 			int clipped_faces_offset = face_offset;
@@ -1738,7 +1746,7 @@ void clip_project_and_draw(
 				{
 					// Initially we used the in front faces buffer, after the first iteration 
 					// we have wrote to the out buffer, so that can now be our in buffer.
-					temp_clipped_faces_out = render_buffers->temp_clipped_faces_in;
+					temp_clipped_faces_out = frame_data->temp_clipped_faces0;
 
 					// Now we want to read from the start of the in buffer, 
 					// not the offset into the front faces buffer.
@@ -1749,7 +1757,7 @@ void clip_project_and_draw(
 				if (num_planes_clipped_against == num_planes_to_clip_against - 1)
 				{
 					// On the last plane, we want to write out to the clipped faces.
-					temp_clipped_faces_out = render_buffers->clipped_faces;
+					temp_clipped_faces_out = frame_data->clipped_faces;
 				}
 
 				// For faces in mesh.
@@ -1763,6 +1771,8 @@ void clip_project_and_draw(
 					int inside_points_indices[3] = { 0 };
 					int outside_points_indices[3] = { 0 };
 
+                    // TODO: Do we want to be dealing with indices here? Could just have the positions from the 
+                    //       step before right?
 					const int index_v0 = index_face;
 					const int index_v1 = index_face + VERTEX_COMPONENTS;
 					const int index_v2 = index_face + VERTEX_COMPONENTS + VERTEX_COMPONENTS;
@@ -1771,9 +1781,9 @@ void clip_project_and_draw(
 					const V3 v1 = v3_read(temp_clipped_faces_in + index_v1);
 					const V3 v2 = v3_read(temp_clipped_faces_in + index_v2);
 
-					float d0 = signed_distance(plane, v0);
-					float d1 = signed_distance(plane, v1);
-					float d2 = signed_distance(plane, v2);
+					const float d0 = signed_distance(plane, v0);
+					const float d1 = signed_distance(plane, v1);
+					const float d2 = signed_distance(plane, v2);
 
 					// Determine what points are inside and outside the plane.
 					if (d0 >= 0)
@@ -1806,7 +1816,6 @@ void clip_project_and_draw(
 						// The whole triangle is inside the plane, so copy the face.
 						int index_face = j * VERTEX_COMPONENTS * STRIDE_FACE_VERTICES;
 
-						// TODO: How do we avoid copying the normal.
 						memcpy(temp_clipped_faces_out + index_out, temp_clipped_faces_in + index_face, VERTEX_COMPONENTS * STRIDE_FACE_VERTICES * sizeof(float));
 
 						index_out += VERTEX_COMPONENTS * STRIDE_FACE_VERTICES;
@@ -1845,7 +1854,8 @@ void clip_project_and_draw(
 						temp_clipped_faces_out[index_out++] = p0.z;
 
 						// Lerp the vertex components straight into the out buffer.
-						const int COMPS_TO_LERP = 11 + scene->point_lights.count * STRIDE_V4;
+                        const int COMPS_TO_LERP = 3;
+						//const int COMPS_TO_LERP = 11 + scene->point_lights.count * STRIDE_V4;
 						for (int k = 0; k < COMPS_TO_LERP; ++k)
 						{
 							temp_clipped_faces_out[index_out++] = lerp(temp_clipped_faces_in[index_ip0 + STRIDE_POSITION + k], temp_clipped_faces_in[index_op0 + STRIDE_POSITION + k], t);
@@ -1906,7 +1916,8 @@ void clip_project_and_draw(
 						temp_clipped_faces_out[index_out++] = p0.y;
 						temp_clipped_faces_out[index_out++] = p0.z;
 
-						const int COMPS_TO_LERP = 11 + scene->point_lights.count * STRIDE_V4;
+                        const int COMPS_TO_LERP = 3;
+						//const int COMPS_TO_LERP = 11 + scene->point_lights.count * STRIDE_V4;
 						for (int k = 0; k < COMPS_TO_LERP; ++k)
 						{
 							temp_clipped_faces_out[index_out++] = lerp(temp_clipped_faces_in[index_ip0 + STRIDE_POSITION + k], temp_clipped_faces_in[index_op0 + STRIDE_POSITION + k], t);
@@ -1962,9 +1973,9 @@ void clip_project_and_draw(
 			// Draw the clipped face
 			if (num_faces_to_process > 0)
 			{
-				project_and_draw_clipped(renderer, scene, i, num_faces_to_process, resources);
+                frame_data->num_clipped_faces = num_faces_to_process;
+                project_and_draw_clipped(renderer, rt, frame_data, mi);
 			}
-			*/
 		}
 
 		//for (int j = 0; j < mi->num_front_faces; ++j)

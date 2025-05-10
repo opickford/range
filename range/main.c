@@ -213,7 +213,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
 
         point_light_init(pl);
         pl->position = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
-        pl->colour = colour;
+        pl->colour = (V3){ 1.f, 1.f, 1.f };
         pl->strength = 1.f;
 
         break;

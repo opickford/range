@@ -24,10 +24,16 @@ For O(1) adding/removing, two maps are used.
 - index_to_id maps an instance index to it's MeshInstanceID, this allows us to 
     keep the instances array tightly packed by swapping the last element with 
     the one we're trying to remove.
-
 */
 
 typedef int MeshInstanceID;
+
+// TODO: This should be refactored to be a MeshComponent?
+/*
+
+Gotta think about it a bit.
+*/
+
 
 typedef struct
 {
@@ -48,6 +54,8 @@ typedef struct
 
 	// Offsets into FrameData, these exist here as they are tied
 	// to the MeshInstance itself.
+
+    // TODO: When refactored to component would we have these? probs fine.
 	int view_space_positions_offset;
 	int view_space_normals_offset;
 

@@ -240,6 +240,8 @@ int window_process_messages()
 
 void window_display(Window* window)
 {
+    // TODO: I feel like i need the backbuffer swap for fps lower than refresh rate??
+
     // TODO: Could look into ways of speeding up blitting, however,
     //       not sure it's really possible, unless there is some 
     //       issue with the width/height needing to be multiples 

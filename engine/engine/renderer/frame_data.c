@@ -12,6 +12,7 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
 	//		 need to reinit the frame data buffer.
 
     // TODO: These will be resizing buffers down as well, do we want that??
+    //       probably not, but then we need arenas.
 
 	// Transform Stage
 	resize_float_array(&frame_data->view_space_bounding_spheres, STRIDE_SPHERE * scene->mesh_instances.count);
@@ -19,6 +20,7 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
 	int total_positions = 0;
 	int total_normals = 0;
 	int total_faces = 0;
+    int most_faces = 0;
 	for (int i = 0; i < scene->mesh_instances.count; ++i)
 	{
 		const MeshInstance* mi = &scene->mesh_instances.instances[i];
@@ -26,6 +28,7 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
 		total_positions += mb->num_positions;
 		total_normals += mb->num_normals;
 		total_faces += mb->num_faces;
+        most_faces = max(most_faces, mb->num_faces);
 	}
 
 	resize_float_array(&frame_data->view_space_positions, total_positions * STRIDE_POSITION);
@@ -51,10 +54,18 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
 	resize_float_array(&frame_data->vertex_lighting, total_faces * STRIDE_FACE_VERTICES * STRIDE_COLOUR);
 
 	// Clipping
-	const int components_per_face = 8; // Temp hardcoded.
-	resize_float_array(&frame_data->faces_to_clip, components_per_face * total_faces * STRIDE_FACE_VERTICES);
-	resize_float_array(&frame_data->clipped_faces, components_per_face * total_faces * STRIDE_FACE_VERTICES);
+    // x,y,z,r,g,b
+	const int components_per_vertex = STRIDE_POSITION + STRIDE_COLOUR; // Temp hardcoded.
+
+    const int max_tris_at_once = most_faces * MAX_CLIPPED_TRIS_FACTOR;
+
 	frame_data->num_clipped_faces = 0;
+	resize_float_array(&frame_data->faces_to_clip, components_per_vertex * total_faces * STRIDE_FACE_VERTICES);
+	resize_float_array(&frame_data->clipped_faces, components_per_vertex * max_tris_at_once * STRIDE_FACE_VERTICES);
+
+    resize_float_array(&frame_data->temp_clipped_faces0, components_per_vertex * max_tris_at_once * STRIDE_FACE_VERTICES);
+    resize_float_array(&frame_data->temp_clipped_faces1, components_per_vertex * max_tris_at_once * STRIDE_FACE_VERTICES);
+
 
 	return STATUS_OK;
 }

@@ -61,47 +61,6 @@ void point_light_init(PointLight* light, V3 position, V3 colour, float strength)
 	rbs->lights_count = point_lights->count;
 }
 */
-/*
-Status point_lights_init(PointLights* point_lights)
-{
-	point_lights->count = 0;
-
-	return STATUS_OK;
-}
-
-void point_lights_destroy(PointLights* point_lights)
-{
-	free(point_lights->lights);
-}
-
-Status point_lights_add(PointLights* point_lights, PointLight point_light)
-{
-	// TODO: How does this work with allocating shadow maps etc.
-	if (point_lights->lights)
-	{
-		PointLights* new_point_lights = realloc(point_lights->lights, (point_lights->count + 1) * sizeof(PointLight));
-		if (!new_point_lights)
-		{
-			log_error("Failed to malloc for point lights.");
-			return STATUS_ALLOC_FAILURE;
-		}
-
-		point_lights->lights = new_point_lights;
-	}
-	else
-	{
-		point_lights->lights = malloc(sizeof(PointLight));
-		if (!point_lights->lights)
-		{
-			log_error("Failed to malloc for point lights.");
-			return STATUS_ALLOC_FAILURE;
-		}
-	}
-
-	++point_lights->count;
-
-	return STATUS_OK;
-}*/
 
 Status lights_init(Lights* lights)
 {
