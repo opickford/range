@@ -1112,7 +1112,7 @@ void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matr
 	// Convert object space positions to view space and update the bounding sphere centre.
 	{
 		float* vsps = frame_data->view_space_positions;
-		float* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+		BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
 		int vsps_offset = 0;
 
 		for (int i = 0; i < mis->count; ++i)
@@ -1141,8 +1141,8 @@ void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matr
 				&view_space_centre);
 
 			// Write out the bounding sphere.
-			const int centre_index = i * 4; // x,y,z,radius
-			v4_write_xyz(view_space_bounding_spheres + centre_index, view_space_centre);
+            BoundingSphere* bs = &view_space_bounding_spheres[i];
+            bs->centre = v4_xyz(view_space_centre);
 
 			// Read the mesh base's object space positions and convert them to 
 			// view space for the mesh instance.
@@ -1204,7 +1204,7 @@ void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matr
 	// Update the radius of each mesh instance bounding sphere.
 	{
 		const float* vsps = frame_data->view_space_positions;
-		float* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+		BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
 
 		for (int i = 0; i < mis->count; ++i)
 		{
@@ -1219,8 +1219,8 @@ void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matr
 				const MeshBase* mb = &mbs[mi->mb_id];
 
 				// Read bounding sphere (x,y,z,radius).
-				const int bounding_sphere_index = i * 4; // x,y,z,radius
-				const V3 view_space_centre = v3_read(view_space_bounding_spheres + bounding_sphere_index);
+                BoundingSphere* bs = &view_space_bounding_spheres[i];
+                V3 view_space_centre = bs->centre;
 
 				// Calculate the new radius of the mi's bounding sphere.
 				float radius_squared = -1;
@@ -1235,7 +1235,7 @@ void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matr
 				}
 
 				// Save the radius (4th component of bounding sphere).
-				view_space_bounding_spheres[bounding_sphere_index + 3] = sqrtf(radius_squared);
+                bs->radius = sqrtf(radius_squared);
 			}
 		}
 	}
@@ -1278,7 +1278,7 @@ void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const View
 	uint8_t* intersected_planes = frame_data->intersected_planes;
 	int intersected_planes_out_index = 0;
 
-	const float* bounding_spheres = frame_data->view_space_bounding_spheres;
+	const BoundingSphere* bounding_spheres = frame_data->view_space_bounding_spheres;
 
 	const int num_planes = view_frustum->planes_count;
 	const Plane* planes = view_frustum->planes;
@@ -1290,14 +1290,7 @@ void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const View
 		
 		const int bounding_sphere_index = i * STRIDE_SPHERE;
 
-		V3 view_space_centre =
-		{
-			bounding_spheres[bounding_sphere_index],
-			bounding_spheres[bounding_sphere_index + 1],
-			bounding_spheres[bounding_sphere_index + 2],
-		};
-
-		const float radius = bounding_spheres[bounding_sphere_index + 3];
+        const BoundingSphere bs = bounding_spheres[i];
 
         // TODO: Bit flag would be a nicer way of doing this. 8 bits vs 
         //       idk
@@ -1309,14 +1302,14 @@ void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const View
 		// Broad phase bounding sphere test.
 		for (int j = 0; j < num_planes; ++j)
 		{
-			const float dist = signed_distance(&planes[j], view_space_centre);
-			if (dist < -radius)
+			const float dist = signed_distance(&planes[j], bs.centre);
+			if (dist < -bs.radius)
 			{
 				// Completely outside the plane, therefore, no need to check against the others.
 				num_intersected_planes = -1; // -1 here means the mi is not visible.
 				break;
 			}
-			else if (dist < radius)
+			else if (dist < bs.radius)
 			{
 				// Mark that we need to clip against this plane.
 				clip_against_plane[num_intersected_planes] = j;

@@ -4,6 +4,8 @@
 #include "mesh_instance.h"
 #include "scene.h"
 
+#include "maths/bounding_sphere.h"
+
 #include "common/status.h"
 
 #include <stdint.h>
@@ -19,7 +21,7 @@ typedef struct
 	// Transform Stage
 	float* view_space_positions;
 	float* view_space_normals;
-	float* view_space_bounding_spheres; // Used for broad phase frustum culling.
+	BoundingSphere* view_space_bounding_spheres; // Used for broad phase frustum culling.
 
 	float* point_lights_view_space_positions;
 

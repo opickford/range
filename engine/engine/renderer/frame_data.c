@@ -15,8 +15,11 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
     //       probably not, but then we need arenas.
 
 	// Transform Stage
-	resize_float_array(&frame_data->view_space_bounding_spheres, STRIDE_SPHERE * scene->mesh_instances.count);
+	//resize_float_array(&frame_data->view_space_bounding_spheres, STRIDE_SPHERE * scene->mesh_instances.count);
+    // TODO :
 
+    resize_array(BoundingSphere, frame_data->view_space_bounding_spheres, scene->mesh_instances.count);
+    
 	int total_positions = 0;
 	int total_normals = 0;
 	int total_faces = 0;
