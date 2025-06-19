@@ -8,7 +8,8 @@
 
 #include "common/status.h"
 
-#define MAX_TEXT 10
+// TODO: Why have i done this.
+#define MAX_TEXT 100
 
 typedef struct
 {

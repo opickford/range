@@ -5,19 +5,18 @@
 
 // This stuff feels quite renderer specific, maybe except from resources.
 // TODO: Think about global-stuff.
-#include "scene.h"
-#include "mesh_base.h"
-#include "mesh_instance.h"
-#include "lights.h"
-#include "resources.h"
-
 #include "frame_data.h"
 #include "render_target.h"
 #include "render_settings.h"
-#include "canvas.h"
 #include "depth_buffer.h"
-
 #include "frustum_culling.h"
+
+#include "core/scene.h"
+#include "core/mesh_base.h"
+#include "core/mesh_instance.h"
+#include "core/lights.h"
+#include "core/resources.h"
+#include "core/canvas.h"
 
 #include "maths/vector2.h"
 #include "maths/vector3.h"

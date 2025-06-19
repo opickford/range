@@ -7,9 +7,6 @@
 
 #include "common/status.h"
 
-// TODO: The component should probably be defined in a light_components file?
-#include "component_list.h"
-
 /*
 A point light can be defined by a:
 - Position
@@ -50,8 +47,7 @@ typedef struct
 	//PointLight* point_lights;
 
 
-    ComponentList point_lights;
-
+    
 
 
 	int num_shadow_casting_point_lights;
@@ -82,9 +78,6 @@ void lights_destroy(Lights* lights);
 //Status point_lights_add_shadow_casting(PointLights* point_lights, ShadowCastingPointLight point_light);
 
 Status point_light_init(PointLight* light);
-
-
-DECLARE_COMPONENT(PointLight)
 
 
 #endif

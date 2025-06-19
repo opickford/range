@@ -1,40 +1,29 @@
 ﻿# CMakeList.txt : CMake project for the range game engine.
 #
 
+# TODO: Fix comments.
+
 # Compile the engine as a static .lib to be used by the game/tools.
-add_library (engine STATIC
+add_subdirectory(engine/common)
+add_subdirectory(engine/utils)
+add_subdirectory(engine/core)
+add_subdirectory(engine/maths)
+add_subdirectory(engine/renderer)
+add_subdirectory(engine/ui)
 
-"engine/canvas.c"
-"engine/engine.c"
-"engine/lights.c"
- 
-"engine/window.c"
-"engine/scene.c"
-"engine/strides.c"
+add_library(engine INTERFACE)
 
-"engine/mesh_base.c" 
-"engine/mesh_instance.c" 
+target_link_libraries(engine INTERFACE core common maths renderer ui utils)
+set_target_properties(engine PROPERTIES FOLDER "Engine")
 
-"engine/maths/matrix4.c"
-"engine/maths/plane.c"
-
-"engine/renderer/camera.c"
-"engine/renderer/frustum_culling.c"
-"engine/renderer/render.c"
-"engine/renderer/renderer.c"
-"engine/renderer/draw_2d.c"
-"engine/renderer/depth_buffer.c"
-"engine/renderer/texture.c"
-"engine/renderer/frame_data.c"
-
-"engine/ui/font.c"
-"engine/ui/text.c"
-"engine/ui/ui.c"
-
-"engine/utils/memory_utils.c"
-"engine/utils/str_utils.c"
-     "engine/component_list.h" "engine/component_list.c" "engine/maths/bounding_sphere.h")
-
-target_include_directories (engine PUBLIC "${CMAKE_SOURCE_DIR}/engine/engine")
 
 # TODO: Add tests and install targets if needed.
+
+# Install libraries
+# Tell CMake where to find cecsConfig.cmake
+
+
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/engine/libs/cecs")
+find_package(cecs REQUIRED)
+target_link_libraries(engine INTERFACE cecs::cecs)
+

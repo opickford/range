@@ -4,7 +4,11 @@
 #include "render_target.h"
 #include "draw_2d.h"
 #include "frame_data.h"
-#include "strides.h"
+#include "frustum_culling.h"
+
+#include "core/strides.h" // TODO: Surely this isn't a 'core' thing.
+#include "core/globals.h"
+#include "core/resources.h"
 
 #include "common/colour.h"
 
@@ -12,14 +16,8 @@
 #include "maths/vector_maths.h"
 #include "maths/utils.h"
 
-#include "frustum_culling.h"
-
 #include "utils/timer.h"
 #include "utils/common.h"
-
-#include "globals.h"
-
-#include "resources.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1267,8 +1265,6 @@ void lights_world_to_view_space(FrameData* frame_data, const Scene* scene, const
 
 void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum)
 {
-	// TODO: This function could actually set a visible MeshInstance array.
-
 	// Performs broad phase frustum culling on the models, writes out the planes
 	// that need to be clipped against.
 	MeshInstances* mis = &scene->mesh_instances;
@@ -1287,13 +1283,7 @@ void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const View
 	for (int i = 0; i < mis->count; ++i)
 	{
 		const MeshInstance* mi = &mis->instances[i];
-		
-		const int bounding_sphere_index = i * STRIDE_SPHERE;
-
         const BoundingSphere bs = bounding_spheres[i];
-
-        // TODO: Bit flag would be a nicer way of doing this. 8 bits vs 
-        //       idk
 
 		// Store what planes need clipping against.
 		int clip_against_plane[MAX_FRUSTUM_PLANES] = { 0 };

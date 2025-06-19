@@ -1,3 +1,5 @@
 .vs
 res
 out
+build
+engine/libs

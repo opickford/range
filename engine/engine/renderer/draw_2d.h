@@ -1,7 +1,7 @@
 #ifndef DRAW_2D_H
 #define DRAW_2D_H
 
-#include "canvas.h"
+#include "core/canvas.h"
 
 // TODO: Documentation comments
 void draw_line(Canvas* canvas, int x0, int y0, int x1, int y1, int colour);

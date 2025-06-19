@@ -11,4 +11,6 @@ target_link_libraries(range engine)
 
 target_include_directories (range PRIVATE "${CMAKE_SOURCE_DIR}/engine")
 
+set_target_properties(range PROPERTIES FOLDER "Range")
+
 # TODO: Add tests and install targets if needed.

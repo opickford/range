@@ -1,7 +1,7 @@
 #ifndef RENDER_TARGET_H
 #define RENDER_TARGET_H
 
-#include "canvas.h"
+#include "core/canvas.h"
 
 #include "utils/logger.h"
 

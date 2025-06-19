@@ -1,8 +1,9 @@
 #ifndef RENDER_SETTINGS_H
 #define RENDER_SETTINGS_H
 
-#include "canvas.h"
 #include "frustum_culling.h"
+
+#include "core/canvas.h"
 
 #include "maths/matrix4.h"
 #include "maths/utils.h"

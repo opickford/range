@@ -2,7 +2,7 @@
 #define TEXT_H
 
 #include "font.h"
-#include "../canvas.h"
+#include "core/canvas.h"
 
 typedef struct
 {

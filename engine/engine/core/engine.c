@@ -55,6 +55,9 @@ Status engine_init(Engine* engine, int window_width, int window_height)
 
     // Initialise a random seed. TODO: Might not want this for testing.
     srand((unsigned int)time(NULL));
+
+    // Initialise the ECS.
+    ECS_init(&engine->ecs);
     
     log_info("Fired engine_on_init event.");
     engine_on_init(engine);
@@ -94,7 +97,7 @@ void engine_run(Engine* engine)
     char ui_draw_str[64] = "";
     char display_str[64] = "";
     char update_str[64] = "";
-
+    
     int y = 10;
     int h = 30;
 
@@ -184,15 +187,7 @@ void engine_run(Engine* engine)
 
 void engine_destroy(Engine* engine)
 {
-    /*
-    free_models(engine->models);
-    destroy_render_target(engine->render_target);
-
-    free(engine->models);
-    free(engine->point_lights);
-    free(engine->font.pixels);
-    */
-
+    // TODO: this stuff.
     ui_destroy(&engine->ui);
     window_destroy(&engine->window);
 }

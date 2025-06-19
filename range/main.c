@@ -1,13 +1,14 @@
-﻿#include <engine/engine.h>
+﻿#include <engine/core/engine.h>
 
-#include <engine/globals.h>
-#include <engine/canvas.h>
+#include <engine/core/globals.h>
+#include <engine/core/canvas.h>
 
 #include <engine/utils/common.h>
 
 float* directions;
 
 MeshBaseID sphere_base;
+MeshBaseID cube_base;
 
 // TODO: Switch to C compiler.
 // TODO: All of my code is C++ style C, why... Not good.
@@ -26,7 +27,12 @@ void create_map(Engine* engine)
     ++engine->scenes_count;
     
     sphere_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(&scene->mesh_bases.bases[sphere_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
+    mesh_base_from_obj(&scene->mesh_bases.bases[sphere_base], "C:/Users/olive/source/repos/range/res/models/sphere.obj");
+
+    cube_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[cube_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
+
+
 
     /*
     const int n = 10;
@@ -156,6 +162,11 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     {
     case VK_F1:
     {
+        MeshBaseID mb_ids[2] = { cube_base, sphere_base };
+
+        MeshBaseID mb_id = mb_ids[(int)(random_float() + 0.5f)];
+
+
         Scene* scene = &engine->scenes[engine->current_scene_id];
 
         V3 colour =
@@ -169,10 +180,10 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
 
         const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
-        MeshInstanceID sphere_instance = mesh_instances_add(&scene->mesh_instances);
-        scene_mesh_instance_set_base(scene, sphere_instance, sphere_base);
-        scene_mesh_instance_set_albedo(scene, sphere_instance, colour);
-        mesh_instances_get(&scene->mesh_instances, sphere_instance)->position = pos;
+        MeshInstanceID inst = mesh_instances_add(&scene->mesh_instances);
+        scene_mesh_instance_set_base(scene, inst, mb_id);
+        scene_mesh_instance_set_albedo(scene, inst, colour);
+        mesh_instances_get(&scene->mesh_instances, inst)->position = pos;
         
         break;
     }

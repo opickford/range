@@ -1,8 +1,8 @@
 #ifndef FRAME_DATA_H
 #define FRAME_DATA_H
 
-#include "mesh_instance.h"
-#include "scene.h"
+#include "core/mesh_instance.h"
+#include "core/scene.h"
 
 #include "maths/bounding_sphere.h"
 
@@ -59,7 +59,6 @@ typedef struct
     // Intermediate buffers for clipping, alternate between per plane.
     float* temp_clipped_faces0; 
     float* temp_clipped_faces1;
-
 
 } FrameData;
 

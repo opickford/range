@@ -3,7 +3,7 @@
 
 // TODO: This is just a canvas that stores float data. Not sure of a better way around this.
 
-#include "canvas.h"
+#include "core/canvas.h"
 
 #include "common/status.h"
 

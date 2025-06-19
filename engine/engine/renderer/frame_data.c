@@ -1,10 +1,14 @@
 #include "frame_data.h"
 
-#include "scene.h"
 #include "frustum_culling.h"
-#include "strides.h"
+
+#include "core/scene.h"
+#include "core/strides.h"
 
 #include "utils/memory_utils.h"
+#include "utils/logger.h"
+
+#include <Windows.h> // max - TODO: Somewhere else?
 
 Status frame_data_init(FrameData* frame_data, Scene* scene)
 {
@@ -15,9 +19,6 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
     //       probably not, but then we need arenas.
 
 	// Transform Stage
-	//resize_float_array(&frame_data->view_space_bounding_spheres, STRIDE_SPHERE * scene->mesh_instances.count);
-    // TODO :
-
     resize_array(BoundingSphere, frame_data->view_space_bounding_spheres, scene->mesh_instances.count);
     
 	int total_positions = 0;

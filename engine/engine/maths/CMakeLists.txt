@@ -1,0 +1,18 @@
+add_library(maths STATIC
+    bounding_sphere.h
+    matrix4.h
+    plane.h
+    utils.h
+    vector_maths.h
+    vector2.h
+    vector3.h
+    vector4.h
+    matrix4.c
+    plane.c
+)
+
+target_link_libraries(maths PRIVATE utils)
+
+target_include_directories(maths PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+set_target_properties(maths PROPERTIES FOLDER "Engine")

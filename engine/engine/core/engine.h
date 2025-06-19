@@ -15,8 +15,12 @@
 
 #include "common/status.h"
 
+#include <cecs/ecs.h>
+
 typedef struct
 {
+    ECS ecs;
+
 	// Engine components.
 	Window window;
 	UI ui;
