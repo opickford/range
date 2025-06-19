@@ -14,3 +14,4 @@ add_subdirectory ("engine")
 add_subdirectory ("range")
 
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "range")
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
