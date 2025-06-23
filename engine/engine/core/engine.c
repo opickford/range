@@ -1,11 +1,13 @@
 #include "engine.h"
 
+#include "globals.h"
+
 #include "utils/logger.h"
 #include "utils/timer.h"
 
 #include "common/colour.h"
 
-#include "globals.h"
+
 
 #include <Windows.h>
 

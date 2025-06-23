@@ -7,7 +7,7 @@ add_executable (range
  )
 
  # Link the light baking tool to the engine
-target_link_libraries(range engine)
+target_link_libraries(range PRIAVTE engine)
 
 target_include_directories (range PRIVATE "${CMAKE_SOURCE_DIR}/engine")
 

@@ -27,7 +27,7 @@ typedef struct
 	Renderer renderer;
 	Resources resources; // Works fine for now, potentially something to refactor.
 
-	// Scene data.
+	// Scene data. - I don't think the engine needs to manage multiple.
 	Scene scenes[MAX_SCENES];
 	int scenes_count;
 	int current_scene_id;

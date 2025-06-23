@@ -27,7 +27,11 @@ add_library (core STATIC
     window.h
 )
 
-target_link_libraries(core INTERFACE common)
+target_link_libraries(core 
+    PUBLIC
+        cecs::cecs
+    INTERFACE 
+        common)
 
 target_include_directories(core 
     PRIVATE

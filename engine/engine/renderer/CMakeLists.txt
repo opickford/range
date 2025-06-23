@@ -21,7 +21,11 @@ add_library(renderer STATIC
     frame_data.c
 )
 
-target_link_libraries(renderer INTERFACE core maths utils)
+target_link_libraries(renderer 
+    PUBLIC
+        cecs::cecs
+    INTERFACE 
+        core maths utils)
 
 target_include_directories(renderer 
     PRIVATE
