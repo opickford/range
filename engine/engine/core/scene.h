@@ -8,28 +8,22 @@
 
 #include "common/status.h"
 
+// TODO: This should more be storing metadata of the scene, the ecs contains lights and instances etc.
 typedef struct
 {
 	// TODO: really this should be made up of entities.
 	MeshBases mesh_bases;
-	MeshInstances mesh_instances;
 
-	Lights lights;
 	V3 ambient_light;
 
 } Scene;
+
+// TODO: refactor to remove the 
 
 Status scene_init(Scene* scene);
 Status scene_destroy(Scene* scene);
 
 // MeshBase API Wrappers
 MeshBaseID scene_add_mesh_base(Scene* scene);
-
-// MeshInstance API Wrappers
-MeshInstanceID scene_add_mesh_instance(Scene* scene);
-
-// TODO: These names are so long idk.
-Status scene_mesh_instance_set_base(Scene* scene, MeshInstanceID mi_id, MeshBaseID mb_id);
-Status scene_mesh_instance_set_albedo(Scene* scene, MeshInstanceID mi_id, V3 albedo);
 
 #endif

@@ -4,13 +4,16 @@
 
 #include "core/scene.h"
 #include "core/strides.h"
+#include "core/components.h"
 
 #include "utils/memory_utils.h"
 #include "utils/logger.h"
 
+#include <cecs/ecs.h>
+
 #include <Windows.h> // max - TODO: Somewhere else?
 
-Status frame_data_init(FrameData* frame_data, Scene* scene)
+Status frame_data_init(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene)
 {
 	// TODO: A flag to determine if the scene has changed and therefore we 
 	//		 need to reinit the frame data buffer.
@@ -18,37 +21,60 @@ Status frame_data_init(FrameData* frame_data, Scene* scene)
     // TODO: These will be resizing buffers down as well, do we want that??
     //       probably not, but then we need arenas.
 
-	// Transform Stage
-    resize_array(BoundingSphere, frame_data->view_space_bounding_spheres, scene->mesh_instances.count);
-    
-	int total_positions = 0;
-	int total_normals = 0;
-	int total_faces = 0;
-    int most_faces = 0;
-	for (int i = 0; i < scene->mesh_instances.count; ++i)
-	{
-		const MeshInstance* mi = &scene->mesh_instances.instances[i];
-		const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
-		total_positions += mb->num_positions;
-		total_normals += mb->num_normals;
-		total_faces += mb->num_faces;
-        most_faces = max(most_faces, mb->num_faces);
-	}
+    // TODO: How do i get the meshinstances count
 
+    int mis_count = 0;
+    int total_positions = 0;
+    int total_normals = 0;
+    int total_faces = 0;
+    int most_faces = 0;
+
+    const MeshBase* mbs = scene->mesh_bases.bases;
+
+    for (int si = 0; si < render_system->num_archetypes; ++si)
+    {
+        const ArchetypeID archetype_id = render_system->archetype_ids[si];
+        Archetype* archetype = &ecs->archetypes[archetype_id];
+
+        int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
+        MeshInstance* mis = archetype->component_lists[mis_i];
+
+        float* vsps = frame_data->view_space_positions;
+        BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+        int vsps_offset = 0;
+
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {
+            MeshInstance* mi = &mis[i];
+
+            const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
+            total_positions += mb->num_positions;
+            total_normals += mb->num_normals;
+            total_faces += mb->num_faces;
+            most_faces = max(most_faces, mb->num_faces);
+
+            ++mis_count;
+
+        }
+    }
+
+	// Transform Stage
+    resize_array(BoundingSphere, frame_data->view_space_bounding_spheres, mis_count);
+    
 	resize_float_array(&frame_data->view_space_positions, total_positions * STRIDE_POSITION);
 	
 	// TODO: Fails in release?? heap corruption, so potentially from before?
 	resize_float_array(&frame_data->view_space_normals, total_normals * STRIDE_NORMAL);
 
-	resize_float_array(&frame_data->point_lights_view_space_positions, scene->lights.point_lights.count * STRIDE_POSITION);
+	//resize_float_array(&frame_data->point_lights_view_space_positions, scene->lights.point_lights.count * STRIDE_POSITION);
 
 	// Broad Phase Frustum Culling
-	resize_int_array(&frame_data->visible_mi_indices, scene->mesh_instances.count);
+	resize_array(MeshInstance, frame_data->visible_mis, mis_count);
 	frame_data->num_visible_mis = 0;
 
 	// Intersected planes stores the number of intersected planes and then the index of each plane,
 	// so give room for the max planes + 1.
-	resize_uint8_array(&frame_data->intersected_planes, scene->mesh_instances.count * (MAX_FRUSTUM_PLANES + 1));
+	resize_uint8_array(&frame_data->intersected_planes, mis_count * (MAX_FRUSTUM_PLANES + 1));
 
 	// Backface Culling Output
 	resize_int_array(&frame_data->front_face_indices, total_faces);

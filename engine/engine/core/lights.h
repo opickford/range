@@ -19,6 +19,8 @@ a red colour.
 
 */
 
+// TODO: Crefactor to component.
+
 typedef int PointLightID;
 typedef int ShadowCastingPointLightID;
 
@@ -40,36 +42,6 @@ typedef struct
 	DepthBuffer* depth_maps;
 
 } ShadowCastingPointLight;
-
-typedef struct
-{
-	//int num_point_lights;
-	//PointLight* point_lights;
-
-
-    
-
-
-	int num_shadow_casting_point_lights;
-	ShadowCastingPointLight* shadow_casting_point_lights;
-
-	/*
-	
-	we kind of want to do the same thing here as we did with the mesh_instance right?
-
-    is there a way to make this nicer?
-
-
-
-
-	
-	*/
-
-} Lights;
-
-Status lights_init(Lights* lights);
-void lights_destroy(Lights* lights);
-
 
 
 // I think in terms of API for example, when creating shadow casting lights,

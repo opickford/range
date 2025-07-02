@@ -6,12 +6,18 @@ add_library(ui STATIC
     ui.c
     ui.h
 )
-target_link_libraries(ui PRIVATE core)
-
-target_include_directories(core PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    $<INSTALL_INTERFACE:include>
+target_link_libraries(ui 
+    PUBLIC
+        core
 )
+
+target_include_directories(ui 
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        $<INSTALL_INTERFACE:include>
+)
+
 
 target_include_directories(ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

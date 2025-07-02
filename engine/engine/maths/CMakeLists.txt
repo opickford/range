@@ -11,8 +11,15 @@ add_library(maths STATIC
     plane.c
 )
 
-target_link_libraries(maths PRIVATE utils)
+target_include_directories(maths 
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        $<INSTALL_INTERFACE:include>
+)
 
-target_include_directories(maths PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(maths 
+    PUBLIC 
+        utils)
 
 set_target_properties(maths PROPERTIES FOLDER "Engine")

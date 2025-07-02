@@ -5,6 +5,9 @@
 
 #include <engine/utils/common.h>
 
+#include <engine/maths/vector3.h>
+#include <engine/common/status.h>
+
 float* directions;
 
 MeshBaseID sphere_base;
@@ -32,7 +35,11 @@ void create_map(Engine* engine)
     cube_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[cube_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
 
-
+    EntityID cube_entity = ECS_create_entity(&engine->ecs);
+    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+    MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+    MeshInstance_init(mi);
+    MeshInstance_set_base(mi, &scene->mesh_bases.bases[sphere_base]);
 
     /*
     const int n = 10;
@@ -46,7 +53,7 @@ void create_map(Engine* engine)
         for (int j = 0; j < n; ++j)
         {
             MeshInstanceID sphere_instance = mesh_instances_add(&scene->mesh_instances);
-            scene_mesh_instance_set_base(scene, sphere_instance, sphere_base);
+            scene_MeshInstance_set_base(scene, sphere_instance, sphere_base);
             scene->mesh_instances.instances[sphere_instance].position.x = x;
             scene->mesh_instances.instances[sphere_instance].position.z = z;
             z -= offset;
@@ -175,15 +182,17 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
             random_float(),
             random_float()
         };
-
+        /*
         const Camera* camera = &engine->renderer.camera;
 
         const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
         MeshInstanceID inst = mesh_instances_add(&scene->mesh_instances);
-        scene_mesh_instance_set_base(scene, inst, mb_id);
-        scene_mesh_instance_set_albedo(scene, inst, colour);
+        scene_MeshInstance_set_base(scene, inst, mb_id);
+        scene_MeshInstance_set_albedo(scene, inst, colour);
         mesh_instances_get(&scene->mesh_instances, inst)->position = pos;
+
+        */
         
         break;
     }
@@ -192,10 +201,10 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         //g_draw_normals = !g_draw_normals;
 
         Scene* scene = &engine->scenes[engine->current_scene_id];
-
+        /*
         if (scene->mesh_instances.count > 0)
             mesh_instances_remove(&scene->mesh_instances,
-                scene->mesh_instances.id_to_index[scene->mesh_instances.count - 1]);
+                scene->mesh_instances.id_to_index[scene->mesh_instances.count - 1]);*/
 
         break;
     }
@@ -207,7 +216,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
             random_float(),
             random_float()
         };
-
+        /*
         Scene* scene = &engine->scenes[engine->current_scene_id];
         Camera* camera = &engine->renderer.camera;
         PointLightID light = PointLights_add(&scene->lights.point_lights);
@@ -226,15 +235,17 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         pl->position = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
         pl->colour = (V3){ 1.f, 1.f, 1.f };
         pl->strength = 1.f;
+        */
 
         break;
     }
     case VK_F4:
     {
+        /*
         Scene* scene = &engine->scenes[engine->current_scene_id];
         if (scene->lights.point_lights.count > 0)
             PointLights_remove(&scene->lights.point_lights, scene->lights.point_lights.index_to_id[0]);
-
+            */
         break;
     }
     }

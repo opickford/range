@@ -8,6 +8,8 @@
 
 #include "common/status.h"
 
+#include <cecs/ecs.h>
+
 #include <stdint.h>
 
 /*
@@ -26,7 +28,8 @@ typedef struct
 	float* point_lights_view_space_positions;
 
 	// Broad Phase Frustum Culling
-	int* visible_mi_indices;
+    MeshInstance* visible_mis;
+	//int* visible_mi_indices;
 	int num_visible_mis;
 	uint8_t* intersected_planes;
 
@@ -62,7 +65,7 @@ typedef struct
 
 } FrameData;
 
-Status frame_data_init(FrameData* frame_data, Scene* scene);
+Status frame_data_init(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene);
 
 
 void frame_data_destroy(FrameData* frame_data);

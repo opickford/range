@@ -8,6 +8,15 @@ add_library(utils STATIC
     timer.h
 )
 
-target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(utils 
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(utils 
+    PUBLIC 
+        common)
 
 set_target_properties(utils PROPERTIES FOLDER "Engine")

@@ -23,12 +23,14 @@
 #include "maths/vector4.h"
 #include "maths/matrix4.h"
 
+#include <cecs/ecs.h>
+
 // TODO: Organise this all.
 
 // SECTION: Debug tools.
 // TODO: Refactor and comments etc.
 
-void debug_draw_point_lights(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const ComponentList* point_lights);
+//void debug_draw_point_lights(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const ComponentList* point_lights);
 void debug_draw_view_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, int colour);
 void debug_draw_normals(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const Scene* scene);
 /*void debug_draw_point_lights(Canvas* canvas, const RenderSettings* settings, PointLights* point_lights);
@@ -76,17 +78,18 @@ void project_and_draw_clipped(
 	FrameData* frame_data,
 	const MeshInstance* mi);
 
-void render(Renderer* renderer, Scene* scene, const Resources* resources, const M4 view_matrix);
+void render(ECS* ecs, System* render_system, Renderer* renderer, Scene* scene, const Resources* resources, const M4 view_matrix);
 
 // REFACTORED PIPELINE
 
-void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matrix);
-void lights_world_to_view_space(FrameData* frame_data, const Scene* scene, const M4 view_matrix);
-void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum);
-void cull_backfaces(FrameData* frame_data, Scene* scene);
-void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient);
-void prepare_for_clipping(FrameData* frame_data, Scene* scene);
+void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const M4 view_matrix);
+void lights_world_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, const Scene* scene, const M4 view_matrix);
+void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum);
+void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene);
+void light_front_faces(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const V3 ambient);
+void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene);
 void clip_project_and_draw(
+    System* render_system,
 	Renderer* renderer,
 	RenderTarget* rt,
 	FrameData* frame_data,

@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include "globals.h"
+#include "components.h"
 
 #include "utils/logger.h"
 #include "utils/timer.h"
@@ -13,6 +14,23 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+// Internal helpers.
+static void Engine_setup_ecs(Engine* engine)
+{
+    ECS* ecs = &engine->ecs;
+    ECS_init(ecs);
+
+    // Setup core components, MeshInstance etc.
+    CoreComponents_init(ecs);
+
+    // Setup render system.
+    engine->render_system_id = ECS_register_system(ecs);
+    System* system = &engine->ecs.systems[engine->render_system_id];
+    system->components_bitset = COMPONENT_MeshInstance;
+
+
+}
 
 Status engine_init(Engine* engine, int window_width, int window_height)
 {
@@ -61,6 +79,10 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     // Initialise the ECS.
     ECS_init(&engine->ecs);
     
+    // Initialise components and systems.
+    Engine_setup_ecs(engine);
+
+
     log_info("Fired engine_on_init event.");
     engine_on_init(engine);
 
@@ -141,10 +163,15 @@ void engine_run(Engine* engine)
         timer_restart(&t);
         if (engine->current_scene_id > -1 && engine->current_scene_id < engine->scenes_count)
         {
-            render(&engine->renderer, &engine->scenes[engine->current_scene_id], &engine->resources, view_matrix);
+            // TODO: Render system..............
+
+            // TODO: How will this work as a system?
+
+            
+            render(&engine->ecs, &engine->ecs.systems[engine->render_system_id], &engine->renderer, &engine->scenes[engine->current_scene_id], &engine->resources, view_matrix);
         }
         snprintf(render_str, sizeof(render_str), "Render: %d", timer_get_elapsed(&t));
-
+         
         // Handle any keyboard/mouse input.
         timer_restart(&t);
         engine_handle_input(engine, dt);
@@ -298,7 +325,7 @@ void engine_handle_input(Engine* engine, float dt)
 }
 
 // Window events
-void engine_on_resize(void* ctx)
+static void engine_on_resize(void* ctx)
 {
     Engine* engine = (Engine*)ctx;
 
@@ -319,7 +346,7 @@ void engine_on_resize(void* ctx)
     }
 }
 
-void engine_process_keyup(void* ctx, WPARAM wParam) 
+static void engine_process_keyup(void* ctx, WPARAM wParam) 
 {
     Engine* engine = (Engine*)ctx;
 
@@ -380,4 +407,8 @@ void engine_process_keyup(void* ctx, WPARAM wParam)
         engine_on_keyup(engine, wParam);
     }
     }
+}
+
+void engine_setup_ecs(Engine* engine)
+{
 }

@@ -62,20 +62,6 @@ void point_light_init(PointLight* light, V3 position, V3 colour, float strength)
 }
 */
 
-Status lights_init(Lights* lights)
-{
-	memset(lights, 0, sizeof(Lights));
-
-    component_list_init(&lights->point_lights);
-
-    return STATUS_OK;
-}
-
-void lights_destroy(Lights* lights)
-{
-	//free(lights->point_lights);
-	free(lights->shadow_casting_point_lights);
-}
 
 Status point_light_init(PointLight* light)
 {
@@ -88,6 +74,4 @@ Status point_light_init(PointLight* light)
 void PointLight_destroy(PointLight* light)
 {
 }
-
-DEFINE_COMPONENT(PointLight)
 

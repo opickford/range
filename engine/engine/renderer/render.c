@@ -9,6 +9,7 @@
 #include "core/strides.h" // TODO: Surely this isn't a 'core' thing.
 #include "core/globals.h"
 #include "core/resources.h"
+#include "core/components.h"
 
 #include "common/colour.h"
 
@@ -27,7 +28,7 @@
 // TODO: Think about my DOD. Should use structs rather than float* because will compile to the same thing.
 // TODO: Something important would be to make the buffer accesses easier.
 
-
+/*
 void debug_draw_point_lights(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const ComponentList* point_lights)
 {
     const float* vsps = frame_data->point_lights_view_space_positions;
@@ -67,7 +68,7 @@ void debug_draw_point_lights(Canvas* canvas, const FrameData* frame_data, const 
 
 		draw_rect(canvas, x0, y0, x1, y1, colour);
 	}
-}
+}*/
 
 void debug_draw_view_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, int colour)
 {
@@ -94,6 +95,7 @@ void debug_draw_view_space_point(Canvas* canvas, const RenderSettings* settings,
 
 void debug_draw_normals(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const Scene* scene)
 {
+    /*
     const MeshInstance* mis = scene->mesh_instances.instances;
     const MeshBase* mbs = scene->mesh_bases.bases;
 
@@ -148,17 +150,16 @@ void debug_draw_normals(Canvas* canvas, const FrameData* frame_data, const Rende
             }
         }
         front_faces_offset += mi->num_front_faces;
-    }
+    }*/
 }
 
-#if 0
-
+/*
 void debug_draw_bounding_spheres(Canvas* canvas, const RenderSettings* settings, const Models* models, const M4 view_matrix)
 {
 	// TODO: This doesn't really work.
 
 	// TODO: For a function like this, I should be able to do debug_draw_bounding_sphere and pass in the mi index.
-	/*
+
 	int colour = int_rgb_to_int(1, 0, 0);
 
 	for (int i = 0; i < models->mis_count; ++i)
@@ -201,8 +202,8 @@ void debug_draw_bounding_spheres(Canvas* canvas, const RenderSettings* settings,
 		float pr = fabsf(pb.y - pt.y) / 2.f;
 		
 		draw_circle(canvas, (int)pc.x, (int)pc.y, (int)pr, colour);
-	}*/
-}
+	}
+}*/
 
 void debug_draw_world_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, const M4 view_matrix, int colour)
 {
@@ -279,9 +280,6 @@ void debug_draw_world_space_line(Canvas* canvas, const RenderSettings* settings,
 
 	draw_line(canvas, (int)ss_v0.x, (int)ss_v0.y, (int)ss_v1.x, (int)ss_v1.y, colour_int);
 }
-
-
-#endif
 
 
 void draw_scanline(RenderTarget* rt,
@@ -1099,152 +1097,153 @@ void project(const Canvas* canvas, const M4 projection_matrix, V4 v, V4* out)
 	out->w = inv_w;
 }
 
-void model_to_view_space(FrameData* frame_data, Scene* scene, const M4 view_matrix)
+void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const M4 view_matrix)
 {
-	const MeshInstances* mis = &scene->mesh_instances;
-	const MeshBase* mbs = scene->mesh_bases.bases;
+    // TODO: Should this function really be defined as transform stage as 
+    //		 we also do the bounding sphere stuff.....
+    const MeshBase* mbs = scene->mesh_bases.bases;
 
-	// TODO: Should this function really be defined as transform stage as 
-	//		 we also do the bounding sphere stuff.....
+    for (int si = 0; si < render_system->num_archetypes; ++si)
+    {
+        const ArchetypeID archetype_id = render_system->archetype_ids[si];
+        Archetype* archetype = &ecs->archetypes[archetype_id];
 
-	// Convert object space positions to view space and update the bounding sphere centre.
-	{
-		float* vsps = frame_data->view_space_positions;
-		BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
-		int vsps_offset = 0;
+        int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
+        MeshInstance* mis = archetype->component_lists[mis_i];
 
-		for (int i = 0; i < mis->count; ++i)
-		{
-			MeshInstance* mi = &mis->instances[i];
+        float* vsps = frame_data->view_space_positions;
+        BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+        int vsps_offset = 0;
 
-			// Save the offset to the start of the view space positions for the 
-			// mesh instance.
-			mi->view_space_positions_offset = vsps_offset;
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {            
+            MeshInstance* mi = &mis[i];
 
-			// Calculate model matrix.
-			// TODO: rotation or direction or eulers?
-			M4 model_matrix;
-			m4_model_matrix(mi->position, mi->rotation, mi->scale, model_matrix);
+            // Save the offset to the start of the view space positions for the 
+            // mesh instance.
+            mi->view_space_positions_offset = vsps_offset;
 
-			M4 model_view_matrix;
-			m4_mul_m4(view_matrix, model_matrix, model_view_matrix);
+            // Calculate model matrix.
+            // TODO: rotation or direction or eulers?
+            M4 model_matrix;
+            m4_model_matrix(mi->position, mi->rotation, mi->scale, model_matrix);
 
-			const MeshBase* mb = &mbs[mi->mb_id];
+            M4 model_view_matrix;
+            m4_mul_m4(view_matrix, model_matrix, model_view_matrix);
 
-			// Update the centre of the bounding sphere.
-			V4 view_space_centre;
-			m4_mul_v4(
-				model_view_matrix, 
-				v3_to_v4(mb->centre, 1.f),
-				&view_space_centre);
+            const MeshBase* mb = &mbs[mi->mb_id];
 
-			// Write out the bounding sphere.
+            // Update the centre of the bounding sphere.
+            V4 view_space_centre;
+            m4_mul_v4(
+                model_view_matrix,
+                v3_to_v4(mb->centre, 1.f),
+                &view_space_centre);
+
+            // Write out the bounding sphere.
             BoundingSphere* bs = &view_space_bounding_spheres[i];
             bs->centre = v4_xyz(view_space_centre);
 
-			// Read the mesh base's object space positions and convert them to 
-			// view space for the mesh instance.
-			
-			for (int j = 0; j < mb->num_positions; ++j)
-			{
-				const int position_index = j * STRIDE_POSITION;
-				const V4 osp = v3_read_to_v4(mb->object_space_positions + position_index, 1.f);
-				V4 vsp;
-				m4_mul_v4(model_view_matrix, osp, &vsp);
-				
-				vsps[vsps_offset] = vsp.x;
-				vsps[vsps_offset + 1] = vsp.y;
-				vsps[vsps_offset + 2] = vsp.z;
+            // Read the mesh base's object space positions and convert them to 
+            // view space for the mesh instance.
 
-				vsps_offset += STRIDE_POSITION;
-			}
-		}
-	}
+            for (int j = 0; j < mb->num_positions; ++j)
+            {
+                const int position_index = j * STRIDE_POSITION;
+                const V4 osp = v3_read_to_v4(mb->object_space_positions + position_index, 1.f);
+                V4 vsp;
+                m4_mul_v4(model_view_matrix, osp, &vsp);
 
-	// Convert object space normals to view space.
-	{
-		float* vsns = frame_data->view_space_normals;
-		int vsns_offset = 0;
+                vsps[vsps_offset] = vsp.x;
+                vsps[vsps_offset + 1] = vsp.y;
+                vsps[vsps_offset + 2] = vsp.z;
 
-		for (int i = 0; i < mis->count; ++i)
-		{
-			MeshInstance* mi = &mis->instances[i];
+                vsps_offset += STRIDE_POSITION;
+            }
+        }
 
-			// Save the offset to the start of the view space positions for the 
-			// mesh instance.
-			mi->view_space_normals_offset = vsns_offset;
+        // Convert object space normals to view space.
+        float* vsns = frame_data->view_space_normals;
+        int vsns_offset = 0;
 
-			// Calculate normal matrix.
-			// TODO: rotation or direction or eulers?
-			M4 normal_matrix;
-			m4_normal_matrix(mi->rotation, mi->scale, normal_matrix);
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {
+            MeshInstance* mi = &mis[i];
 
-			M4 view_normal_matrix;
-			m4_mul_m4(view_matrix, normal_matrix, view_normal_matrix);
+            // Save the offset to the start of the view space positions for the 
+            // mesh instance.
+            mi->view_space_normals_offset = vsns_offset;
 
-			const MeshBase* mb = &mbs[mi->mb_id];
+            // Calculate normal matrix.
+            // TODO: rotation or direction or eulers?
+            M4 normal_matrix;
+            m4_normal_matrix(mi->rotation, mi->scale, normal_matrix);
 
-			for (int j = 0; j < mb->num_normals; ++j)
-			{
-				const int normal_index = j * STRIDE_NORMAL;
-				const V4 osn = v3_read_to_v4(mb->object_space_normals + normal_index, 0.f);
-				
-				V4 vsn;
-				m4_mul_v4(view_normal_matrix, osn, &vsn);
-				
+            M4 view_normal_matrix;
+            m4_mul_m4(view_matrix, normal_matrix, view_normal_matrix);
+
+            const MeshBase* mb = &mbs[mi->mb_id];
+
+            for (int j = 0; j < mb->num_normals; ++j)
+            {
+                const int normal_index = j * STRIDE_NORMAL;
+                const V4 osn = v3_read_to_v4(mb->object_space_normals + normal_index, 0.f);
+
+                V4 vsn;
+                m4_mul_v4(view_normal_matrix, osn, &vsn);
+
                 v3_write(vsns + vsns_offset, normalised(v4_xyz(vsn)));
 
-				vsns_offset += STRIDE_NORMAL;
-			}
-		}
-	}
-	
-	// Update the radius of each mesh instance bounding sphere.
-	{
-		const float* vsps = frame_data->view_space_positions;
-		BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+                vsns_offset += STRIDE_NORMAL;
+            }
+        }
 
-		for (int i = 0; i < mis->count; ++i)
-		{
-			MeshInstance* mi = &mis->instances[i];
-			
-			// Only update the bounding sphere if the scale is changed, otherwise
-			// we don't need to update it.
-			if (mi->has_scale_changed)
-			{
-				mi->has_scale_changed = 0;
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {
+            MeshInstance* mi = &mis[i];
 
-				const MeshBase* mb = &mbs[mi->mb_id];
+            // Update the radius of each mesh instance bounding sphere.
+            const float* vsps = frame_data->view_space_positions;
+            BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
 
-				// Read bounding sphere (x,y,z,radius).
+            // Only update the bounding sphere if the scale is changed, otherwise
+            // we don't need to update it.
+            if (mi->has_scale_changed)
+            {
+                mi->has_scale_changed = 0;
+
+                const MeshBase* mb = &mbs[mi->mb_id];
+
+                // Read bounding sphere (x,y,z,radius).
                 BoundingSphere* bs = &view_space_bounding_spheres[i];
                 V3 view_space_centre = bs->centre;
 
-				// Calculate the new radius of the mi's bounding sphere.
-				float radius_squared = -1;
+                // Calculate the new radius of the mi's bounding sphere.
+                float radius_squared = -1;
 
-				const int end = mi->view_space_positions_offset + mb->num_positions * STRIDE_POSITION;
-				for (int j = mi->view_space_positions_offset; j < end; j += STRIDE_POSITION)
-				{
-					V3 v = v3_read(vsps + j);
-					V3 between = v3_sub_v3(v, view_space_centre);
+                const int end = mi->view_space_positions_offset + mb->num_positions * STRIDE_POSITION;
+                for (int j = mi->view_space_positions_offset; j < end; j += STRIDE_POSITION)
+                {
+                    V3 v = v3_read(vsps + j);
+                    V3 between = v3_sub_v3(v, view_space_centre);
 
-					radius_squared = max(size_squared(between), radius_squared);
-				}
+                    radius_squared = max(size_squared(between), radius_squared);
+                }
 
-				// Save the radius (4th component of bounding sphere).
+                // Save the radius (4th component of bounding sphere).
                 bs->radius = sqrtf(radius_squared);
-			}
-		}
-	}
+            }
+        }
+    }	
 }
 
-void lights_world_to_view_space(FrameData* frame_data, const Scene* scene, const M4 view_matrix)
+void lights_world_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, const Scene* scene, const M4 view_matrix)
 {
 	// This could be made more efficient by having an array of input world
 	// space positions, however, we will never be able to support enough lights
 	// to make this worthwhile (i think).
 
+    /*
     const ComponentList* point_lights_list = &scene->lights.point_lights;
     const PointLight* point_lights = (PointLight*)point_lights_list->elements;
 
@@ -1260,16 +1259,15 @@ void lights_world_to_view_space(FrameData* frame_data, const Scene* scene, const
 		// There is no need to save the w component as it is always 1 until 
 		// after projection.
 		v4_write_xyz(view_space_positions + i * STRIDE_POSITION, v_view_space);
-	}
+	}*/
 }
 
-void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum)
+void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum)
 {
 	// Performs broad phase frustum culling on the models, writes out the planes
 	// that need to be clipped against.
-	MeshInstances* mis = &scene->mesh_instances;
-
-	int* visible_mi_indices = frame_data->visible_mi_indices;
+	
+    MeshInstance* visible_mis = frame_data->visible_mis;
 	int visible_mis_count = 0;
 	uint8_t* intersected_planes = frame_data->intersected_planes;
 	int intersected_planes_out_index = 0;
@@ -1279,74 +1277,91 @@ void broad_phase_frustum_culling(FrameData* frame_data, Scene* scene, const View
 	const int num_planes = view_frustum->planes_count;
 	const Plane* planes = view_frustum->planes;
 
-	// Perform board phase bounding sphere check against each plane.
-	for (int i = 0; i < mis->count; ++i)
-	{
-		const MeshInstance* mi = &mis->instances[i];
-        const BoundingSphere bs = bounding_spheres[i];
+    float* vsps = frame_data->view_space_positions;
+    BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+    int vsps_offset = 0;
 
-		// Store what planes need clipping against.
-		int clip_against_plane[MAX_FRUSTUM_PLANES] = { 0 };
-		int num_intersected_planes = 0;
+    for (int si = 0; si < render_system->num_archetypes; ++si)
+    {
+        const ArchetypeID archetype_id = render_system->archetype_ids[si];
+        Archetype* archetype = &ecs->archetypes[archetype_id];
 
-		// Broad phase bounding sphere test.
-		for (int j = 0; j < num_planes; ++j)
-		{
-			const float dist = signed_distance(&planes[j], bs.centre);
-			if (dist < -bs.radius)
-			{
-				// Completely outside the plane, therefore, no need to check against the others.
-				num_intersected_planes = -1; // -1 here means the mi is not visible.
-				break;
-			}
-			else if (dist < bs.radius)
-			{
-				// Mark that we need to clip against this plane.
-				clip_against_plane[num_intersected_planes] = j;
-				++num_intersected_planes;
-			}
-		}
+        int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
+        MeshInstance* mis = archetype->component_lists[mis_i];
+    
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {
+            MeshInstance* mi = &mis[i];
 
-		// Mark whether the mi passed the broad phase and store the 
-		// intersection data if it passed.
-		if (-1 != num_intersected_planes)
-		{
-			// Flag the mi as having passed the broad phase.
-			visible_mi_indices[visible_mis_count++] = i;
+            const BoundingSphere bs = bounding_spheres[i];
 
-			// Write out for narrow phase to use.
-			// In format: num_planes_intersecting, plane_index_0, plane_index_1, ...
-			intersected_planes[intersected_planes_out_index++] = num_intersected_planes;
+            // Store what planes need clipping against.
+            int clip_against_plane[MAX_FRUSTUM_PLANES] = { 0 };
+            int num_intersected_planes = 0;
 
-			for (int j = 0; j < num_intersected_planes; ++j)
-			{
-				intersected_planes[intersected_planes_out_index++] = clip_against_plane[j];
-			}
-		}
-	}
+            // Broad phase bounding sphere test.
+            for (int j = 0; j < num_planes; ++j)
+            {
+                const float dist = signed_distance(&planes[j], bs.centre);
+                if (dist < -bs.radius)
+                {
+                    // Completely outside the plane, therefore, no need to check against the others.
+                    num_intersected_planes = -1; // -1 here means the mi is not visible.
+                    break;
+                }
+                else if (dist < bs.radius)
+                {
+                    // Mark that we need to clip against this plane.
+                    clip_against_plane[num_intersected_planes] = j;
+                    ++num_intersected_planes;
+                }
+            }
+
+            // Mark whether the mi passed the broad phase and store the 
+            // intersection data if it passed.
+            if (-1 != num_intersected_planes)
+            {
+                // Copy the mi to the visible mis array. TODO: Is this faster than using pointers??
+                visible_mis[visible_mis_count++] = *mi;
+
+                // Write out for narrow phase to use.
+                // In format: num_planes_intersecting, plane_index_0, plane_index_1, ...
+                intersected_planes[intersected_planes_out_index++] = num_intersected_planes;
+
+
+
+                for (int j = 0; j < num_intersected_planes; ++j)
+                {
+                    intersected_planes[intersected_planes_out_index++] = clip_against_plane[j];
+                }
+            }
+        }
+    }
 
 	frame_data->num_visible_mis = visible_mis_count;
 }
 
-void cull_backfaces(FrameData* frame_data, Scene* scene)
+void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene)
 {
-	MeshInstance* mis = scene->mesh_instances.instances;
 	const MeshBase* mbs = scene->mesh_bases.bases;
 
 	// Determines what faces are facing the camera and prepares
 	// the vertex data for the lighting calculations.
 	const float* vsps = frame_data->view_space_positions;
-	const int* visible_mi_indices = frame_data->visible_mi_indices;
+	MeshInstance* visible_mis = frame_data->visible_mis;
 	const int num_visible_mis = frame_data->num_visible_mis;
 
 	int* front_face_indices = frame_data->front_face_indices;
 	int front_face_out = 0;
 
+
+    
+
 	for (int i = 0; i < num_visible_mis; ++i)
 	{
 		int front_faces = 0;
 
-		MeshInstance* mi = &mis[visible_mi_indices[i]];
+		MeshInstance* mi = &visible_mis[i];
 		const MeshBase* mb = &mbs[mi->mb_id];
 
 		const int* position_indices = mb->position_indices;
@@ -1386,7 +1401,7 @@ void cull_backfaces(FrameData* frame_data, Scene* scene)
 	}
 }
 
-void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
+void light_front_faces(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const V3 ambient)
 {
 	/*
 	
@@ -1430,10 +1445,9 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 	*/
 
 	// Input
-	const Lights* lights = &scene->lights;
-    const ComponentList* point_lights_list = &scene->lights.point_lights;
-    const PointLight* point_lights = (PointLight*)point_lights_list->elements;
-	const MeshInstance* mis = scene->mesh_instances.instances;
+	//const Lights* lights = &scene->lights;
+    //const ComponentList* point_lights_list = &scene->lights.point_lights;
+    //const PointLight* point_lights = (PointLight*)point_lights_list->elements;
 	const MeshBase* mbs = scene->mesh_bases.bases;
 
 	const int* front_face_indices = frame_data->front_face_indices;
@@ -1441,7 +1455,7 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 	const float* vsns = frame_data->view_space_normals;
 	const float* point_light_vsps = frame_data->point_lights_view_space_positions;
 
-	const int* visible_mi_indices = frame_data->visible_mi_indices;
+	const MeshInstance* mis = frame_data->visible_mis;
 	const int num_visible_mis = frame_data->num_visible_mis;
 	
 	// Output
@@ -1452,7 +1466,7 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 
 	for (int i = 0; i < num_visible_mis; ++i)
 	{
-		const MeshInstance* mi = &mis[visible_mi_indices[i]];
+		const MeshInstance* mi = &mis[i];
 		const MeshBase* mb = &mbs[mi->mb_id];
 
 		const float* vertex_albedos = mi->vertex_alebdos;
@@ -1489,6 +1503,7 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
                 const V3 albedo = v3_read(vertex_albedos + (j * STRIDE_FACE_VERTICES + vi) * STRIDE_COLOUR);
 				V3 diffuse = { 0 };
                 
+                /*
 				for (int pl_index = 0; pl_index < point_lights_list->count; ++pl_index)
 				{
 					const PointLight* pl = &point_lights[pl_index];
@@ -1503,7 +1518,7 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 					const V3 colour = v3_mul_f(pl->colour, df);
 
 					v3_add_eq_v3(&diffuse, colour);
-				}
+				}*/
 
 				// TODO: shadow casting lights etc.
 
@@ -1542,16 +1557,15 @@ void light_front_faces(FrameData* frame_data, Scene* scene, const V3 ambient)
 	}
 }
 
-void prepare_for_clipping(FrameData* frame_data, Scene* scene)
+void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene)
 {
 	// Input
-	MeshInstance* mis = scene->mesh_instances.instances;
+	MeshInstance* mis = frame_data->visible_mis;
 	MeshBase* mbs = scene->mesh_bases.bases;
 	
 	const int* front_face_indices = frame_data->front_face_indices;
 	const float* vsps = frame_data->view_space_positions;
 
-	const int* visible_mi_indices = frame_data->visible_mi_indices;
 	const int num_visible_mis = frame_data->num_visible_mis;
 
 	const float* vertex_lighting = frame_data->vertex_lighting;
@@ -1565,7 +1579,7 @@ void prepare_for_clipping(FrameData* frame_data, Scene* scene)
 
 	for (int i = 0; i < num_visible_mis; ++i)
 	{
-		const MeshInstance* mi = &mis[visible_mi_indices[i]];
+		const MeshInstance* mi = &mis[i];
 		const MeshBase* mb = &mbs[mi->mb_id];
 
 		const int* position_indices = mb->position_indices;
@@ -1641,16 +1655,16 @@ void prepare_for_clipping(FrameData* frame_data, Scene* scene)
 }
 
 void clip_project_and_draw(
+    System* render_system,
 	Renderer* renderer,
 	RenderTarget* rt,
 	FrameData* frame_data,
 	Scene* scene)
 {
-	const MeshInstance* mis = scene->mesh_instances.instances;
+	const MeshInstance* mis = frame_data->visible_mis;
 	const MeshBase* mbs = scene->mesh_bases.bases;
 
 	// Input
-	const int* visible_mi_indices = frame_data->visible_mi_indices;
 	const int num_visible_mis = frame_data->num_visible_mis;
 
 	const uint8_t* intersected_planes = frame_data->intersected_planes;
@@ -1665,7 +1679,7 @@ void clip_project_and_draw(
 
 	for (int i = 0; i < num_visible_mis; ++i)
 	{
-		const MeshInstance* mi = &mis[visible_mi_indices[i]];
+		const MeshInstance* mi = &mis[i];
 		const MeshBase* mb = &mbs[mi->mb_id];
 
 		const uint8_t num_planes_to_clip_against = intersected_planes[intersected_planes_index++];
@@ -2036,39 +2050,57 @@ void project_and_draw_clipped(
 }
 
 void render(
+    ECS* ecs,
+    System* render_system,
 	Renderer* renderer,
 	Scene* scene,
 	const Resources* resources,
 	const M4 view_matrix)
 {
+    // TODO: This render function could include a light and render system honestly. easily combining both.
+
+
+    /*
+    
+    TODO: How do we refactor this to a system????
+
+    after converting model to view space we have them in buffers. not sure how this part works tbf.
+
+
+
+    */
+
+    // TODO: Essentially need to update the concept of a scene. 
+
+
 	// TODO: when do we resize the framedata? was annoying doing it in the 
 	// loading of instances also just seemed wrong..
 	
-	frame_data_init(&renderer->frame_data, scene);
+	frame_data_init(ecs, render_system, &renderer->frame_data, scene);
 
 	// Convert positions and normals from object space to view space.
 	// Also update mesh instance's bounding spheres.
 	// TODO: Rename object space? or model space??/
-	model_to_view_space(&renderer->frame_data, 
+	model_to_view_space(ecs, render_system, &renderer->frame_data, 
 		scene, view_matrix);
 
 	// Convert light positions from world space to view space.
-	lights_world_to_view_space(&renderer->frame_data,
+	lights_world_to_view_space(ecs, render_system, &renderer->frame_data,
 		scene, view_matrix);
 
-	broad_phase_frustum_culling(&renderer->frame_data, scene, &renderer->settings.view_frustum);
+	broad_phase_frustum_culling(ecs, render_system, &renderer->frame_data, scene, &renderer->settings.view_frustum);
 
-	cull_backfaces(&renderer->frame_data, scene);
+	cull_backfaces(ecs, render_system, &renderer->frame_data, scene);
 
-	light_front_faces(&renderer->frame_data, scene, scene->ambient_light);
+	light_front_faces(ecs, render_system, &renderer->frame_data, scene, scene->ambient_light);
 
-	prepare_for_clipping(&renderer->frame_data, scene);
+	prepare_for_clipping(ecs, render_system, &renderer->frame_data, scene);
 
-	clip_project_and_draw(renderer, &renderer->target, &renderer->frame_data, scene);
+	clip_project_and_draw(render_system, renderer, &renderer->target, &renderer->frame_data, scene);
 
     // DEBUGGING
-    debug_draw_point_lights(&renderer->target.canvas, &renderer->frame_data,
-        &renderer->settings, &scene->lights.point_lights);
+    //debug_draw_point_lights(render_system, &renderer->target.canvas, &renderer->frame_data,
+    //    &renderer->settings, &scene->lights.point_lights);
 
    // debug_draw_normals(&renderer->target.canvas, &renderer->frame_data, &renderer->settings, scene);
 }

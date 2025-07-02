@@ -25,13 +25,13 @@ add_library (core STATIC
     scene.h
     strides.h
     window.h
+	components.h
 )
 
 target_link_libraries(core 
     PUBLIC
-        cecs::cecs
-    INTERFACE 
-        common)
+        cecs::cecs common maths utils
+)
 
 target_include_directories(core 
     PRIVATE

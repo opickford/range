@@ -6,8 +6,10 @@
 #include "scene.h"
 
 #include "window.h"
-#include "ui/ui.h"
 #include "resources.h"
+#include "components.h"
+
+#include "ui/ui.h"
 
 // TODO: These need to be refactored.
 #include "renderer/renderer.h"
@@ -20,6 +22,8 @@
 typedef struct
 {
     ECS ecs;
+
+    SystemID render_system_id;
 
 	// Engine components.
 	Window window;
@@ -50,19 +54,22 @@ void engine_run(Engine* engine);
 
 void engine_destroy(Engine* engine);
 
-// TODO: Some sort of input handler? Fine here for now.
-void engine_handle_input(Engine* engine, float dt);
-
-// Window events.
-void engine_on_resize(void* ctx);
-
-void engine_process_keyup(void* ctx, WPARAM wParam);
-
-// Engine events that the game should define.
+// Public engine events that the game should define.
 void engine_on_init(Engine* engine);
 
 void engine_on_update(Engine* engine, float dt);
 
 void engine_on_keyup(Engine* engine, WPARAM wParam);
+
+// Internal functions
+
+
+// TODO: Some sort of input handler? Fine here for now.
+void engine_handle_input(Engine* engine, float dt);
+
+// Private window events.
+static void engine_on_resize(void* ctx);
+
+static void engine_process_keyup(void* ctx, WPARAM wParam);
 
 #endif

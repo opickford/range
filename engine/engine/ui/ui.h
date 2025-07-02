@@ -1,10 +1,11 @@
 #ifndef UI_H
 #define UI_H
 
-#include "canvas.h"
 
 #include "font.h"
 #include "text.h"
+
+#include "core/canvas.h"
 
 #include "common/status.h"
 

@@ -23,12 +23,10 @@ add_library(renderer STATIC
 
 target_link_libraries(renderer 
     PUBLIC
-        cecs::cecs
-    INTERFACE 
-        core maths utils)
+        cecs::cecs core maths utils)
 
 target_include_directories(renderer 
-    PRIVATE
+    PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
         $<INSTALL_INTERFACE:include>
