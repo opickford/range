@@ -1237,29 +1237,37 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
     }	
 }
 
-void lights_world_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, const Scene* scene, const M4 view_matrix)
+void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* frame_data, const Scene* scene, const M4 view_matrix)
 {
 	// This could be made more efficient by having an array of input world
 	// space positions, however, we will never be able to support enough lights
 	// to make this worthwhile (i think).
 
-    /*
-    const ComponentList* point_lights_list = &scene->lights.point_lights;
-    const PointLight* point_lights = (PointLight*)point_lights_list->elements;
 
-	// Transform the world space light positions.
 	float* view_space_positions = frame_data->point_lights_view_space_positions;
 
-	for (int i = 0; i < point_lights_list->count; ++i)
-	{
-		V4 v_view_space;
-		m4_mul_v4(view_matrix, v3_to_v4(point_lights[i].position, 1.f), 
-			&v_view_space);
+    int vsps_offset = 0;
 
-		// There is no need to save the w component as it is always 1 until 
-		// after projection.
-		v4_write_xyz(view_space_positions + i * STRIDE_POSITION, v_view_space);
-	}*/
+    for (int si = 0; si < lighting_system->num_archetypes; ++si)
+    {
+        const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
+        Archetype* archetype = &ecs->archetypes[archetype_id];
+
+        int pls_i = Archetype_find_component_list(archetype, COMPONENT_PointLight);
+        PointLight* pls = archetype->component_lists[pls_i];
+
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {
+            V4 v_view_space;
+            m4_mul_v4(view_matrix, v3_to_v4(pls[i].position, 1.f),
+                &v_view_space);
+
+            // There is no need to save the w component as it is always 1 until 
+            // after projection.
+            v4_write_xyz(view_space_positions + vsps_offset, v_view_space);
+            vsps_offset += STRIDE_POSITION;
+        }
+    }
 }
 
 void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum)
@@ -1401,7 +1409,13 @@ void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scen
 	}
 }
 
-void light_front_faces(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const V3 ambient)
+void light_front_faces(
+    ECS* ecs, 
+    System* render_system, 
+    System* lighting_system, 
+    FrameData* frame_data, 
+    Scene* scene, 
+    const V3 ambient)
 {
 	/*
 	
@@ -1503,6 +1517,34 @@ void light_front_faces(ECS* ecs, System* render_system, FrameData* frame_data, S
                 const V3 albedo = v3_read(vertex_albedos + (j * STRIDE_FACE_VERTICES + vi) * STRIDE_COLOUR);
 				V3 diffuse = { 0 };
                 
+                int pl_vsps_offset = 0;
+                for (int si = 0; si < lighting_system->num_archetypes; ++si)
+                {
+                    const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
+                    Archetype* archetype = &ecs->archetypes[archetype_id];
+
+                    int pls_i = Archetype_find_component_list(archetype, COMPONENT_PointLight);
+                    PointLight* pls = archetype->component_lists[pls_i];
+
+                    for (int i = 0; i < archetype->entity_count; ++i)
+                    {
+                        const V3 pl_vsp = v3_read(point_light_vsps + pl_vsps_offset);
+                        pl_vsps_offset += STRIDE_POSITION;
+
+                        const PointLight* pl = &pls[i];
+
+                        const float a = 0.1f / pl->strength;
+                        const float b = 0.01f / pl->strength;
+
+                        const float df = calculate_diffuse_factor(point, normal, pl_vsp, a, b);
+
+                        const V3 colour = v3_mul_f(pl->colour, df);
+
+                        v3_add_eq_v3(&diffuse, colour);
+                    }
+                }
+
+
                 /*
 				for (int pl_index = 0; pl_index < point_lights_list->count; ++pl_index)
 				{
@@ -2052,31 +2094,19 @@ void project_and_draw_clipped(
 void render(
     ECS* ecs,
     System* render_system,
+    System* lighting_system,
 	Renderer* renderer,
 	Scene* scene,
 	const Resources* resources,
 	const M4 view_matrix)
 {
-    // TODO: This render function could include a light and render system honestly. easily combining both.
-
-
-    /*
-    
-    TODO: How do we refactor this to a system????
-
-    after converting model to view space we have them in buffers. not sure how this part works tbf.
-
-
-
-    */
-
-    // TODO: Essentially need to update the concept of a scene. 
-
+    // This render function is using the render and lighting 'systems' honestly
+    // they're more like views at this point.
 
 	// TODO: when do we resize the framedata? was annoying doing it in the 
 	// loading of instances also just seemed wrong..
 	
-	frame_data_init(ecs, render_system, &renderer->frame_data, scene);
+	frame_data_init(ecs, render_system, lighting_system, &renderer->frame_data, scene);
 
 	// Convert positions and normals from object space to view space.
 	// Also update mesh instance's bounding spheres.
@@ -2085,14 +2115,14 @@ void render(
 		scene, view_matrix);
 
 	// Convert light positions from world space to view space.
-	lights_world_to_view_space(ecs, render_system, &renderer->frame_data,
+	lights_world_to_view_space(ecs, lighting_system, &renderer->frame_data,
 		scene, view_matrix);
 
 	broad_phase_frustum_culling(ecs, render_system, &renderer->frame_data, scene, &renderer->settings.view_frustum);
 
 	cull_backfaces(ecs, render_system, &renderer->frame_data, scene);
 
-	light_front_faces(ecs, render_system, &renderer->frame_data, scene, scene->ambient_light);
+	light_front_faces(ecs, render_system, lighting_system, &renderer->frame_data, scene, scene->ambient_light);
 
 	prepare_for_clipping(ecs, render_system, &renderer->frame_data, scene);
 

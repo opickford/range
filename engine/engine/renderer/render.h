@@ -78,15 +78,31 @@ void project_and_draw_clipped(
 	FrameData* frame_data,
 	const MeshInstance* mi);
 
-void render(ECS* ecs, System* render_system, Renderer* renderer, Scene* scene, const Resources* resources, const M4 view_matrix);
+void render(
+    ECS* ecs, 
+    System* render_system, 
+    System* lighting_system,
+    Renderer* renderer, 
+    Scene* scene, 
+    const Resources* resources, 
+    const M4 view_matrix);
 
 // REFACTORED PIPELINE
 
 void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const M4 view_matrix);
-void lights_world_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, const Scene* scene, const M4 view_matrix);
+void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* frame_data, const Scene* scene, const M4 view_matrix);
 void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum);
 void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene);
-void light_front_faces(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const V3 ambient);
+
+void light_front_faces(
+    ECS* ecs, 
+    System* render_system, 
+    System* lighting_system, 
+    FrameData* frame_data, 
+    Scene* scene, 
+    const V3 ambient
+);
+
 void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene);
 void clip_project_and_draw(
     System* render_system,

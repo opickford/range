@@ -65,7 +65,12 @@ typedef struct
 
 } FrameData;
 
-Status frame_data_init(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene);
+Status frame_data_init(
+    ECS* ecs, 
+    System* render_system, 
+    System* lighting_system, 
+    FrameData* frame_data, 
+    Scene* scene);
 
 
 void frame_data_destroy(FrameData* frame_data);

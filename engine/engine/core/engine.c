@@ -18,18 +18,35 @@
 // Internal helpers.
 static void Engine_setup_ecs(Engine* engine)
 {
+    /*
+    
+    TODO: Honestly my systems at the moment are more just collections of 
+    archetypes that match their bitset, the 'system' is not really right?
+    it's kinda more of a view of the entities with certain components?
+    
+    */
+
     ECS* ecs = &engine->ecs;
     ECS_init(ecs);
 
     // Setup core components, MeshInstance etc.
     CoreComponents_init(ecs);
 
-    // Setup render system.
-    engine->render_system_id = ECS_register_system(ecs);
-    System* system = &engine->ecs.systems[engine->render_system_id];
-    system->components_bitset = COMPONENT_MeshInstance;
+    // TODO: How does the render system also process lights.
 
+    // Setup systems.
+    {
+        engine->render_system_id = ECS_register_system(ecs);
+        System* system = &engine->ecs.systems[engine->render_system_id];
+        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance);
+    }
+    
+    {
+        engine->lighting_system_id = ECS_register_system(ecs);
+        System* system = &engine->ecs.systems[engine->lighting_system_id];
+        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PointLight);
 
+    }
 }
 
 Status engine_init(Engine* engine, int window_width, int window_height)
@@ -81,7 +98,6 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     
     // Initialise components and systems.
     Engine_setup_ecs(engine);
-
 
     log_info("Fired engine_on_init event.");
     engine_on_init(engine);
@@ -168,7 +184,13 @@ void engine_run(Engine* engine)
             // TODO: How will this work as a system?
 
             
-            render(&engine->ecs, &engine->ecs.systems[engine->render_system_id], &engine->renderer, &engine->scenes[engine->current_scene_id], &engine->resources, view_matrix);
+            render(&engine->ecs, 
+                &engine->ecs.systems[engine->render_system_id], 
+                &engine->ecs.systems[engine->lighting_system_id], 
+                &engine->renderer, 
+                &engine->scenes[engine->current_scene_id], 
+                &engine->resources,
+                view_matrix);
         }
         snprintf(render_str, sizeof(render_str), "Render: %d", timer_get_elapsed(&t));
          

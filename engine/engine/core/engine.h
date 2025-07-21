@@ -23,7 +23,9 @@ typedef struct
 {
     ECS ecs;
 
+    // TODO: Defining these in the engine struct feels awful, should be a static?
     SystemID render_system_id;
+    SystemID lighting_system_id;
 
 	// Engine components.
 	Window window;
@@ -32,6 +34,7 @@ typedef struct
 	Resources resources; // Works fine for now, potentially something to refactor.
 
 	// Scene data. - I don't think the engine needs to manage multiple.
+    // TODO: Only manage one scene.
 	Scene scenes[MAX_SCENES];
 	int scenes_count;
 	int current_scene_id;

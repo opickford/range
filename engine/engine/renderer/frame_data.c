@@ -13,7 +13,12 @@
 
 #include <Windows.h> // max - TODO: Somewhere else?
 
-Status frame_data_init(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene)
+Status frame_data_init(
+    ECS* ecs, 
+    System* render_system,
+    System* lighting_system,
+    FrameData* frame_data, 
+    Scene* scene)
 {
 	// TODO: A flag to determine if the scene has changed and therefore we 
 	//		 need to reinit the frame data buffer.
@@ -40,7 +45,7 @@ Status frame_data_init(ECS* ecs, System* render_system, FrameData* frame_data, S
         MeshInstance* mis = archetype->component_lists[mis_i];
 
         float* vsps = frame_data->view_space_positions;
-        BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+
         int vsps_offset = 0;
 
         for (int i = 0; i < archetype->entity_count; ++i)
@@ -65,8 +70,6 @@ Status frame_data_init(ECS* ecs, System* render_system, FrameData* frame_data, S
 	
 	// TODO: Fails in release?? heap corruption, so potentially from before?
 	resize_float_array(&frame_data->view_space_normals, total_normals * STRIDE_NORMAL);
-
-	//resize_float_array(&frame_data->point_lights_view_space_positions, scene->lights.point_lights.count * STRIDE_POSITION);
 
 	// Broad Phase Frustum Culling
 	resize_array(MeshInstance, frame_data->visible_mis, mis_count);
@@ -96,6 +99,23 @@ Status frame_data_init(ECS* ecs, System* render_system, FrameData* frame_data, S
     resize_float_array(&frame_data->temp_clipped_faces0, components_per_vertex * max_tris_at_once * STRIDE_FACE_VERTICES);
     resize_float_array(&frame_data->temp_clipped_faces1, components_per_vertex * max_tris_at_once * STRIDE_FACE_VERTICES);
 
+
+
+    // Lighting system
+    // TODO: I feel like a lot of this could be done with a define or a function
+    int num_point_lights = 0;
+    for (int si = 0; si < lighting_system->num_archetypes; ++si)
+    {
+        const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
+        Archetype* archetype = &ecs->archetypes[archetype_id];
+
+
+        // TODO: If we introduce other lights this logic needs updating.
+        num_point_lights += archetype->entity_count;
+    }
+
+    resize_float_array(&frame_data->point_lights_view_space_positions, 
+        num_point_lights * STRIDE_POSITION);
 
 	return STATUS_OK;
 }

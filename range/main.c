@@ -29,13 +29,17 @@ void create_map(Engine* engine)
     engine->current_scene_id = 0;
     ++engine->scenes_count;
     
+    // Load some mesh bases.
     sphere_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[sphere_base], "C:/Users/olive/source/repos/range/res/models/sphere.obj");
 
     cube_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[cube_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
 
+    // Create an entity
     EntityID cube_entity = ECS_create_entity(&engine->ecs);
+
+    // Add a MeshInstance component.
     ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
     MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
     MeshInstance_init(mi);
@@ -165,6 +169,7 @@ void engine_on_update(Engine* engine, float dt)
 
 void engine_on_keyup(Engine* engine, WPARAM wParam)
 {
+
     switch (wParam)
     {
     case VK_F1:
@@ -182,11 +187,23 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
             random_float(),
             random_float()
         };
-        /*
+
+
+
+        
         const Camera* camera = &engine->renderer.camera;
 
         const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
+        EntityID cube_entity = ECS_create_entity(&engine->ecs);
+        ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+        MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+        MeshInstance_init(mi);
+        MeshInstance_set_base(mi, &scene->mesh_bases.bases[sphere_base]);
+        MeshInstance_set_albedo(mi, &scene->mesh_bases.bases[sphere_base], colour);
+        mi->position = pos;
+
+        /*
         MeshInstanceID inst = mesh_instances_add(&scene->mesh_instances);
         scene_MeshInstance_set_base(scene, inst, mb_id);
         scene_MeshInstance_set_albedo(scene, inst, colour);
@@ -201,6 +218,8 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         //g_draw_normals = !g_draw_normals;
 
         Scene* scene = &engine->scenes[engine->current_scene_id];
+        
+        
         /*
         if (scene->mesh_instances.count > 0)
             mesh_instances_remove(&scene->mesh_instances,
@@ -216,9 +235,20 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
             random_float(),
             random_float()
         };
-        /*
-        Scene* scene = &engine->scenes[engine->current_scene_id];
+        
+        // TODO: Should camera be an entity component or entity or leave it? Not sure.
+        //       Fine for now.
         Camera* camera = &engine->renderer.camera;
+        
+        const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
+
+        EntityID e = ECS_create_entity(&engine->ecs);
+        ECS_add_component(&engine->ecs, e, COMPONENT_PointLight);
+        PointLight* pl = ECS_get_component(&engine->ecs, e, COMPONENT_PointLight);
+        pl->position = pos;
+        pl->colour = colour;
+
+        /*
         PointLightID light = PointLights_add(&scene->lights.point_lights);
 
         // TODO: I'm realy not sure about this 2 levels of indirection, but is there
