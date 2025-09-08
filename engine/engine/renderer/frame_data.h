@@ -16,10 +16,6 @@
 
 // Transient buffers used during the render pipeline per frame.
 
-
-// TODO: Allocate for all these buffers.
-// TODO: realloc() reallocs even if the size hasn't changed.
-
 typedef struct
 {
 	// Transform Stage
@@ -31,7 +27,6 @@ typedef struct
 
 	// Broad Phase Frustum Culling
     Vector(MeshInstance) visible_mis;
-	//int* visible_mi_indices;
 	int num_visible_mis;
 	Vector(uint8_t) intersected_planes;
 
@@ -51,10 +46,6 @@ typedef struct
 	*/
 	
     Vector(float) vertex_lighting;
-
-
-
-
 
 	// Clipping
     Vector(float) faces_to_clip;  // Input to clip.

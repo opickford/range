@@ -2115,9 +2115,6 @@ void render(
 
     // TODO: I realy don't like passing the ecs and systems, feels very messy.
     //       Not sure though, doesn't matter loads. 
-
-	// TODO: when do we resize the framedata? was annoying doing it in the 
-	// loading of instances also just seemed wrong..
 	
 	frame_data_init(ecs, render_system, lighting_system, &renderer->frame_data, scene);
 

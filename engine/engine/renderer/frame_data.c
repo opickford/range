@@ -24,17 +24,8 @@ Status frame_data_init(
     //       we don't have enough memory, honestly no clue how we could
     //       get around this.
 
-    // TODO: IMPORTANT: THIS IS CAUSING ISSUES, REALLOC SEEMS TO RECALL EACH
-    //       FRAME SO I NEED TO IMPLEMENT SOME SORT OF VECTOR.
-
-
 	// TODO: A flag to determine if the scene has changed and therefore we 
 	//		 need to reinit the frame data buffer.
-
-    // TODO: These will be resizing buffers down as well, do we want that??
-    //       probably not, but then we need arenas.
-
-    // TODO: How do i get the meshinstances count
 
     // TODO: Do we want to cache this data? Could be useful for debugging.
 
@@ -112,7 +103,6 @@ Status frame_data_init(
     {
         const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
         Archetype* archetype = &ecs->archetypes[archetype_id];
-
 
         // TODO: If we introduce other lights this logic needs updating.
         num_point_lights += archetype->entity_count;

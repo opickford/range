@@ -14,7 +14,6 @@ MeshBaseID sphere_base;
 MeshBaseID cube_base;
 
 // TODO: Switch to C compiler.
-// TODO: All of my code is C++ style C, why... Not good.
 
 void create_map(Engine* engine)
 {

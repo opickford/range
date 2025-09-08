@@ -16,7 +16,8 @@ This vector implementation wraps a raw data array and a capacity.
 
 // TODO: Init and Destroy functions?
 
-// Generates an anonymous struct, 
+// Define a vector representation of a given type.
+// Generates an anonymous struct to represent a vector for a type.
 #define Vector(T) struct { T* data; size_t capacity; }
 
 // Reserves bytes for the given capacity.
@@ -45,6 +46,7 @@ static void reserve(
         return;
     }
 
+    // Update the given vector struct componnents.
     *data = temp;
     *old_capacity = new_capacity;
  }
