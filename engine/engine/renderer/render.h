@@ -30,7 +30,14 @@
 // SECTION: Debug tools.
 // TODO: Refactor and comments etc.
 
-//void debug_draw_point_lights(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const ComponentList* point_lights);
+void debug_draw_point_lights(
+    Canvas* canvas,
+    const ECS* ecs,
+    const System* lighting_system,
+    const FrameData* frame_data,
+    const RenderSettings* settings
+);
+
 void debug_draw_view_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, int colour);
 void debug_draw_normals(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const Scene* scene);
 /*void debug_draw_point_lights(Canvas* canvas, const RenderSettings* settings, PointLights* point_lights);

@@ -137,6 +137,7 @@ void engine_run(Engine* engine)
     char ui_draw_str[64] = "";
     char display_str[64] = "";
     char update_str[64] = "";
+    char vertices_str[64] = "";
     
     int y = 10;
     int h = 30;
@@ -152,6 +153,7 @@ void engine_run(Engine* engine)
     engine->ui.text[engine->ui.text_count++] = text_create(ui_draw_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, 3);
     engine->ui.text[engine->ui.text_count++] = text_create(display_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, 3);
     engine->ui.text[engine->ui.text_count++] = text_create(update_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, 3);
+    engine->ui.text[engine->ui.text_count++] = text_create(vertices_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, 3);
 
     engine->running = 1;
     while (engine->running)
@@ -233,6 +235,31 @@ void engine_run(Engine* engine)
 
         snprintf(dir_str, sizeof(dir_str), "DIR: %.2f %.2f %.2f", engine->renderer.camera.direction.x, engine->renderer.camera.direction.y, engine->renderer.camera.direction.z);
         snprintf(pos_str, sizeof(pos_str), "POS: %.2f %.2f %.2f", engine->renderer.camera.position.x, engine->renderer.camera.position.y, engine->renderer.camera.position.z);
+        
+        int total_faces = 0;
+        int mis_count = 0;
+        const ECS* ecs = &engine->ecs;
+        const System* render_system = &ecs->systems[engine->render_system_id];
+        for (int si = 0; si < render_system->num_archetypes; ++si)
+        {
+            const ArchetypeID archetype_id = render_system->archetype_ids[si];
+            Archetype* archetype = &ecs->archetypes[archetype_id];
+
+            int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
+            MeshInstance* mis = archetype->component_lists[mis_i];
+
+            for (int i = 0; i < archetype->entity_count; ++i)
+            {
+                MeshInstance* mi = &mis[i];
+
+                const Scene* scene = &engine->scenes[engine->current_scene_id];
+                const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
+                total_faces += mb->num_faces;
+                ++mis_count;
+            }
+        }
+
+        snprintf(vertices_str, sizeof(vertices_str), "VERTICES: %d", total_faces * 3);
     }
 }
 

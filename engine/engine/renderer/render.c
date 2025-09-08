@@ -28,47 +28,57 @@
 // TODO: Think about my DOD. Should use structs rather than float* because will compile to the same thing.
 // TODO: Something important would be to make the buffer accesses easier.
 
-/*
-void debug_draw_point_lights(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const ComponentList* point_lights)
+void debug_draw_point_lights(
+    Canvas* canvas, 
+    const ECS* ecs,
+    const System* lighting_system,
+    const FrameData* frame_data, 
+    const RenderSettings* settings
+    )
 {
-    const float* vsps = frame_data->point_lights_view_space_positions;
+    const float* vsps = frame_data->point_lights_view_space_positions.data;
+    int vsps_offset = 0;
 
-	// Debug draw point light icons as rects.
-	for (int i = 0; i < point_lights->count; ++i)
-	{
-		const int idx_vsp = i * STRIDE_POSITION;
-		V4 p = {
-			vsps[idx_vsp],
-			vsps[idx_vsp + 1],
-			vsps[idx_vsp + 2],
-			1.f
-		};
+    // Debug draw point light icons as rects.
+    for (int si = 0; si < lighting_system->num_archetypes; ++si)
+    {
+        const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
+        Archetype* archetype = &ecs->archetypes[archetype_id];
 
-		// Only draw if depth is visibile in clip space.
-		if (p.z > -settings->near_plane)
-		{
-			continue;
-		}
+        int pls_i = Archetype_find_component_list(archetype, COMPONENT_PointLight);
+        PointLight* pls = archetype->component_lists[pls_i];
 
-		V4 projected;
-		project(canvas, settings->projection_matrix, p, &projected);
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {
+            V4 p = v3_read_to_v4(vsps + vsps_offset, 1.f);
+            vsps_offset += STRIDE_POSITION;
 
-        V3 colour_v3 = PointLights_get(point_lights)[i].colour;
+            // Only draw if depth is visibile in clip space.
+            if (p.z > -settings->near_plane)
+            {
+                continue;
+            }
 
-		int colour = float_rgb_to_int(colour_v3.x, colour_v3.y, colour_v3.z);
+            V4 projected;
+            project(canvas, settings->projection_matrix, p, &projected);
 
-		// Scale the radius so it's at a maximum of 10.
-		const float radius = 10.f * (-settings->near_plane / p.z); // Square radius nice.
+            V3 colour_v3 = pls[i].colour;
 
-		int x0 = (int)(projected.x - radius);
-		int x1 = (int)(projected.x + radius);
+            int colour = float_rgb_to_int(colour_v3.x, colour_v3.y, colour_v3.z);
 
-		int y0 = (int)(projected.y - radius);
-		int y1 = (int)(projected.y + radius);
+            // Scale the radius so it's at a maximum of 10.
+            const float radius = 10.f * (-settings->near_plane / p.z); // Square radius nice.
 
-		draw_rect(canvas, x0, y0, x1, y1, colour);
-	}
-}*/
+            int x0 = (int)(projected.x - radius);
+            int x1 = (int)(projected.x + radius);
+
+            int y0 = (int)(projected.y - radius);
+            int y1 = (int)(projected.y + radius);
+
+            draw_rect(canvas, x0, y0, x1, y1, colour);
+        }
+    }
+}
 
 void debug_draw_view_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, int colour)
 {
@@ -1111,8 +1121,8 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
         MeshInstance* mis = archetype->component_lists[mis_i];
 
-        float* vsps = frame_data->view_space_positions;
-        BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+        float* vsps = frame_data->view_space_positions.data;
+        BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
         int vsps_offset = 0;
 
         for (int i = 0; i < archetype->entity_count; ++i)
@@ -1163,7 +1173,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         }
 
         // Convert object space normals to view space.
-        float* vsns = frame_data->view_space_normals;
+        float* vsns = frame_data->view_space_normals.data;
         int vsns_offset = 0;
 
         for (int i = 0; i < archetype->entity_count; ++i)
@@ -1203,8 +1213,8 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
             MeshInstance* mi = &mis[i];
 
             // Update the radius of each mesh instance bounding sphere.
-            const float* vsps = frame_data->view_space_positions;
-            BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+            const float* vsps = frame_data->view_space_positions.data;
+            BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
 
             // Only update the bounding sphere if the scale is changed, otherwise
             // we don't need to update it.
@@ -1244,7 +1254,7 @@ void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* fr
 	// to make this worthwhile (i think).
 
 
-	float* view_space_positions = frame_data->point_lights_view_space_positions;
+	float* view_space_positions = frame_data->point_lights_view_space_positions.data;
 
     int vsps_offset = 0;
 
@@ -1275,18 +1285,18 @@ void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* fra
 	// Performs broad phase frustum culling on the models, writes out the planes
 	// that need to be clipped against.
 	
-    MeshInstance* visible_mis = frame_data->visible_mis;
+    MeshInstance* visible_mis = frame_data->visible_mis.data;
 	int visible_mis_count = 0;
-	uint8_t* intersected_planes = frame_data->intersected_planes;
+	uint8_t* intersected_planes = frame_data->intersected_planes.data;
 	int intersected_planes_out_index = 0;
 
-	const BoundingSphere* bounding_spheres = frame_data->view_space_bounding_spheres;
+	const BoundingSphere* bounding_spheres = frame_data->view_space_bounding_spheres.data;
 
 	const int num_planes = view_frustum->planes_count;
 	const Plane* planes = view_frustum->planes;
 
-    float* vsps = frame_data->view_space_positions;
-    BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres;
+    float* vsps = frame_data->view_space_positions.data;
+    BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
     int vsps_offset = 0;
 
     for (int si = 0; si < render_system->num_archetypes; ++si)
@@ -1355,11 +1365,11 @@ void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scen
 
 	// Determines what faces are facing the camera and prepares
 	// the vertex data for the lighting calculations.
-	const float* vsps = frame_data->view_space_positions;
-	MeshInstance* visible_mis = frame_data->visible_mis;
+	const float* vsps = frame_data->view_space_positions.data;
+	MeshInstance* visible_mis = frame_data->visible_mis.data;
 	const int num_visible_mis = frame_data->num_visible_mis;
 
-	int* front_face_indices = frame_data->front_face_indices;
+	int* front_face_indices = frame_data->front_face_indices.data;
 	int front_face_out = 0;
 
 
@@ -1464,17 +1474,17 @@ void light_front_faces(
     //const PointLight* point_lights = (PointLight*)point_lights_list->elements;
 	const MeshBase* mbs = scene->mesh_bases.bases;
 
-	const int* front_face_indices = frame_data->front_face_indices;
-	const float* vsps = frame_data->view_space_positions;
-	const float* vsns = frame_data->view_space_normals;
-	const float* point_light_vsps = frame_data->point_lights_view_space_positions;
+	const int* front_face_indices = frame_data->front_face_indices.data;
+	const float* vsps = frame_data->view_space_positions.data;
+	const float* vsns = frame_data->view_space_normals.data;
+	const float* point_light_vsps = frame_data->point_lights_view_space_positions.data;
 
-	const MeshInstance* mis = frame_data->visible_mis;
+	const MeshInstance* mis = frame_data->visible_mis.data;
 	const int num_visible_mis = frame_data->num_visible_mis;
 	
 	// Output
 	int out_index = 0;
-	float* vertex_lighting = frame_data->vertex_lighting;
+	float* vertex_lighting = frame_data->vertex_lighting.data;
 
 	int front_faces_offset = 0;
 
@@ -1602,19 +1612,19 @@ void light_front_faces(
 void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene)
 {
 	// Input
-	MeshInstance* mis = frame_data->visible_mis;
+	MeshInstance* mis = frame_data->visible_mis.data;
 	MeshBase* mbs = scene->mesh_bases.bases;
 	
-	const int* front_face_indices = frame_data->front_face_indices;
-	const float* vsps = frame_data->view_space_positions;
+	const int* front_face_indices = frame_data->front_face_indices.data;
+	const float* vsps = frame_data->view_space_positions.data;
 
 	const int num_visible_mis = frame_data->num_visible_mis;
 
-	const float* vertex_lighting = frame_data->vertex_lighting;
+	const float* vertex_lighting = frame_data->vertex_lighting.data;
     int vertex_lighting_in = 0;
 
 	// Output
-	float* faces_to_clip = frame_data->faces_to_clip;
+	float* faces_to_clip = frame_data->faces_to_clip.data;
 	int out_index = 0;
 
 	int front_faces_offset = 0;
@@ -1703,18 +1713,18 @@ void clip_project_and_draw(
 	FrameData* frame_data,
 	Scene* scene)
 {
-	const MeshInstance* mis = frame_data->visible_mis;
+	const MeshInstance* mis = frame_data->visible_mis.data;
 	const MeshBase* mbs = scene->mesh_bases.bases;
 
 	// Input
 	const int num_visible_mis = frame_data->num_visible_mis;
 
-	const uint8_t* intersected_planes = frame_data->intersected_planes;
+	const uint8_t* intersected_planes = frame_data->intersected_planes.data;
 	int intersected_planes_index = 0;
 
 	// Output
-	float* faces_to_clip = frame_data->faces_to_clip;
-	float* clipped_faces = frame_data->clipped_faces;
+	float* faces_to_clip = frame_data->faces_to_clip.data;
+	float* clipped_faces = frame_data->clipped_faces.data;
 	int out_index = 0;
 
 	int face_offset = 0;
@@ -1752,8 +1762,8 @@ void clip_project_and_draw(
 			// Partially inside so must clip the vertices against the planes.
 
 			// Initially read from the front_faces buffer.
-			float* temp_clipped_faces_in = frame_data->faces_to_clip;
-			float* temp_clipped_faces_out = frame_data->temp_clipped_faces1;
+			float* temp_clipped_faces_in = frame_data->faces_to_clip.data;
+			float* temp_clipped_faces_out = frame_data->temp_clipped_faces1.data;
 
 			// Store the index to write out to, needs to be defined here so we can
 			// update the clipped_faces_index after writing to the clipped_faces buffer.
@@ -1785,7 +1795,7 @@ void clip_project_and_draw(
 				{
 					// Initially we used the in front faces buffer, after the first iteration 
 					// we have wrote to the out buffer, so that can now be our in buffer.
-					temp_clipped_faces_out = frame_data->temp_clipped_faces0;
+					temp_clipped_faces_out = frame_data->temp_clipped_faces0.data;
 
 					// Now we want to read from the start of the in buffer, 
 					// not the offset into the front faces buffer.
@@ -1796,7 +1806,7 @@ void clip_project_and_draw(
 				if (num_planes_clipped_against == num_planes_to_clip_against - 1)
 				{
 					// On the last plane, we want to write out to the clipped faces.
-					temp_clipped_faces_out = frame_data->clipped_faces;
+					temp_clipped_faces_out = frame_data->clipped_faces.data;
 				}
 
 				// For faces in mesh.
@@ -1855,7 +1865,7 @@ void clip_project_and_draw(
 						// The whole triangle is inside the plane, so copy the face.
 						int index_face = j * VERTEX_COMPONENTS * STRIDE_FACE_VERTICES;
 
-						memcpy(temp_clipped_faces_out + index_out, temp_clipped_faces_in + index_face, VERTEX_COMPONENTS * STRIDE_FACE_VERTICES * sizeof(float));
+						memcpy(temp_clipped_faces_out + index_out, temp_clipped_faces_in + index_face, (VERTEX_COMPONENTS * STRIDE_FACE_VERTICES) * sizeof(float));
 
 						index_out += VERTEX_COMPONENTS * STRIDE_FACE_VERTICES;
 						++temp_visible_faces_count;
@@ -2040,7 +2050,7 @@ void project_and_draw_clipped(
 	// TODO: Hardcoded for now.
 	const int clipped_vertex_components = 6;
 
-	const float* clipped_faces = frame_data->clipped_faces;
+	const float* clipped_faces = frame_data->clipped_faces.data;
 
 	const int num_clipped_faces = frame_data->num_clipped_faces;
 	for (int i = 0; i < num_clipped_faces; ++i)
@@ -2103,6 +2113,9 @@ void render(
     // This render function is using the render and lighting 'systems' honestly
     // they're more like views at this point.
 
+    // TODO: I realy don't like passing the ecs and systems, feels very messy.
+    //       Not sure though, doesn't matter loads. 
+
 	// TODO: when do we resize the framedata? was annoying doing it in the 
 	// loading of instances also just seemed wrong..
 	
@@ -2129,8 +2142,13 @@ void render(
 	clip_project_and_draw(render_system, renderer, &renderer->target, &renderer->frame_data, scene);
 
     // DEBUGGING
-    //debug_draw_point_lights(render_system, &renderer->target.canvas, &renderer->frame_data,
-    //    &renderer->settings, &scene->lights.point_lights);
+    debug_draw_point_lights(
+        &renderer->target.canvas, 
+        ecs,
+        lighting_system,
+        &renderer->frame_data,
+        &renderer->settings
+    );
 
    // debug_draw_normals(&renderer->target.canvas, &renderer->frame_data, &renderer->settings, scene);
 }

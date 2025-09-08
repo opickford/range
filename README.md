@@ -7,8 +7,10 @@ repository and developed separately.
 
 ## Roadmap
 
+TODO: Redo this, priorites etc.
+
 - [x] Basic 3D software rendering
-- [ ] Baked lightmaps
+- [ ] Baked lightmaps 
 - [ ] Basic physics
     - [ ] Player collisions
 

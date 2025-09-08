@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+// TODO: I need some sort of vector implementation, this isn't guaranteed
+//       to NOT REALLOC!
+
+// TODO: Remove this.
+
 Status resize_int_array(int** out_buffer, unsigned int len)
 {
 	// Realloc with size = 0 fails.

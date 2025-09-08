@@ -247,25 +247,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         PointLight* pl = ECS_get_component(&engine->ecs, e, COMPONENT_PointLight);
         pl->position = pos;
         pl->colour = colour;
-
-        /*
-        PointLightID light = PointLights_add(&scene->lights.point_lights);
-
-        // TODO: I'm realy not sure about this 2 levels of indirection, but is there
-        //       a way around it??? Unless I actually update the ids in the 'entity'
-        //       or wherever we're storing it?
-        
-        //       Obviously in this case we could just access via index as count -1.
-        int index = scene->lights.point_lights.id_to_index[light];
-
-        // TODO: Helper for get?
-        PointLight* pl = &PointLights_get(&scene->lights.point_lights)[index];
-
-        point_light_init(pl);
-        pl->position = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
-        pl->colour = (V3){ 1.f, 1.f, 1.f };
         pl->strength = 1.f;
-        */
 
         break;
     }

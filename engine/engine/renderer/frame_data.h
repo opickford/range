@@ -8,33 +8,35 @@
 
 #include "common/status.h"
 
+#include "utils/vector.h"
+
 #include <cecs/ecs.h>
 
 #include <stdint.h>
 
-/*
-A collection of transient buffers used during the render pipeline per frame.
-*/
+// Transient buffers used during the render pipeline per frame.
+
 
 // TODO: Allocate for all these buffers.
+// TODO: realloc() reallocs even if the size hasn't changed.
 
 typedef struct
 {
 	// Transform Stage
-	float* view_space_positions;
-	float* view_space_normals;
-	BoundingSphere* view_space_bounding_spheres; // Used for broad phase frustum culling.
+	Vector(float) view_space_positions;
+    Vector(float) view_space_normals;
+    Vector(BoundingSphere) view_space_bounding_spheres; // Used for broad phase frustum culling.
 
-	float* point_lights_view_space_positions;
+    Vector(float) point_lights_view_space_positions;
 
 	// Broad Phase Frustum Culling
-    MeshInstance* visible_mis;
+    Vector(MeshInstance) visible_mis;
 	//int* visible_mi_indices;
 	int num_visible_mis;
-	uint8_t* intersected_planes;
+	Vector(uint8_t) intersected_planes;
 
 	// Backface Culling Output
-	int* front_face_indices;
+	Vector(int) front_face_indices;
 
 	// Lighting
 	// TODO: Where should the vertex light output be written to?
@@ -48,20 +50,20 @@ typedef struct
 	 just forget about shadows for now mayber.
 	*/
 	
-	float* vertex_lighting;
+    Vector(float) vertex_lighting;
 
 
 
 
 
 	// Clipping
-	float* faces_to_clip;  // Input to clip.
-	float* clipped_faces;  // Clipping output.
+    Vector(float) faces_to_clip;  // Input to clip.
+	Vector(float) clipped_faces;  // Clipping output.
 	int num_clipped_faces; // Number of faces in the output buffer.
 
     // Intermediate buffers for clipping, alternate between per plane.
-    float* temp_clipped_faces0; 
-    float* temp_clipped_faces1;
+    Vector(float) temp_clipped_faces0; 
+    Vector(float) temp_clipped_faces1;
 
 } FrameData;
 
