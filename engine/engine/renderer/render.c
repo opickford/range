@@ -2149,6 +2149,7 @@ void render(
 
    // debug_draw_normals(&renderer->target.canvas, &renderer->frame_data, &renderer->settings, scene);
 }
+
 /*
 void update_depth_maps(Renderer* renderer, const Scene* scene)
 {

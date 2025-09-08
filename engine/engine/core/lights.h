@@ -19,10 +19,11 @@ a red colour.
 
 */
 
+// TODO: Should probably be split into different fiels.
+
 // TODO: Crefactor to component.
 
 typedef int PointLightID;
-typedef int ShadowCastingPointLightID;
 
 typedef struct
 {
@@ -32,6 +33,9 @@ typedef struct
 
 } PointLight;
 
+Status PointLight_init(PointLight* light);
+
+typedef int ShadowCastingPointLightID;
 
 typedef struct
 {
@@ -43,13 +47,7 @@ typedef struct
 
 } ShadowCastingPointLight;
 
-
-// I think in terms of API for example, when creating shadow casting lights,
-// we just want the user to call this, and this can create the shadow map?
-//Status point_lights_add(PointLights* point_lights, PointLight point_light);
-//Status point_lights_add_shadow_casting(PointLights* point_lights, ShadowCastingPointLight point_light);
-
-Status point_light_init(PointLight* light);
+Status ShadowCastingPointLight_init(ShadowCastingPointLight* light);
 
 
 #endif

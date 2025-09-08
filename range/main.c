@@ -84,10 +84,6 @@ void create_map(Engine* engine)
 
     // TODO: Should the camera be part of the scene??
     engine->renderer.camera.position = (V3) { 0, 0, 10.f };
-    
-    // TODO: Also this should just be done by a flag so at the start of the render,
-    //       the buffers are resized. Or even we check each time.
-    //render_buffers_resize(&engine->renderer.buffers);
 }
 
 void engine_on_init(Engine* engine)
