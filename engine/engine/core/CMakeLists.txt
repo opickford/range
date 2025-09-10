@@ -20,7 +20,6 @@ add_library (core STATIC
     lights.h
     mesh_base.h
     mesh_instance.h
-    models.h
     resources.h
     scene.h
     strides.h

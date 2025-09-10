@@ -71,7 +71,7 @@ inline void render_target_clear(RenderTarget* rt, uint32_t bg_colour)
 {
     const int length = rt->canvas.width * rt->canvas.height;
 
-    uint32_t* canvas_ptr = rt->canvas.pixels;
+    uint32_t* canvas_ptr = rt->canvas.pixels.data;
     float* depth_buffer_ptr = rt->depth_buffer;
 
     // Splitting these loops is much faster, guessing because of cache.

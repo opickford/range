@@ -72,6 +72,9 @@ void depth_buffer_fill(DepthBuffer* depth_buffer, float depth)
 
 void depth_buffer_draw(const DepthBuffer* source, Canvas* target, int x_offset, int y_offset)
 {
+    // TODO: What is this function????
+    int* data = target->pixels.data;
+
 	for (int y = 0; y < source->height; ++y)
 	{
 		for (int x = 0; x < source->height; ++x)
@@ -79,7 +82,7 @@ void depth_buffer_draw(const DepthBuffer* source, Canvas* target, int x_offset, 
 			float depth = 1-source->data[y * source->width + x];
 			int colour = float_rgb_to_int(depth, depth, depth);
 
-			target->pixels[(y + y_offset) * target->width + x + x_offset] = colour;
+			data[(y + y_offset) * target->width + x + x_offset] = colour;
 		}
 	}
 }

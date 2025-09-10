@@ -3,10 +3,13 @@
 
 #include "common/status.h"
 
+#include "utils/vector.h"
+
 #include <stdint.h>
 
 typedef struct {
-	float* data; // TODO: Should texture be uint32_t like Canvas again? And we can still access each component?
+	//float* data; // TODO: Should texture be uint32_t like Canvas again? And we can still access each component?
+    Vector(float) pixels;
 	int width;
 	int height;
 

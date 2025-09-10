@@ -10,12 +10,14 @@ void draw_line(Canvas* canvas, int x0, int y0, int x1, int y1, int colour)
 	int sy = y0 < y1 ? 1 : -1;
 	int error = dx + dy;
 
+    int* pixels = canvas->pixels.data;
+
 	while (1)
 	{
 		if (x0 > -1 && x0 < canvas->width - 1 && y0 > -1 && y0 < canvas->height - 1)
 		{
 			int pos = y0 * canvas->width + x0;
-			canvas->pixels[pos] = colour;
+			pixels[pos] = colour;
 		}
 
 		if (x0 == x1 && y0 == y1) break;
@@ -43,6 +45,8 @@ void draw_circle(Canvas* canvas, int cx, int cy, int r, int colour)
 	// All this could be better, doesn't work great.
 	int rr = r * r;
 
+    int* pixels = canvas->pixels.data;
+
 	for (int y = -r; y < r; ++y)
 	{
 		if (cy + y < 0 || cy + y > canvas->height - 1)
@@ -58,18 +62,20 @@ void draw_circle(Canvas* canvas, int cx, int cy, int r, int colour)
 
 		if (x0 > -1 && x0 < canvas->width)
 		{
-			canvas->pixels[(int)((cy + y) * canvas->width + x0)] = colour;
+			pixels[(int)((cy + y) * canvas->width + x0)] = colour;
 		}
 
 		if (x1 > -1 && x1 < canvas->width)
 		{
-			canvas->pixels[(int)((cy + y) * canvas->width + x1)] = colour;
+			pixels[(int)((cy + y) * canvas->width + x1)] = colour;
 		}
 	}
 }
 
 void draw_rect(Canvas* canvas, int x0, int y0, int x1, int y1, int colour)
 {
+    int* pixels = canvas->pixels.data;
+
 	// TODO: Can optimise.
 	for (int y = y0; y < y1; ++y)
 	{
@@ -87,7 +93,7 @@ void draw_rect(Canvas* canvas, int x0, int y0, int x1, int y1, int colour)
 			}
 
 			int i = y * canvas->width + x;
-			canvas->pixels[i] = colour;
+			pixels[i] = colour;
 		}
 	}
 }

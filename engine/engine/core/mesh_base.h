@@ -2,10 +2,11 @@
 #define MESH_BASE_H
 
 #include "maths/vector3.h"
+#include "maths/vector2.h"
 
 #include "common/status.h"
 
-#include "utils/memory_utils.h"
+#include "utils/vector.h"
 
 #include <stdio.h>
 
@@ -37,18 +38,19 @@ typedef struct
 	int num_normals;
 	int num_uvs;
 
-	int* position_indices;
-	int* normal_indices;
-	int* uv_indices;
+	Vector(int) position_indices;
+	Vector(int) normal_indices;
+    Vector(int) uv_indices;
 
-	float* object_space_positions;
-	float* object_space_normals;
-	float* uvs; // TODO: Specifiy for textures?
+    Vector(V3) object_space_positions;
+	Vector(V3) object_space_normals;
+	Vector(V2) uvs; // TODO: Specifiy for textures?
 	
 	V3 centre;
 
 } MeshBase;
 
+// TODO: No longer need this, Vector(MeshBase)?
 typedef struct
 {
 	MeshBase* bases;

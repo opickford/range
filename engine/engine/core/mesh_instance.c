@@ -21,30 +21,33 @@ Status MeshInstance_set_base(MeshInstance* mi, const MeshBase* mb)
 {
 	// Grow the vertex albedos buffer, there should be one albedo
 	// per vertex.
-	Status status = resize_float_array(&mi->vertex_alebdos, mb->num_faces * STRIDE_FACE_VERTICES * STRIDE_COLOUR);
 
-	if (STATUS_OK == status)
-	{
-		mi->mb_id = mb->id;
+    Vector_resize(mi->vertex_alebdos, mb->num_faces * STRIDE_FACE_VERTICES);
 
-		// Default albedo to white.
-		MeshInstance_set_albedo(mi, mb, (V3) { 1.f, 1.f, 1.f });
-	}
+    if (!mi->vertex_alebdos.capacity == mb->num_faces * STRIDE_FACE_VERTICES)
+    {
+        return STATUS_ALLOC_FAILURE;
+    }
+	
+	mi->mb_id = mb->id;
 
-	return status;
+	// Default albedo to white.
+	MeshInstance_set_albedo(mi, mb, (V3) { 1.f, 1.f, 1.f });
+	
+	return STATUS_OK;
 }
 
 void MeshInstance_set_albedo(MeshInstance* mi, const MeshBase* mb, V3 albedo)
 {
-	for (int i = 0; i < mb->num_faces * STRIDE_FACE_VERTICES * STRIDE_COLOUR; i += STRIDE_COLOUR)
+	for (int i = 0; i < mb->num_faces * STRIDE_FACE_VERTICES; ++i)
 	{
-		mi->vertex_alebdos[i] = albedo.x;
-		mi->vertex_alebdos[i + 1] = albedo.y;
-		mi->vertex_alebdos[i + 2] = albedo.z;
+		mi->vertex_alebdos.data[i].x = albedo.x;
+		mi->vertex_alebdos.data[i].y = albedo.y;
+		mi->vertex_alebdos.data[i].z = albedo.z;
 	}
 }
 
 void MeshInstance_destroy(MeshInstance* mi)
 {
-	free(mi->vertex_alebdos);
+    Vector_destroy(mi->vertex_alebdos);
 }

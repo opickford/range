@@ -4,7 +4,6 @@ add_library(renderer STATIC
     draw_2d.h
     frame_data.h
     frustum_culling.h
-    render_buffers.h
     render_settings.h
     render_target.h
     render.h

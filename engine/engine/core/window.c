@@ -7,11 +7,13 @@
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    // TODO: Or the heap corruption could be coming from something weird here.
     switch (uMsg)
     {
     case WM_NCCREATE:
     {
         // TODO: Find the best way to do this.
+        // TODO: Could be part of the heap corruption.
 
         // Recover the window pointer.
         LPCREATESTRUCT lpcs = (LPCREATESTRUCT)lParam;
@@ -139,16 +141,17 @@ Status window_init(Window* window, Canvas* canvas, void* ctx, int width, int hei
     HMODULE hinstance = GetModuleHandleA(NULL);
 
     // Define the window's class.
-    WNDCLASS wc = {
-        .lpszClassName = range_WINDOW_CLASS,
-        .hInstance = hinstance,
-        .lpfnWndProc = WindowProc,
-        .hIcon = LoadIcon(NULL, IDI_APPLICATION),
-        .hCursor = LoadCursor(NULL, IDC_ARROW),
-        .style = CS_OWNDC
-    };
+    WNDCLASSEX wc = { 0 };
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.style = CS_OWNDC;
+    wc.lpfnWndProc = WindowProc;
+    wc.hInstance = hinstance;
+    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc.lpszClassName = RANGE_WINDOW_CLASS;
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
-    if (!RegisterClassA(&wc))
+    if (!RegisterClassExA(&wc))
     {
         log_error("Failed to RegisterClassA.");
         return STATUS_WIN32_FAILURE;
@@ -157,8 +160,8 @@ Status window_init(Window* window, Canvas* canvas, void* ctx, int width, int hei
     // Create the window
     window->hwnd = CreateWindowExA(
         0,                          // Window styles, TODO: PASS window_style?
-        range_WINDOW_CLASS,         // Window class
-        range_WINDOW_TITLE,         // Window caption
+        RANGE_WINDOW_CLASS,         // Window class
+        RANGE_WINDOW_TITLE,         // Window caption
         window_style,
 
         // Size and position
@@ -214,13 +217,6 @@ Status window_init(Window* window, Canvas* canvas, void* ctx, int width, int hei
 
 int window_process_messages()
 {
-    // TODO: Some heap is corrupted so i keep getting an error here......
-    // TODO: The issue comes when we close the window sometimes and sometimes on startup.
-    //       Potentially something to do with storing the window pointer.
-
-    // TODO: The stupid error has to be from some array allocation right? Check the new temp shadow ones. 
-    // Error triggered by events.
-
     // Processes all messages and sends them to WindowProc
     MSG msg;
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
@@ -255,7 +251,7 @@ void window_display(Window* window)
             window->width, window->height,
             0, 0,
             window->canvas->width, window->canvas->height,
-            window->canvas->pixels,
+            window->canvas->pixels.data,
             &window->bitmap,
             DIB_RGB_COLORS,
             SRCCOPY);
@@ -269,7 +265,7 @@ void window_display(Window* window)
             0, 0,
             0,
             window->height,
-            window->canvas->pixels,
+            window->canvas->pixels.data,
             &window->bitmap,
             DIB_RGB_COLORS);
     }
@@ -278,4 +274,6 @@ void window_display(Window* window)
 void window_destroy(Window* window)
 {
     // TODO: Not sure how necessary this is.
+    //DestroyWindow(window->hwnd);
+
 }

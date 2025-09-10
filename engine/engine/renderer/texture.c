@@ -52,15 +52,15 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
     bmi.bmiHeader.biCompression = BI_RGB; // Uncompressed RGB.
 
     // Read the image as an array of ints
-    int* temp_pixels = 0;
-    Status status = resize_int_array(&temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
-    if (STATUS_OK != status || !temp_pixels)
+    Vector(int) temp_pixels = { 0 };
+    Vector_resize(temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
+    if (temp_pixels.capacity != bitmap.bmWidthBytes * bitmap.bmHeight)
     {
-        return status;
+        return STATUS_ALLOC_FAILURE;
     }
 
     // Get the pixels buffer.
-    GetDIBits(mem_hdc, h_bitmap, 0, bitmap.bmHeight, temp_pixels, &bmi, DIB_RGB_COLORS);
+    GetDIBits(mem_hdc, h_bitmap, 0, bitmap.bmHeight, temp_pixels.data, &bmi, DIB_RGB_COLORS);
 
     // Cleanup.
     if (!DeleteObject(h_bitmap))
@@ -81,14 +81,15 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
 
     
     //resize_float_array(&texture->data, texture->width * texture->height * 3);
-    resize_int_array(&texture->data, texture->width * texture->height * 3);
+    //resize_int_array(&texture->data, texture->width * texture->height * 3);
+    Vector_resize(texture->pixels, texture->width * texture->height * 3);
 
     // TODO: Gotta test the texture a few ways, do we want r,g,b uint8? 3 floats? what.
     for (int i = 0; i < texture->width * texture->height; ++i)
     {
 
         int index = i * 3;
-        int colour = temp_pixels[i];
+        int colour = temp_pixels.data[i];
 
 
         //int r, g, b;
@@ -99,18 +100,17 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
         //unpack_int_rgb_to_floats(colour, &r, &g, &b);
         //printf("%f %f %f\n", r, g, b);
 
-        unpack_int_rgb_to_floats(colour, &texture->data[index], &texture->data[index + 1], &texture->data[index + 2]);
+        unpack_int_rgb_to_floats(colour, &texture->pixels.data[index], &texture->pixels.data[index + 1], &texture->pixels.data[index + 2]);
     }
 
-    free(temp_pixels);
+    Vector_destroy(temp_pixels);
 
     return STATUS_OK;
 }
 
 void texture_destroy(Texture* texture)
 {
-    free(texture->data);
-    texture->data = 0;
+    Vector_destroy(texture->pixels);
 
     free(texture);
     texture = 0; // TODO: Do we want to do this?

@@ -35,9 +35,7 @@ typedef struct
 
 	// Scene data. - I don't think the engine needs to manage multiple.
     // TODO: Only manage one scene.
-	Scene scenes[MAX_SCENES];
-	int scenes_count;
-	int current_scene_id;
+	Scene scene;
 
 	// Engine settings
 	int running;

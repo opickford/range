@@ -8,6 +8,8 @@
 
 #include "common/status.h"
 
+#include "utils/vector.h"
+
 #include <stdint.h>
 
 
@@ -42,7 +44,8 @@ typedef struct
 	// Per instance data
 	// TODO: Do we actually want per vertex albedos? I reckon per face at least
 	//		 makes more sense.
-	float* vertex_alebdos;
+    // TODO: Float or V3???
+	Vector(V3) vertex_alebdos;
 
 	// Offsets into FrameData, these exist here as they are tied
 	// to the MeshInstance itself.

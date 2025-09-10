@@ -19,11 +19,11 @@
 typedef struct
 {
 	// Transform Stage
-	Vector(float) view_space_positions;
-    Vector(float) view_space_normals;
+	Vector(V3) view_space_positions;
+    Vector(V3) view_space_normals;
     Vector(BoundingSphere) view_space_bounding_spheres; // Used for broad phase frustum culling.
 
-    Vector(float) point_lights_view_space_positions;
+    Vector(V3) point_lights_view_space_positions;
 
 	// Broad Phase Frustum Culling
     Vector(MeshInstance) visible_mis;
@@ -45,7 +45,7 @@ typedef struct
 	 just forget about shadows for now mayber.
 	*/
 	
-    Vector(float) vertex_lighting;
+    Vector(V3) vertex_lighting;
 
 	// Clipping
     Vector(float) faces_to_clip;  // Input to clip.

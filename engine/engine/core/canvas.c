@@ -3,7 +3,6 @@
 #include "common/status.h"
 
 #include "utils/logger.h"
-#include "utils/memory_utils.h"
 
 #include <Windows.h>
 
@@ -17,17 +16,17 @@ Status canvas_init(Canvas* canvas, int width, int height)
 	canvas->width = width;
 	canvas->height = height;
 
-    const size_t pixels_bytes = (size_t)width * height * sizeof(unsigned int) * 4;
-	canvas->pixels = malloc(pixels_bytes);
-
-	if (!canvas->pixels)
+    const size_t length = (size_t)width * height * 4;
+    Vector_reserve(canvas->pixels, length);
+	
+	if (!canvas->pixels.data)
 	{
 		log_error("Failed to allocate memory for canvas pixels.");
 		return STATUS_ALLOC_FAILURE;
 	}
     
     // Clear the allocated memory otherwise we might get artificats.
-    memset(canvas->pixels, 0, pixels_bytes);
+    memset(canvas->pixels.data, 0, length * sizeof(*canvas->pixels.data));
 
 	return STATUS_OK;
 }
@@ -79,14 +78,14 @@ Status canvas_init_from_bitmap(Canvas* canvas, const char* file)
     bmi.bmiHeader.biCompression = BI_RGB; // Uncompressed RGB.
 
     // Allocate memory for pixels
-    Status status = resize_int_array(&canvas->pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
-    if (STATUS_OK != status)
+    Vector_reserve(canvas->pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
+    if (!canvas->pixels.data)
     {
-        return status;
+        return STATUS_ALLOC_FAILURE;
     }
 
     // Get the pixels buffer.
-    GetDIBits(mem_hdc, h_bitmap, 0, bitmap.bmHeight, canvas->pixels, &bmi, DIB_RGB_COLORS);
+    GetDIBits(mem_hdc, h_bitmap, 0, bitmap.bmHeight, canvas->pixels.data, &bmi, DIB_RGB_COLORS);
 
     // Cleanup.
     if (!DeleteObject(h_bitmap))
@@ -170,7 +169,7 @@ Status canvas_write_to_bitmap(const Canvas* canvas, const char* file)
     fileHeader[5] = (unsigned char)(fileSize >> 24);
     fileHeader[10] = (unsigned char)(fileHeaderSize + infoHeaderSize);
 
-    unsigned char* image = (unsigned char*)canvas->pixels;
+    unsigned char* image = (unsigned char*)canvas->pixels.data;
 
     FILE* imageFile = fopen(file, "wb");
 
@@ -196,17 +195,17 @@ Status canvas_resize(Canvas* canvas, int width, int height)
 	
 	// Allocate memory for the new array.
 	// TODO: Use my memory allocating helpers for this.
-	unsigned int* new_pixels = realloc(canvas->pixels, (size_t)width * height * sizeof(unsigned int));
+    size_t length = width * height;
+    Vector_reserve(canvas->pixels, length);
 
 	// Check the allocation worked.
-	if (!new_pixels)
+	if (!canvas->pixels.data)
 	{
 		log_error("Failed to reallocate memory for canvas pixels on resize.");
 		return STATUS_ALLOC_FAILURE;
 	}
 
 	// Update the canvas.
-	canvas->pixels = new_pixels;
 	canvas->width = width;
 	canvas->height = height;
 
@@ -217,7 +216,7 @@ void canvas_fill(Canvas* canvas, const unsigned int colour)
 {
 	// TODO: Look for some sort of blit or fill function 
 	const int length = canvas->width * canvas->height;	
-	unsigned int* ptr = canvas->pixels;
+	unsigned int* ptr = canvas->pixels.data;
 	
 	unsigned int i = length;
 	
@@ -231,19 +230,21 @@ void canvas_fill(Canvas* canvas, const unsigned int colour)
 
 void canvas_draw(const Canvas* source, Canvas* target, int x_offset, int y_offset)
 {
+    int* source_data = source->pixels.data;
+    int* target_data = target->pixels.data;
+
     for (int y = 0; y < source->height; ++y)
     {
         for (int x = 0; x < source->height; ++x)
         {
-            target->pixels[(y + y_offset) * target->width + x + x_offset] = source->pixels[y * source->width + x];
+            target_data[(y + y_offset) * target->width + x + x_offset] = source_data[y * source->width + x];
         }
     }
 }
 
 void canvas_destroy(Canvas* canvas)
 {
-	free(canvas->pixels);
-	canvas->pixels = 0;
+    Vector_destroy(canvas->pixels);
 
 	free(canvas);
 	canvas = 0; // TODO: Do we want to do this?

@@ -2,9 +2,6 @@
 
 #include "strides.h"
 
-#include "renderer/render_buffers.h"
-
-#include "utils/memory_utils.h"
 #include "utils/logger.h"
 
 #include <string.h>

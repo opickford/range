@@ -3,12 +3,14 @@
 
 #include "common/status.h"
 
+#include "utils/vector.h"
+
 #include <stdint.h>
 
 typedef struct
 {
 	int width, height;
-	uint32_t* pixels;
+	Vector(uint32_t) pixels;
 
 } Canvas;
 

@@ -131,12 +131,14 @@ inline void v3_swap(V3* v0, V3* v1)
 	*v1 = temp;
 }
 
+/*
 inline void v3_write(float* out, V3 v)
 {
 	out[0] = v.x;
 	out[1] = v.y;
 	out[2] = v.z;
 }
+*/
 
 inline V3 v3_read(const float* in)
 {

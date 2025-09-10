@@ -18,15 +18,11 @@ MeshBaseID cube_base;
 void create_map(Engine* engine)
 {
     // TODO: Map like a fortnite 1v1 map, just a floor and scoreboard and maybe some obstacles.
-
-    // TODO: Also for models, the scene could be global?
-    Scene* scene = &engine->scenes[0];
+    
+    // TODO: Also for models, the scene could be global? I think MBs should be 
+    //       global.
+    Scene* scene = &engine->scene;
     Status status = scene_init(scene);
-
-    // TODO: Should really have a helper for this sort of thing?
-    // TODO: Do we even want to support multiple scenes.. probably not.
-    engine->current_scene_id = 0;
-    ++engine->scenes_count;
     
     // Load some mesh bases.
     sphere_base = mesh_bases_add(&scene->mesh_bases);
@@ -40,37 +36,17 @@ void create_map(Engine* engine)
 
     // Add a MeshInstance component.
     ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-    MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+    MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, 
+        COMPONENT_MeshInstance);
     MeshInstance_init(mi);
+
+    // TODO: I hate this set base.
     MeshInstance_set_base(mi, &scene->mesh_bases.bases[sphere_base]);
-
-    /*
-    const int n = 10;
-
-    float offset = 1;
-    float x = -n * 0.5f * offset;
-    float z = 0;
-
-    for (int i = 0; i < n; ++i)
-    {
-        for (int j = 0; j < n; ++j)
-        {
-            MeshInstanceID sphere_instance = mesh_instances_add(&scene->mesh_instances);
-            scene_MeshInstance_set_base(scene, sphere_instance, sphere_base);
-            scene->mesh_instances.instances[sphere_instance].position.x = x;
-            scene->mesh_instances.instances[sphere_instance].position.z = z;
-            z -= offset;
-        }
-
-        z = 0;
-        x += offset;
-    }
-    */
-
-
-
     
-    //resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
+    Assert(resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp"));
+
+    mi->texture_id = 0;
+
 
     /*
     mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");
@@ -178,7 +154,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         MeshBaseID mb_id = mb_ids[(int)(random_float() + 0.5f)];
 
 
-        Scene* scene = &engine->scenes[engine->current_scene_id];
+        Scene* scene = &engine->scene;
 
         V3 colour =
         {
@@ -188,7 +164,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         };
 
 
-
+        // TODO: A bunch of stuff broken.
         
         const Camera* camera = &engine->renderer.camera;
 
@@ -216,7 +192,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     {
         //g_draw_normals = !g_draw_normals;
 
-        Scene* scene = &engine->scenes[engine->current_scene_id];
+        Scene* scene = &engine->scene;
         
         
         /*

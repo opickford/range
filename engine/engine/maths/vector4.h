@@ -81,6 +81,7 @@ inline void v4_swap(V4* v0, V4* v1)
 	*v1 = temp;
 }
 
+
 // TODO: If it turns out these are taking a noticeable amount of CPU,
 //		 convert to #define.
 inline void v4_write(float* out, V4 v)

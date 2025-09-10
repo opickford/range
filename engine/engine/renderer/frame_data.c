@@ -6,7 +6,6 @@
 #include "core/strides.h"
 #include "core/components.h"
 
-#include "utils/memory_utils.h"
 #include "utils/logger.h"
 
 #include <cecs/ecs.h>
@@ -37,7 +36,6 @@ Status frame_data_init(
 
     const MeshBase* mbs = scene->mesh_bases.bases;
 
-    
     for (int si = 0; si < render_system->num_archetypes; ++si)
     {
         const ArchetypeID archetype_id = render_system->archetype_ids[si];

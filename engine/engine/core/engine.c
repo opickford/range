@@ -8,8 +8,6 @@
 
 #include "common/colour.h"
 
-
-
 #include <Windows.h>
 
 #include <stdio.h>
@@ -40,7 +38,7 @@ static void Engine_setup_ecs(Engine* engine)
         System* system = &engine->ecs.systems[engine->render_system_id];
         system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance);
     }
-    
+
     {
         engine->lighting_system_id = ECS_register_system(ecs);
         System* system = &engine->ecs.systems[engine->lighting_system_id];
@@ -49,13 +47,14 @@ static void Engine_setup_ecs(Engine* engine)
     }
 }
 
+
+
 Status engine_init(Engine* engine, int window_width, int window_height)
 {
     log_info("Initialising the engine.");
     memset(engine, 0, sizeof(Engine));
 
     // Set some default settings.
-    engine->current_scene_id = -1;
     engine->upscaling_factor = 1;
     engine->handle_input = 0;
 
@@ -95,7 +94,7 @@ Status engine_init(Engine* engine, int window_width, int window_height)
 
     // Initialise the ECS.
     ECS_init(&engine->ecs);
-    
+
     // Initialise components and systems.
     Engine_setup_ecs(engine);
 
@@ -103,6 +102,7 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     engine_on_init(engine);
 
     log_info("Engine successfully initialised.");
+
     return STATUS_OK;
 }
 
@@ -143,6 +143,7 @@ void engine_run(Engine* engine)
     int h = 30;
 
     // TODO: This can be a ui add text function
+    
     engine->ui.text[engine->ui.text_count++] = text_create(fps_str, 10, engine->ui.text_count * h + 10, COLOUR_LIME, 3);
     engine->ui.text[engine->ui.text_count++] = text_create(dir_str, 10, engine->ui.text_count * h + 10, COLOUR_RED, 3);
     engine->ui.text[engine->ui.text_count++] = text_create(pos_str, 10, engine->ui.text_count * h + 10, COLOUR_RED, 3);
@@ -179,21 +180,20 @@ void engine_run(Engine* engine)
 
         // Render scene.
         timer_restart(&t);
-        if (engine->current_scene_id > -1 && engine->current_scene_id < engine->scenes_count)
-        {
-            // TODO: Render system..............
+        
+        // TODO: Render system..............
 
-            // TODO: How will this work as a system?
+        // TODO: How will this work as a system?
 
             
-            render(&engine->ecs, 
-                &engine->ecs.systems[engine->render_system_id], 
-                &engine->ecs.systems[engine->lighting_system_id], 
-                &engine->renderer, 
-                &engine->scenes[engine->current_scene_id], 
-                &engine->resources,
-                view_matrix);
-        }
+        render(&engine->ecs, 
+            &engine->ecs.systems[engine->render_system_id], 
+            &engine->ecs.systems[engine->lighting_system_id], 
+            &engine->renderer, 
+            &engine->scene, 
+            &engine->resources,
+            view_matrix);
+        
         snprintf(render_str, sizeof(render_str), "Render: %d", timer_get_elapsed(&t));
          
         // Handle any keyboard/mouse input.
@@ -252,7 +252,7 @@ void engine_run(Engine* engine)
             {
                 MeshInstance* mi = &mis[i];
 
-                const Scene* scene = &engine->scenes[engine->current_scene_id];
+                const Scene* scene = &engine->scene;
                 const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
                 total_faces += mb->num_faces;
                 ++mis_count;

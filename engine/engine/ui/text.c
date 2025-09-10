@@ -34,6 +34,7 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 
 	// For scaling the font, we draw the pixel as a rect with
 	// width and height = scale.
+    int* canvas_data = canvas->pixels.data;
 
 	int count = 0;
 	int row = 0;
@@ -86,7 +87,7 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 					{
 						for (int x2 = 0; x2 < scale; ++x2)
 						{
-							canvas->pixels[i + x2] = text->colour;
+							canvas_data[i + x2] = text->colour;
 						}
 
 						i += canvas->width;

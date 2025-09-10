@@ -70,27 +70,14 @@ Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 	parse_obj_counts(file, &mb->num_positions, &mb->num_uvs, &mb->num_normals, &mb->num_faces);
 
 	// Allocate the buffers.
-	resize_float_array(&mb->object_space_positions, mb->num_positions * STRIDE_POSITION);
-	resize_float_array(&mb->object_space_normals, mb->num_normals * STRIDE_NORMAL);
-	resize_float_array(&mb->uvs, mb->num_uvs * STRIDE_UV);
+    Vector_reserve(mb->object_space_positions, mb->num_positions);
+    Vector_reserve(mb->object_space_normals, mb->num_normals);
+    Vector_reserve(mb->uvs, mb->num_uvs);
 
 	const int num_vertices = mb->num_faces * STRIDE_FACE_VERTICES;
-	resize_int_array(&mb->position_indices, num_vertices);
-	resize_int_array(&mb->normal_indices, num_vertices);
-	resize_int_array(&mb->uv_indices, num_vertices);
-
-
-	/* TODO: ?
-	// Recreate the in/out buffers for clipping if this model base has the most
-	// faces yet.
-	if (models->max_mb_faces < face_count)
-	{
-		models->max_mb_faces = face_count;
-
-		// Resize the shared render buffers.
-		rbs->mbs_max_faces = models->max_mb_faces;
-		render_buffers_resize(rbs);
-	}*/
+	Vector_reserve(mb->position_indices, num_vertices);
+	Vector_reserve(mb->normal_indices, num_vertices);
+	Vector_reserve(mb->uv_indices, num_vertices);
 
 	int positions_offset = 0;
 	int normals_offset = 0;
@@ -120,34 +107,26 @@ Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 
 		if (strcmp(tokens[0], "v") == 0)
 		{
-			// Apply the model matrix to put the vertices in world space.
-			V4 v = {
-				(float)atof(tokens[1]),
-				(float)atof(tokens[2]),
-				(float)atof(tokens[3]),
-				1
-			};
-
 			// Store the object space position.
-			mb->object_space_positions[positions_offset++] = v.x;
-			mb->object_space_positions[positions_offset++] = v.y;
-			mb->object_space_positions[positions_offset++] = v.z;
+			mb->object_space_positions.data[positions_offset].x = (float)atof(tokens[1]);
+            mb->object_space_positions.data[positions_offset].y = (float)atof(tokens[2]);
+            mb->object_space_positions.data[positions_offset++].z = (float)atof(tokens[3]);
 		}
 
 		else if (strcmp(tokens[0], "vn") == 0)
 		{
-			mb->object_space_normals[normals_offset++] = (float)atof(tokens[1]);
-			mb->object_space_normals[normals_offset++] = (float)atof(tokens[2]);
-			mb->object_space_normals[normals_offset++] = (float)atof(tokens[3]);
+			mb->object_space_normals.data[normals_offset].x = (float)atof(tokens[1]);
+			mb->object_space_normals.data[normals_offset].y = (float)atof(tokens[2]);
+			mb->object_space_normals.data[normals_offset++].z = (float)atof(tokens[3]);
 		}
 
 		else if (strcmp(tokens[0], "vt") == 0)
 		{
-			mb->uvs[uvs_offset++] = (float)atof(tokens[1]);
+			mb->uvs.data[uvs_offset].x = (float)atof(tokens[1]);
 
 			// Invert the v component so we don't have to do it per pixel.
 			// Not sure if this will cause any confusion if we ever want to edit them.
-			mb->uvs[uvs_offset++] = 1.f - (float)atof(tokens[2]);
+			mb->uvs.data[uvs_offset++].y = 1.f - (float)atof(tokens[2]);
 		}
 
 		else if (strcmp(tokens[0], "f") == 0)
@@ -207,17 +186,17 @@ Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 				}
 			}
 
-			mb->position_indices[faces_positions_offset++] = face_indices[0];
-			mb->position_indices[faces_positions_offset++] = face_indices[3];
-			mb->position_indices[faces_positions_offset++] = face_indices[6];
+			mb->position_indices.data[faces_positions_offset++] = face_indices[0];
+			mb->position_indices.data[faces_positions_offset++] = face_indices[3];
+			mb->position_indices.data[faces_positions_offset++] = face_indices[6];
 
-			mb->normal_indices[faces_normals_offset++] = face_indices[2];
-			mb->normal_indices[faces_normals_offset++] = face_indices[5];
-			mb->normal_indices[faces_normals_offset++] = face_indices[8];
+			mb->normal_indices.data[faces_normals_offset++] = face_indices[2];
+			mb->normal_indices.data[faces_normals_offset++] = face_indices[5];
+			mb->normal_indices.data[faces_normals_offset++] = face_indices[8];
 
-			mb->uv_indices[faces_uvs_offset++] = face_indices[1];
-			mb->uv_indices[faces_uvs_offset++] = face_indices[4];
-			mb->uv_indices[faces_uvs_offset++] = face_indices[7];
+			mb->uv_indices.data[faces_uvs_offset++] = face_indices[1];
+			mb->uv_indices.data[faces_uvs_offset++] = face_indices[4];
+			mb->uv_indices.data[faces_uvs_offset++] = face_indices[7];
 		}
 	}
 
@@ -232,14 +211,7 @@ Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 	// Iterate through each vertex of each face in one go.
 	for (int i = 0; i < mb->num_positions; ++i)
 	{
-		const int index = i * STRIDE_POSITION;
-
-		const V3 position = {
-			mb->object_space_positions[index],
-			mb->object_space_positions[index + 1],
-			mb->object_space_positions[index + 2]
-		};
-		v3_add_eq_v3(&mb->centre, position);
+		v3_add_eq_v3(&mb->centre, mb->object_space_positions.data[i]);
 	}
 
 	v3_mul_eq_f(&mb->centre, 1.0f / mb->num_positions);
@@ -256,13 +228,12 @@ Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 
 void mesh_base_destroy(MeshBase* mb)
 {
-	free(mb->object_space_positions);
-	free(mb->object_space_normals);
-	free(mb->uvs);
-
-	free(mb->position_indices);
-	free(mb->normal_indices);
-	free(mb->uv_indices);
+    Vector_destroy(mb->object_space_positions);
+	Vector_destroy(mb->object_space_normals);
+	Vector_destroy(mb->uvs);
+	Vector_destroy(mb->position_indices);
+	Vector_destroy(mb->normal_indices);
+	Vector_destroy(mb->uv_indices);
 }
 
 // MeshBases API

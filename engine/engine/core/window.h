@@ -7,8 +7,8 @@
 
 #include <Windows.h>
 
-#define range_WINDOW_CLASS "range_window_class"
-#define range_WINDOW_TITLE "range"
+#define RANGE_WINDOW_CLASS "range_window_class"
+#define RANGE_WINDOW_TITLE "range"
 
 // TODO: Is all of this really necessary.
 

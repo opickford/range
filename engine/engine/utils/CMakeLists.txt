@@ -1,8 +1,6 @@
 add_library(utils STATIC
     common.h
     logger.h
-    memory_utils.h
-    memory_utils.c
     str_utils.h
     str_utils.c
     timer.h

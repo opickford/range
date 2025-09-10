@@ -13,6 +13,7 @@
 
 #include "common/colour.h"
 
+#include "maths/vector3.h"
 #include "maths/matrix4.h"
 #include "maths/vector_maths.h"
 #include "maths/utils.h"
@@ -36,7 +37,7 @@ void debug_draw_point_lights(
     const RenderSettings* settings
     )
 {
-    const float* vsps = frame_data->point_lights_view_space_positions.data;
+    const V3* vsps = frame_data->point_lights_view_space_positions.data;
     int vsps_offset = 0;
 
     // Debug draw point light icons as rects.
@@ -50,8 +51,8 @@ void debug_draw_point_lights(
 
         for (int i = 0; i < archetype->entity_count; ++i)
         {
-            V4 p = v3_read_to_v4(vsps + vsps_offset, 1.f);
-            vsps_offset += STRIDE_POSITION;
+            V4 p = v3_to_v4(vsps[vsps_offset], 1.f);
+            ++vsps_offset;
 
             // Only draw if depth is visibile in clip space.
             if (p.z > -settings->near_plane)
@@ -321,7 +322,7 @@ void draw_scanline(RenderTarget* rt,
 	int end_x = x1 + row_offset;
 
 	// Render the scanline
-	unsigned int* pixels = rt->canvas.pixels + start_x;
+	unsigned int* pixels = rt->canvas.pixels.data + start_x;
 	float* depth_buffer = rt->depth_buffer + start_x;
 
 	float inv_w = w0;
@@ -580,10 +581,10 @@ void draw_textured_scanline(RenderTarget* rt, int x0, int x1, int y, float z0, f
 
 
 	// Render the scanline
-	const float* texture_data = texture->data;
+	const float* texture_data = texture->pixels.data;
 
 	// Write out like this to avoid packing the int back together.
-	uint8_t* rgbas = (uint8_t*)(rt->canvas.pixels + start_x);
+	uint8_t* rgbas = (uint8_t*)(rt->canvas.pixels.data + start_x);
 
 	float* depth_buffer = rt->depth_buffer + start_x;
 
@@ -1121,7 +1122,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
         MeshInstance* mis = archetype->component_lists[mis_i];
 
-        float* vsps = frame_data->view_space_positions.data;
+        V3* vsps = frame_data->view_space_positions.data;
         BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
         int vsps_offset = 0;
 
@@ -1159,21 +1160,20 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
 
             for (int j = 0; j < mb->num_positions; ++j)
             {
-                const int position_index = j * STRIDE_POSITION;
-                const V4 osp = v3_read_to_v4(mb->object_space_positions + position_index, 1.f);
+                const V4 osp = v3_to_v4(mb->object_space_positions.data[j], 1.f);
                 V4 vsp;
                 m4_mul_v4(model_view_matrix, osp, &vsp);
 
-                vsps[vsps_offset] = vsp.x;
-                vsps[vsps_offset + 1] = vsp.y;
-                vsps[vsps_offset + 2] = vsp.z;
+                vsps[vsps_offset].x = vsp.x;
+                vsps[vsps_offset].y = vsp.y;
+                vsps[vsps_offset].z = vsp.z;
 
-                vsps_offset += STRIDE_POSITION;
+                ++vsps_offset;
             }
         }
 
         // Convert object space normals to view space.
-        float* vsns = frame_data->view_space_normals.data;
+        V3* vsns = frame_data->view_space_normals.data;
         int vsns_offset = 0;
 
         for (int i = 0; i < archetype->entity_count; ++i)
@@ -1196,15 +1196,18 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
 
             for (int j = 0; j < mb->num_normals; ++j)
             {
-                const int normal_index = j * STRIDE_NORMAL;
-                const V4 osn = v3_read_to_v4(mb->object_space_normals + normal_index, 0.f);
+                const V4 osn = v3_to_v4(mb->object_space_normals.data[j], 0.f);
 
                 V4 vsn;
                 m4_mul_v4(view_normal_matrix, osn, &vsn);
 
-                v3_write(vsns + vsns_offset, normalised(v4_xyz(vsn)));
+                V3 normal = normalised(v4_xyz(vsn));
 
-                vsns_offset += STRIDE_NORMAL;
+                vsns[vsns_offset].x = normal.x;
+                vsns[vsns_offset].y = normal.y;
+                vsns[vsns_offset].z = normal.z;
+
+                ++vsns_offset;
             }
         }
 
@@ -1213,7 +1216,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
             MeshInstance* mi = &mis[i];
 
             // Update the radius of each mesh instance bounding sphere.
-            const float* vsps = frame_data->view_space_positions.data;
+            const V3* vsps = frame_data->view_space_positions.data;
             BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
 
             // Only update the bounding sphere if the scale is changed, otherwise
@@ -1231,10 +1234,10 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
                 // Calculate the new radius of the mi's bounding sphere.
                 float radius_squared = -1;
 
-                const int end = mi->view_space_positions_offset + mb->num_positions * STRIDE_POSITION;
-                for (int j = mi->view_space_positions_offset; j < end; j += STRIDE_POSITION)
+                const int end = mi->view_space_positions_offset + mb->num_positions;
+                for (int j = mi->view_space_positions_offset; j < end; ++j)
                 {
-                    V3 v = v3_read(vsps + j);
+                    V3 v = vsps[j];
                     V3 between = v3_sub_v3(v, view_space_centre);
 
                     radius_squared = max(size_squared(between), radius_squared);
@@ -1254,7 +1257,7 @@ void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* fr
 	// to make this worthwhile (i think).
 
 
-	float* view_space_positions = frame_data->point_lights_view_space_positions.data;
+	V3* view_space_positions = frame_data->point_lights_view_space_positions.data;
 
     int vsps_offset = 0;
 
@@ -1274,8 +1277,11 @@ void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* fr
 
             // There is no need to save the w component as it is always 1 until 
             // after projection.
-            v4_write_xyz(view_space_positions + vsps_offset, v_view_space);
-            vsps_offset += STRIDE_POSITION;
+            view_space_positions[vsps_offset].x = v_view_space.x;
+            view_space_positions[vsps_offset].y = v_view_space.y;
+            view_space_positions[vsps_offset].z = v_view_space.z;
+
+            ++vsps_offset;
         }
     }
 }
@@ -1295,9 +1301,7 @@ void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* fra
 	const int num_planes = view_frustum->planes_count;
 	const Plane* planes = view_frustum->planes;
 
-    float* vsps = frame_data->view_space_positions.data;
     BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
-    int vsps_offset = 0;
 
     for (int si = 0; si < render_system->num_archetypes; ++si)
     {
@@ -1365,7 +1369,7 @@ void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scen
 
 	// Determines what faces are facing the camera and prepares
 	// the vertex data for the lighting calculations.
-	const float* vsps = frame_data->view_space_positions.data;
+	const V3* vsps = frame_data->view_space_positions.data;
 	MeshInstance* visible_mis = frame_data->visible_mis.data;
 	const int num_visible_mis = frame_data->num_visible_mis;
 
@@ -1382,23 +1386,19 @@ void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scen
 		MeshInstance* mi = &visible_mis[i];
 		const MeshBase* mb = &mbs[mi->mb_id];
 
-		const int* position_indices = mb->position_indices;
+		const int* position_indices = mb->position_indices.data;
 		const int vsp_offset = mi->view_space_positions_offset;
 
 		for (int j = 0; j < mb->num_faces; ++j)
 		{
 			const int face_index = j * STRIDE_FACE_VERTICES;
 
-			const int p0_index = vsp_offset + position_indices[face_index] * STRIDE_POSITION;
-			const int p1_index = vsp_offset + position_indices[face_index + 1] * STRIDE_POSITION;
-			const int p2_index = vsp_offset + position_indices[face_index + 2] * STRIDE_POSITION;
+			const int p0_index = vsp_offset + position_indices[face_index];
+			const int p1_index = vsp_offset + position_indices[face_index + 1];
+			const int p2_index = vsp_offset + position_indices[face_index + 2];
 			
 			// TODO: Would just storing as a V3 be better?
-			const V3 p0 = v3_read(vsps + p0_index);
-			const V3 p1 = v3_read(vsps + p1_index);
-			const V3 p2 = v3_read(vsps + p2_index);
-
-			if (is_front_face(p0, p1, p2))
+			if (is_front_face(vsps[p0_index], vsps[p1_index], vsps[p2_index]))
 			{
 				// Store the index of the face for culling later.
 				front_face_indices[front_face_out++] = j;
@@ -1475,16 +1475,18 @@ void light_front_faces(
 	const MeshBase* mbs = scene->mesh_bases.bases;
 
 	const int* front_face_indices = frame_data->front_face_indices.data;
-	const float* vsps = frame_data->view_space_positions.data;
-	const float* vsns = frame_data->view_space_normals.data;
-	const float* point_light_vsps = frame_data->point_lights_view_space_positions.data;
+	const V3* vsps = frame_data->view_space_positions.data;
+	const V3* vsns = frame_data->view_space_normals.data;
+	const V3* point_light_vsps = frame_data->point_lights_view_space_positions.data;
 
 	const MeshInstance* mis = frame_data->visible_mis.data;
 	const int num_visible_mis = frame_data->num_visible_mis;
 	
 	// Output
 	int out_index = 0;
-	float* vertex_lighting = frame_data->vertex_lighting.data;
+
+    // TODO: float* or V3*
+	V3* vertex_lighting = frame_data->vertex_lighting.data;
 
 	int front_faces_offset = 0;
 
@@ -1493,7 +1495,7 @@ void light_front_faces(
 		const MeshInstance* mi = &mis[i];
 		const MeshBase* mb = &mbs[mi->mb_id];
 
-		const float* vertex_albedos = mi->vertex_alebdos;
+		const V3* vertex_albedos = mi->vertex_alebdos.data;
 
 		const int vsp_offset = mi->view_space_positions_offset;
 		const int vsn_offset = mi->view_space_normals_offset;
@@ -1518,13 +1520,13 @@ void light_front_faces(
 
 			for (int vi = 0; vi < STRIDE_FACE_VERTICES; ++vi)
 			{
-				const V3 point = v3_read(vsps + vsp_offset + mb->position_indices[face_index + vi] * STRIDE_POSITION);
-				const V3 normal = v3_read(vsns + vsn_offset + mb->normal_indices[face_index + vi] * STRIDE_NORMAL);
+				const V3 point = vsps[vsp_offset + mb->position_indices.data[face_index + vi]];
+				const V3 normal = vsns[vsn_offset + mb->normal_indices.data[face_index + vi]];
 
                 // Albedos are stored per vertex. 
                 // TODO: How do these line up when we cull faces????? They dont..... do they? could cause issues when setting albedo for specific vertices....
 
-                const V3 albedo = v3_read(vertex_albedos + (j * STRIDE_FACE_VERTICES + vi) * STRIDE_COLOUR);
+                const V3 albedo = vertex_albedos[j * STRIDE_FACE_VERTICES + vi];
 				V3 diffuse = { 0 };
                 
                 int pl_vsps_offset = 0;
@@ -1538,8 +1540,8 @@ void light_front_faces(
 
                     for (int i = 0; i < archetype->entity_count; ++i)
                     {
-                        const V3 pl_vsp = v3_read(point_light_vsps + pl_vsps_offset);
-                        pl_vsps_offset += STRIDE_POSITION;
+                        const V3 pl_vsp = point_light_vsps[pl_vsps_offset];
+                        ++pl_vsps_offset;
 
                         const PointLight* pl = &pls[i];
 
@@ -1593,9 +1595,9 @@ void light_front_faces(
 				light.z = min(1.f, light.z);
 
 
-				vertex_lighting[out_index++] = light.x;
-				vertex_lighting[out_index++] = light.y;
-				vertex_lighting[out_index++] = light.z;
+				vertex_lighting[out_index].x = light.x;
+				vertex_lighting[out_index].y = light.y;
+				vertex_lighting[out_index++].z = light.z;
 
                 // TODO: TEMP
                 //break;
@@ -1616,11 +1618,11 @@ void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data
 	MeshBase* mbs = scene->mesh_bases.bases;
 	
 	const int* front_face_indices = frame_data->front_face_indices.data;
-	const float* vsps = frame_data->view_space_positions.data;
+	const V3* vsps = frame_data->view_space_positions.data;
 
 	const int num_visible_mis = frame_data->num_visible_mis;
 
-	const float* vertex_lighting = frame_data->vertex_lighting.data;
+	const V3* vertex_lighting = frame_data->vertex_lighting.data;
     int vertex_lighting_in = 0;
 
 	// Output
@@ -1634,9 +1636,9 @@ void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data
 		const MeshInstance* mi = &mis[i];
 		const MeshBase* mb = &mbs[mi->mb_id];
 
-		const int* position_indices = mb->position_indices;
-		const int* uv_indices = mb->uv_indices;
-		const float* uvs = mb->uvs;
+		const int* position_indices = mb->position_indices.data;
+		const int* uv_indices = mb->uv_indices.data;
+		const V2* uvs = mb->uvs.data;
 
 		const int vsp_offset = mi->view_space_positions_offset;
 
@@ -1644,35 +1646,36 @@ void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data
 		{
 			const int face_index = front_face_indices[j + front_faces_offset] * STRIDE_FACE_VERTICES;
 
-			const int p0_index = vsp_offset + position_indices[face_index] * STRIDE_POSITION;
-			const int p1_index = vsp_offset + position_indices[face_index + 1] * STRIDE_POSITION;
-			const int p2_index = vsp_offset + position_indices[face_index + 2] * STRIDE_POSITION;
+			const int p0_index = vsp_offset + position_indices[face_index];
+			const int p1_index = vsp_offset + position_indices[face_index + 1];
+			const int p2_index = vsp_offset + position_indices[face_index + 2];
 
 			// TODO: Would just storing as a V3 be better?
-			const V3 p0 = v3_read(vsps + p0_index);
-			const V3 p1 = v3_read(vsps + p1_index);
-			const V3 p2 = v3_read(vsps + p2_index);
-			/*
-			const int uv0_index = uv_indices[face_index] * STRIDE_UV;
-			const int uv1_index = uv_indices[face_index + 1] * STRIDE_UV;
-			const int uv2_index = uv_indices[face_index + 2] * STRIDE_UV;
-
-			const V2 uv0 = v2_read(uvs + uv0_index);
-			const V2 uv1 = v2_read(uvs + uv0_index);
-			const V2 uv2 = v2_read(uvs + uv0_index);
-			*/
+			const V3 p0 = vsps[p0_index];
+			const V3 p1 = vsps[p1_index];
+			const V3 p2 = vsps[p2_index];
 			
+			const int uv0_index = uv_indices[face_index];
+			const int uv1_index = uv_indices[face_index + 1];
+			const int uv2_index = uv_indices[face_index + 2];
+
+            const V2 uv0 = uvs[uv0_index];
+            const V2 uv1 = uvs[uv1_index];
+            const V2 uv2 = uvs[uv2_index];
+
             // TODO: NOt sure how great this way of reading lighting is.
             //       but can't be terrible right??
             // TODO: is lighting the wrong word here...
-            const V3 lighting0 = v3_read(vertex_lighting + vertex_lighting_in * STRIDE_COLOUR);
-            const V3 lighting1 = v3_read(vertex_lighting + (vertex_lighting_in + 1) * STRIDE_COLOUR);
-            const V3 lighting2 = v3_read(vertex_lighting + (vertex_lighting_in + 2) * STRIDE_COLOUR);
+            const V3 lighting0 = vertex_lighting[vertex_lighting_in];
+            const V3 lighting1 = vertex_lighting[vertex_lighting_in + 1];
+            const V3 lighting2 = vertex_lighting[vertex_lighting_in + 2];
 
             vertex_lighting_in += STRIDE_FACE_VERTICES;
 
 			// TODO: If doesn't have texture, shouldn't copy UVs.
 			//	     Try avoid branching per face.
+
+            // TODO: 
 
 			faces_to_clip[out_index++] = p0.x;
 			faces_to_clip[out_index++] = p0.y;
@@ -2073,8 +2076,9 @@ void project_and_draw_clipped(
 		project(&rt->canvas, renderer->settings.projection_matrix, p2, &ssp2);
 
 		//x,y,z,w,u,v,r,g,b
+        // TODO: Switch to a vertex struct?
 		float vc0[VERTEX_COMPONENTS] = { 0 };
-		v4_write(vc0, ssp0);
+		v4_write(vc0, ssp0); 
 		for (int j = 4; j < VERTEX_COMPONENTS; ++j)
 		{
 			// -1 because incoming x,y,z -> out x,y,z,w
