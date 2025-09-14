@@ -1,29 +1,19 @@
 # range
 
-A fast paced 3D shooter game driven by my own software renderer written in C. 
+A fast paced 3D shooter game driven by my own software rendered game engine written in C. 
 
-The engine is being specifically developed for the game, however, in the future, it may be split off into it's own 
-repository and developed separately.
-
-## Roadmap
-
-TODO: Redo this, priorites etc.
-
-- [x] Basic 3D software rendering
-- [ ] Baked lightmaps 
-- [ ] Basic physics
-    - [ ] Player collisions
-
-- [ ] Gameplay
+For now the game engine development is solely driven by necessity for the game, however, in the future, the engine
+may be split off into it's own project.
 
 ## Installation
 
-# Generating visual studio stufff.
+# Generating visual studio stuff.
 
 Generate the .sln file:
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 
-TODO
+TODO: Update this
+TODO: Add requirements (Windows, CECS)
 
 ## Licence 
 
