@@ -13,14 +13,12 @@ float* directions;
 MeshBaseID sphere_base;
 MeshBaseID cube_base;
 
-// TODO: Switch to C compiler.
-
 void create_map(Engine* engine)
 {
-    // TODO: Map like a fortnite 1v1 map, just a floor and scoreboard and maybe some obstacles.
+    // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     
     // TODO: Also for models, the scene could be global? I think MBs should be 
-    //       global.
+    //       global?
     Scene* scene = &engine->scene;
     Status status = scene_init(scene);
     
@@ -40,7 +38,7 @@ void create_map(Engine* engine)
         COMPONENT_MeshInstance);
     MeshInstance_init(mi);
 
-    // TODO: I hate this set base.
+    // TODO: I hate this set base. - it should be from init?
     MeshInstance_set_base(mi, &scene->mesh_bases.bases[cube_base]);
     
     Assert(resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp"));

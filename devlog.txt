@@ -5,5 +5,10 @@
 14/9/25
 - Refactored some parts of clipping and prepare_for_clipping
 - Reimplemented UVs
+- Realised that I've been prematurely optimising and working on stuff for absolutely no reason (ECS).
+  From this point going forwards, I will be focusing on the development of the game, and the engine
+  will be purely tied to the game. Any refactors or optimisations should come out of necessity.
 
 TODOS:
+- Begin basic physics system.
+- Reimplement shadows.
