@@ -13,6 +13,7 @@ Status MeshInstance_init(MeshInstance* mi)
 
 	mi->scale = (V3){ 1,1,1 };
 	mi->has_scale_changed = 1; // TODO: Rename to recalc bounding sphere?
+    mi->texture_id = -1; // Default to untextured.
 
 	return STATUS_OK;
 }
