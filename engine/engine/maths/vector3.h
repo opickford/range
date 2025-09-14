@@ -124,13 +124,6 @@ inline V3 v3_sub_v3(V3 v0, V3 v1)
 	return (V3) { v0.x - v1.x, v0.y - v1.y, v0.z - v1.z };
 }
 
-inline void v3_swap(V3* v0, V3* v1)
-{
-	V3 temp = *v0;
-	*v0 = *v1;
-	*v1 = temp;
-}
-
 /*
 inline void v3_write(float* out, V3 v)
 {

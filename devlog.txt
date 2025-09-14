@@ -1,0 +1,9 @@
+10/9/25
+- Fixed heap corruption bug from CECS causing sporadic crash on startup.
+
+
+14/9/25
+- Refactored some parts of clipping and prepare_for_clipping
+- Reimplemented UVs
+
+TODOS:

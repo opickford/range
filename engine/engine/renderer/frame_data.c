@@ -81,11 +81,20 @@ Status frame_data_init(
 	// TODO: TEMP: For now no shadows so only 3 comps?
     Vector_reserve(frame_data->vertex_lighting, total_faces * STRIDE_FACE_VERTICES * STRIDE_COLOUR);
 
-	// Clipping
-    // x,y,z,r,g,b
-	const int components_per_vertex = STRIDE_POSITION + STRIDE_COLOUR; // Temp hardcoded.
 
+    // TODO: I think I'll have to rethink this entire clipping process once we introduce dynamic lights again
+    //       otherwise do we have to allocate space for each light for each mesh instance.
+
+	// Clipping
+    // x,y,z,r,g,b,u,v
+    // UV are optional and may not be included but obviously we need the space incase.
+	const int components_per_vertex = STRIDE_POSITION + STRIDE_COLOUR + STRIDE_UV; // Temp hardcoded.
+
+    // TODO: I really don't like this tbf, not sure the extra memory is worth this, just process a clipped face at a time?
+    //       IF! It becomes an issue.
     const int max_tris_at_once = most_faces * MAX_CLIPPED_TRIS_FACTOR;
+
+    // TODO: More comments about this stuff and components per vertex etc.
 
 	frame_data->num_clipped_faces = 0;
     Vector_reserve(frame_data->faces_to_clip, components_per_vertex * total_faces * STRIDE_FACE_VERTICES);

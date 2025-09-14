@@ -74,14 +74,6 @@ inline V4 v4_sub_v4(V4 v0, V4 v1)
 	return (V4) { v0.x - v1.x, v0.y - v1.y, v0.z - v1.z, v0.w - v1.w };
 }
 
-inline void v4_swap(V4* v0, V4* v1)
-{
-	V4 temp = *v0;
-	*v0 = *v1;
-	*v1 = temp;
-}
-
-
 // TODO: If it turns out these are taking a noticeable amount of CPU,
 //		 convert to #define.
 inline void v4_write(float* out, V4 v)

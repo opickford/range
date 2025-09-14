@@ -1,7 +1,7 @@
 #ifndef STATUS_H
 #define STATUS_H
 
-#include <assert.h>
+
 
 // TODO: In the future it would be nice to have some prefix for engine/game code to differentiate it 
 //       from Windows code for example there are lots of STATUS_ from <Windows.h>.
@@ -34,6 +34,7 @@ inline const char* status_to_str(Status status)
 }
 
 #ifndef NDEBUG
+#include <assert.h>
 inline void Assert(Status status) { assert(status == STATUS_OK); };
 #else
 inline void Assert(Status status) {};

@@ -44,6 +44,9 @@ typedef struct
 
 	 just forget about shadows for now mayber.
 	*/
+
+
+    // TODO: Refactoring this so it's not just float arrays.
 	
     Vector(V3) vertex_lighting;
 

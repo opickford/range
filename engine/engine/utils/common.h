@@ -11,4 +11,6 @@ inline float random_float()
 	return (float)rand() / (float)RAND_MAX;
 }
 
+#define SWAP(T, a, b) do { T temp = a; a = b; b = temp; } while (0)
+
 #endif

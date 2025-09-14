@@ -7,18 +7,24 @@ typedef struct
 
 } V2;
 
-inline void v2_swap(V2* v0, V2* v1)
+inline V2 v2_add_v2(V2 v0, V2 v1)
 {
-    // TODO: Generic function for this?
-	V2 temp = *v0;
-	*v0 = *v1;
-	*v1 = temp;
+    return (V2) { v0.x + v1.x, v0.y + v1.y };
 }
 
-/*
+inline V2 v2_sub_v2(V2 v0, V2 v1)
+{
+    return (V2) { v0.x - v1.x, v0.y - v1.y };
+}
+
+inline V2 v2_mul_f(V2 v, float f)
+{
+    return (V2) { v.x * f, v.y * f };
+}
+
 inline V2 v2_read(const float* in)
 {
 	return (V2) { in[0], in[1] };
-}*/
+}
 
 #endif

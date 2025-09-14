@@ -41,12 +41,13 @@ void create_map(Engine* engine)
     MeshInstance_init(mi);
 
     // TODO: I hate this set base.
-    MeshInstance_set_base(mi, &scene->mesh_bases.bases[sphere_base]);
+    MeshInstance_set_base(mi, &scene->mesh_bases.bases[cube_base]);
     
     Assert(resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp"));
 
     mi->texture_id = 0;
 
+    
 
     /*
     mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");
@@ -56,8 +57,7 @@ void create_map(Engine* engine)
     //scene->models.mis_texture_ids[0] = 0;
 
     scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
-    //scene->ambient_light = (V3){ 1.f,1.f,1.f };
-
+    
     // TODO: Should the camera be part of the scene??
     engine->renderer.camera.position = (V3) { 0, 0, 10.f };
     

@@ -62,13 +62,13 @@ void draw_scanline(RenderTarget* rt,
 
 void draw_flat_bottom_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2);
 void draw_flat_top_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2);
-void draw_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2, float* vc3);
+void draw_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2);
 
 // TODO: Rename?
 void draw_textured_scanline(RenderTarget* rt, int x0, int x1, int y, float z0, float z1, float w0, float w1, V3 c0, V3 c1, const V2 uv0, const V2 uv1, const Texture* texture);
-void draw_textured_flat_bottom_triangle(RenderTarget* rt, V4 v0, V4 v1, V4 v2, V3 c0, V3 c1, V3 c2, V2 uv0, V2 uv1, V2 uv2, const Texture* texture);
-void draw_textured_flat_top_triangle(RenderTarget* rt, V4 v0, V4 v1, V4 v2, V3 c0, V3 c1, V3 c2, V2 uv0, V2 uv1, V2 uv2, const Texture* texture);
-void draw_textured_triangle(RenderTarget* rt, V4 v0, V4 v1, V4 v2, V3 c0, V3 c1, V3 c2, V2 uv0, V2 uv1, V2 uv2, const Texture* texture);
+void draw_textured_flat_bottom_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2, const Texture* texture);
+void draw_textured_flat_top_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2, const Texture* texture);
+void draw_textured_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2, const Texture* texture);
 
 // TODO: Comments etc.
 void draw_depth_scanline(DepthBuffer* db, int x0, int x1, int y, float z0, float z1);
@@ -79,20 +79,8 @@ void draw_depth_triangle(DepthBuffer* db, V4 v0, V4 v1, V4 v2);
 // SECTION: Rendering Pipeline.
 void project(const Canvas* canvas, const M4 projection_matrix, V4 v, V4* out);
 
-void project_and_draw_clipped(
-	Renderer* renderer,
-	RenderTarget* rt,
-	FrameData* frame_data,
-	const MeshInstance* mi);
 
-void render(
-    ECS* ecs, 
-    System* render_system, 
-    System* lighting_system,
-    Renderer* renderer, 
-    Scene* scene, 
-    const Resources* resources, 
-    const M4 view_matrix);
+
 
 // REFACTORED PIPELINE
 
@@ -116,8 +104,31 @@ void clip_project_and_draw(
 	Renderer* renderer,
 	RenderTarget* rt,
 	FrameData* frame_data,
-	Scene* scene);
+	Scene* scene,
+    const Resources* resources);
 
+// TODO: Hate this name.
+void project_and_draw_clipped(
+    Renderer* renderer,
+    RenderTarget* rt,
+    FrameData* frame_data,
+    const MeshInstance* mi);
+
+void project_and_draw_clipped_textured(
+    Renderer* renderer,
+    RenderTarget* rt,
+    FrameData* frame_data,
+    const MeshInstance* mi,
+    const Texture* texture);
+
+void render(
+    ECS* ecs,
+    System* render_system,
+    System* lighting_system,
+    Renderer* renderer,
+    Scene* scene,
+    const Resources* resources,
+    const M4 view_matrix);
 
 // TEMP
 
