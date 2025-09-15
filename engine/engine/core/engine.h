@@ -37,6 +37,8 @@ typedef struct
     // TODO: Only manage one scene.
 	Scene scene;
 
+    // TODO: Stuff like this is private?
+
 	// Engine settings
 	int running;
 

@@ -15,6 +15,7 @@ typedef struct
 	MeshBases mesh_bases;
 
 	V3 ambient_light;
+    int bg_colour;
 
 } Scene;
 
