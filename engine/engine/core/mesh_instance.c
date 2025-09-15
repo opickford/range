@@ -50,5 +50,7 @@ void MeshInstance_set_albedo(MeshInstance* mi, const MeshBase* mb, V3 albedo)
 
 void MeshInstance_destroy(MeshInstance* mi)
 {
+    if (!mi) return;
+
     Vector_destroy(mi->vertex_alebdos);
 }
