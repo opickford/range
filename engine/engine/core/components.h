@@ -3,6 +3,8 @@
 
 #include <cecs/ecs.h>
 
+#include "transform.h"
+
 // TODO: Is XMacro pattern necessary here?
 
 
