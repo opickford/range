@@ -14,7 +14,7 @@ This vector implementation wraps a raw data array and a capacity.
 */
 
 // TODO: Init function?
-#define Vector_destroy(v) free((v).data)
+#define Vector_destroy(v) do { if ((v).data) free((v).data); } while(0)
 
 // Define a vector representation of a given type.
 // Generates an anonymous struct to represent a vector for a type.
