@@ -8,7 +8,8 @@
 
 #define CORE_COMPONENTS_LIST \
     X(MeshInstance) \
-    X(PointLight)
+    X(PointLight) \
+    X(Transform)
 
 // TODO: Should this be like COMPONENT_ID_...?
 #define X(T) ComponentID COMPONENT_##T;
