@@ -24,7 +24,8 @@ add_library (core STATIC
     scene.h
     strides.h
     window.h
-	components.h
+    components.h
+    transform.h
 )
 
 target_link_libraries(core 
