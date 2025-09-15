@@ -23,16 +23,6 @@ target_link_libraries(engine
 
 set_target_properties(engine PROPERTIES FOLDER "Engine")
 
-get_target_property(EXISTS cecs::cecs NAME)
-message(STATUS "Target exists: ${EXISTS}")
-
-
-get_target_property(ENGINE_INCLUDES engine INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "engine includes: ${CECS_INCLUDES}")
-
-get_target_property(CECS_INCLUDES cecs::cecs INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "cecs::cecs includes: ${CECS_INCLUDES}")
-
 # TODO: Add tests and install targets if needed.
 
 # Install libraries
