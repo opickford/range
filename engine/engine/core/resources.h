@@ -24,6 +24,7 @@ inline void resources_init(Resources* resources)
 	memset(resources, 0, sizeof(Resources));
 }
 
+// TODO: This could return some TextureID that can be used for indexing the texture.
 inline Status resources_load_texture(Resources* resources, const char* file)
 {
 	// Get the texture's index.
