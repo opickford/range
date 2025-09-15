@@ -34,11 +34,6 @@ typedef struct
 	MeshBaseID mb_id; // TODO: Rename as base?
 	int texture_id;
 
-	// Transform - TODO: Refactor into component.
-	V3 position;
-	V3 rotation;
-	V3 scale;
-
 	uint8_t has_scale_changed; // Determines if the bounding sphere needs updating.
 
 	// Per instance data

@@ -36,7 +36,8 @@ static void Engine_setup_ecs(Engine* engine)
     {
         engine->render_system_id = ECS_register_system(ecs);
         System* system = &engine->ecs.systems[engine->render_system_id];
-        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance);
+        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | 
+                                    COMPONENT_ID_TO_BITSET(COMPONENT_Transform);
     }
 
     {

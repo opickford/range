@@ -10,6 +10,7 @@
 #include "core/globals.h"
 #include "core/resources.h"
 #include "core/components.h"
+#include "core/transform.h"
 
 #include "common/colour.h"
 
@@ -1108,6 +1109,9 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
         MeshInstance* mis = archetype->component_lists[mis_i];
 
+        int transforms_i = Archetype_find_component_list(archetype, COMPONENT_Transform);
+        Transform* transforms = archetype->component_lists[transforms_i];
+
         V3* vsps = frame_data->view_space_positions.data;
         BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
         int vsps_offset = 0;
@@ -1115,6 +1119,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         for (int i = 0; i < archetype->entity_count; ++i)
         {            
             MeshInstance* mi = &mis[i];
+            Transform transform = transforms[i];
 
             // Save the offset to the start of the view space positions for the 
             // mesh instance.
@@ -1123,7 +1128,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
             // Calculate model matrix.
             // TODO: rotation or direction or eulers?
             M4 model_matrix;
-            m4_model_matrix(mi->position, mi->rotation, mi->scale, model_matrix);
+            m4_model_matrix(transform.position, transform.rotation, transform.scale, model_matrix);
 
             M4 model_view_matrix;
             m4_mul_m4(view_matrix, model_matrix, model_view_matrix);
@@ -1165,6 +1170,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         for (int i = 0; i < archetype->entity_count; ++i)
         {
             MeshInstance* mi = &mis[i];
+            Transform transform = transforms[i];
 
             // Save the offset to the start of the view space positions for the 
             // mesh instance.
@@ -1173,7 +1179,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
             // Calculate normal matrix.
             // TODO: rotation or direction or eulers?
             M4 normal_matrix;
-            m4_normal_matrix(mi->rotation, mi->scale, normal_matrix);
+            m4_normal_matrix(transform.rotation, transform.scale, normal_matrix);
 
             M4 view_normal_matrix;
             m4_mul_m4(view_matrix, normal_matrix, view_normal_matrix);
