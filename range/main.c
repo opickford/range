@@ -2,11 +2,13 @@
 
 #include <engine/core/globals.h>
 #include <engine/core/canvas.h>
+#include <engine/core/transform.h>
 
 #include <engine/utils/common.h>
 
 #include <engine/maths/vector3.h>
 #include <engine/common/status.h>
+
 
 float* directions;
 
@@ -40,10 +42,15 @@ void create_map(Engine* engine)
 
     // TODO: I hate this set base. - it should be from init?
     MeshInstance_set_base(mi, &scene->mesh_bases.bases[cube_base]);
-    
+    mi->texture_id = 0;
+
+    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+    Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+    Transform_init(transform);
+
+
     Assert(resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp"));
 
-    mi->texture_id = 0;
 
     
 
@@ -55,6 +62,7 @@ void create_map(Engine* engine)
     //scene->models.mis_texture_ids[0] = 0;
 
     scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
+    scene->bg_colour = 0x11111111;
     
     // TODO: Should the camera be part of the scene??
     engine->renderer.camera.position = (V3) { 0, 0, 10.f };
@@ -161,8 +169,6 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
             random_float()
         };
 
-
-        // TODO: A bunch of stuff broken.
         
         const Camera* camera = &engine->renderer.camera;
 
@@ -174,7 +180,11 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         MeshInstance_init(mi);
         MeshInstance_set_base(mi, &scene->mesh_bases.bases[sphere_base]);
         MeshInstance_set_albedo(mi, &scene->mesh_bases.bases[sphere_base], colour);
-        mi->position = pos;
+
+        ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+        Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+        Transform_init(transform);
+        transform->position = pos;
 
         /*
         MeshInstanceID inst = mesh_instances_add(&scene->mesh_instances);
@@ -226,6 +236,31 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     }
     case VK_F4:
     {
+        MeshInstance* mi = ECS_get_component(&engine->ecs, 0, COMPONENT_MeshInstance);
+        MeshInstance_destroy(mi);
+        ECS_remove_component(&engine->ecs, 0, COMPONENT_MeshInstance);
+
+        ECS_destroy_entity(&engine->ecs, 0);
+
+
+        /*
+        Scene* scene = &engine->scenes[engine->current_scene_id];
+        if (scene->lights.point_lights.count > 0)
+            PointLights_remove(&scene->lights.point_lights, scene->lights.point_lights.index_to_id[0]);
+            */
+        break;
+    }
+    case VK_F5:
+    {
+        ECS_add_component(&engine->ecs, 0, COMPONENT_MeshInstance);
+        MeshInstance* mi = ECS_get_component(&engine->ecs, 0, COMPONENT_MeshInstance);
+        MeshInstance_init(mi);
+        MeshInstance_set_base(mi, &engine->scene.mesh_bases.bases[0]);
+        MeshInstance_set_albedo(mi, &engine->scene.mesh_bases.bases[0], (V3) { 1, 0, 0 });
+
+
+
+
         /*
         Scene* scene = &engine->scenes[engine->current_scene_id];
         if (scene->lights.point_lights.count > 0)
