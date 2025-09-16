@@ -459,7 +459,3 @@ static void engine_process_keyup(void* ctx, WPARAM wParam)
     }
     }
 }
-
-void engine_setup_ecs(Engine* engine)
-{
-}
