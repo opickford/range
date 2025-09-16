@@ -13,6 +13,9 @@
 15/9/25
 - Fixed logic errors and crashes in CECS when moving entity archetype which was causing a crash when I removed a mesh
   instance and added a new one to another entity.
+- Added Transform component to replace position,scale,rotation in
+  MeshInstance. Refactored render system to use Transform component, ready
+for starting physics implementation.
 
 TODOS:
 - Begin basic physics system.
