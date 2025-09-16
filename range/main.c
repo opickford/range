@@ -38,10 +38,8 @@ void create_map(Engine* engine)
     ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
     MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, 
         COMPONENT_MeshInstance);
-    MeshInstance_init(mi);
+    MeshInstance_init(mi, &scene->mesh_bases.bases[cube_base]);
 
-    // TODO: I hate this set base. - it should be from init?
-    MeshInstance_set_base(mi, &scene->mesh_bases.bases[cube_base]);
     mi->texture_id = 0;
 
     ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
@@ -66,10 +64,6 @@ void create_map(Engine* engine)
     
     // TODO: Should the camera be part of the scene??
     engine->renderer.camera.position = (V3) { 0, 0, 10.f };
-    
-    // TODO: Also this should just be done by a flag so at the start of the render,
-    //       the buffers are resized. Or even we check each time.
-    //render_buffers_resize(&engine->renderer.buffers);
 }
 
 void engine_on_init(Engine* engine)
@@ -177,8 +171,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         EntityID cube_entity = ECS_create_entity(&engine->ecs);
         ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
         MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-        MeshInstance_init(mi);
-        MeshInstance_set_base(mi, &scene->mesh_bases.bases[sphere_base]);
+        MeshInstance_init(mi, &scene->mesh_bases.bases[sphere_base]);
         MeshInstance_set_albedo(mi, &scene->mesh_bases.bases[sphere_base], colour);
 
         ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
@@ -254,12 +247,8 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     {
         ECS_add_component(&engine->ecs, 0, COMPONENT_MeshInstance);
         MeshInstance* mi = ECS_get_component(&engine->ecs, 0, COMPONENT_MeshInstance);
-        MeshInstance_init(mi);
-        MeshInstance_set_base(mi, &engine->scene.mesh_bases.bases[0]);
+        MeshInstance_init(mi, &engine->scene.mesh_bases.bases[0]);
         MeshInstance_set_albedo(mi, &engine->scene.mesh_bases.bases[0], (V3) { 1, 0, 0 });
-
-
-
 
         /*
         Scene* scene = &engine->scenes[engine->current_scene_id];

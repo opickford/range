@@ -54,7 +54,7 @@ typedef struct
 } MeshInstance;
 
 // MeshInstance API
-Status MeshInstance_init(MeshInstance* mi);
+Status MeshInstance_init(MeshInstance* mi, const MeshBase* mb);
 void MeshInstance_destroy(MeshInstance* mi);
 
 Status MeshInstance_set_base(MeshInstance* mi, const MeshBase* mb);

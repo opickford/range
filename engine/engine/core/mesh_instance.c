@@ -7,14 +7,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-Status MeshInstance_init(MeshInstance* mi)
+Status MeshInstance_init(MeshInstance* mi, const MeshBase* mb)
 {
 	memset(mi, 0, sizeof(MeshInstance));
 
 	mi->has_scale_changed = 1; // TODO: Rename to recalc bounding sphere?
     mi->texture_id = -1; // Default to untextured.
 
-	return STATUS_OK;
+    Status status = MeshInstance_set_base(mi, mb);
+
+	return status;
 }
 
 Status MeshInstance_set_base(MeshInstance* mi, const MeshBase* mb)
