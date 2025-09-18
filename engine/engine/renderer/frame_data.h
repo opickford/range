@@ -21,7 +21,6 @@ typedef struct
 	// Transform Stage
 	Vector(V3) view_space_positions;
     Vector(V3) view_space_normals;
-    Vector(BoundingSphere) view_space_bounding_spheres; // Used for broad phase frustum culling.
 
     Vector(V3) point_lights_view_space_positions;
 

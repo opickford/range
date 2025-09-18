@@ -2,6 +2,7 @@
 #define MeshInstance_H
 
 #include "mesh_base.h"
+#include "bounding_sphere.h"
 
 #include "maths/vector3.h"
 #include "maths/vector4.h"
@@ -50,6 +51,8 @@ typedef struct
 	int view_space_normals_offset;
 
 	int num_front_faces;
+
+    BoundingSphere view_space_bounding_sphere; // Broad phase frustum culling.
 
 } MeshInstance;
 

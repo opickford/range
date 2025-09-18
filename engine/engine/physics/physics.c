@@ -13,7 +13,7 @@ void PhysicsData_init(PhysicsData* data)
 }
 
 void Physics_tick(ECS* ecs, System* physics_system, float dt)
-{    
+{
     // Disable gravity for now.
     static V3 acceleration = { 0, 0, 0 };
     //static V3 acceleration = { 0, -9.8f, 0 };

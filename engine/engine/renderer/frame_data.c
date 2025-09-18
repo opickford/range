@@ -60,7 +60,6 @@ Status frame_data_init(
     }
 
 	// Transform Stage
-    Vector_reserve(frame_data->view_space_bounding_spheres, mis_count);
     Vector_reserve(frame_data->view_space_positions, total_positions * STRIDE_POSITION);
 	
 	// TODO: Fails in release?? heap corruption, so potentially from before?

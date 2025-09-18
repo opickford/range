@@ -1097,6 +1097,8 @@ void project(const Canvas* canvas, const M4 projection_matrix, V4 v, V4* out)
 
 void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const M4 view_matrix)
 {
+    // TODO: Could split this into multiple functions.
+
     // TODO: Should this function really be defined as transform stage as 
     //		 we also do the bounding sphere stuff.....
     const MeshBase* mbs = scene->mesh_bases.bases;
@@ -1113,10 +1115,9 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         MeshInstance* mis = archetype->component_lists[mis_i];
 
         int transforms_i = Archetype_find_component_list(archetype, COMPONENT_Transform);
-        Transform* transforms = archetype->component_lists[transforms_i];
+        const Transform* transforms = archetype->component_lists[transforms_i];
 
         V3* vsps = frame_data->view_space_positions.data;
-        BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
 
         for (int i = 0; i < archetype->entity_count; ++i)
         {            
@@ -1145,7 +1146,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
                 &view_space_centre);
 
             // Write out the bounding sphere.
-            BoundingSphere* bs = &view_space_bounding_spheres[i];
+            BoundingSphere* bs = &mi->view_space_bounding_sphere;
             bs->centre = v4_xyz(view_space_centre);
 
             // Read the mesh base's object space positions and convert them to 
@@ -1167,7 +1168,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
 
         // Convert object space normals to view space.
         V3* vsns = frame_data->view_space_normals.data;
-        
+
         for (int i = 0; i < archetype->entity_count; ++i)
         {
             MeshInstance* mi = &mis[i];
@@ -1204,25 +1205,25 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
             }
         }
 
+        // TODO: I believe the bounding sphere is the same for the sphere and cube for some reason????
         for (int i = 0; i < archetype->entity_count; ++i)
         {
             MeshInstance* mi = &mis[i];
 
             // Update the radius of each mesh instance bounding sphere.
             const V3* vsps = frame_data->view_space_positions.data;
-            BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
 
             // Only update the bounding sphere if the scale is changed, otherwise
-            // we don't need to update it.
+            // we don't need to update it. Note, we've already updated the centre
+            // in the vsps calculation step!
             if (mi->has_scale_changed)
             {
+                BoundingSphere* bs = &mi->view_space_bounding_sphere;
+                V3 view_space_centre = bs->centre;
+
                 mi->has_scale_changed = 0;
 
                 const MeshBase* mb = &mbs[mi->mb_id];
-
-                // Read bounding sphere (x,y,z,radius).
-                BoundingSphere* bs = &view_space_bounding_spheres[i];
-                V3 view_space_centre = bs->centre;
 
                 // Calculate the new radius of the mi's bounding sphere.
                 float radius_squared = -1;
@@ -1289,12 +1290,8 @@ void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* fra
 	uint8_t* intersected_planes = frame_data->intersected_planes.data;
 	int intersected_planes_out_index = 0;
 
-	const BoundingSphere* bounding_spheres = frame_data->view_space_bounding_spheres.data;
-
 	const int num_planes = view_frustum->planes_count;
 	const Plane* planes = view_frustum->planes;
-
-    BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
 
     for (int si = 0; si < render_system->num_archetypes; ++si)
     {
@@ -1307,8 +1304,7 @@ void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* fra
         for (int i = 0; i < archetype->entity_count; ++i)
         {
             MeshInstance* mi = &mis[i];
-
-            const BoundingSphere bs = bounding_spheres[i];
+            const BoundingSphere bs = mi->view_space_bounding_sphere;
 
             // Store what planes need clipping against.
             int clip_against_plane[MAX_FRUSTUM_PLANES] = { 0 };
@@ -1343,8 +1339,6 @@ void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* fra
                 // In format: num_planes_intersecting, plane_index_0, plane_index_1, ...
                 intersected_planes[intersected_planes_out_index++] = num_intersected_planes;
 
-
-
                 for (int j = 0; j < num_intersected_planes; ++j)
                 {
                     intersected_planes[intersected_planes_out_index++] = clip_against_plane[j];
@@ -1362,15 +1356,11 @@ void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scen
 
 	// Determines what faces are facing the camera and prepares
 	// the vertex data for the lighting calculations.
-	const V3* vsps = frame_data->view_space_positions.data;
 	MeshInstance* visible_mis = frame_data->visible_mis.data;
 	const int num_visible_mis = frame_data->num_visible_mis;
 
 	int* front_face_indices = frame_data->front_face_indices.data;
 	int front_face_out = 0;
-
-
-    
 
 	for (int i = 0; i < num_visible_mis; ++i)
 	{
@@ -1380,17 +1370,16 @@ void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scen
 		const MeshBase* mb = &mbs[mi->mb_id];
 
 		const int* position_indices = mb->position_indices.data;
-		const int vsp_offset = mi->view_space_positions_offset;
+	    const V3* vsps = frame_data->view_space_positions.data + mi->view_space_positions_offset;
 
 		for (int j = 0; j < mb->num_faces; ++j)
 		{
 			const int face_index = j * STRIDE_FACE_VERTICES;
 
-			const int p0_index = vsp_offset + position_indices[face_index];
-			const int p1_index = vsp_offset + position_indices[face_index + 1];
-			const int p2_index = vsp_offset + position_indices[face_index + 2];
+			const int p0_index = position_indices[face_index];
+			const int p1_index = position_indices[face_index + 1];
+			const int p2_index = position_indices[face_index + 2];
 			
-			// TODO: Would just storing as a V3 be better?
 			if (is_front_face(vsps[p0_index], vsps[p1_index], vsps[p2_index]))
 			{
 				// Store the index of the face for culling later.
