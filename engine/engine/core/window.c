@@ -104,6 +104,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         break;
     }
+    case WM_LBUTTONDOWN:
+    {
+        Window* window = (Window*)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+        window->on_lmbdown(window->ctx);
+        break;
+    }
     }
 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
