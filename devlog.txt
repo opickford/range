@@ -17,6 +17,10 @@
   MeshInstance. Refactored render system to use Transform component, ready
 for starting physics implementation.
 
+18/9/25
+- Begin implementation of physics, basic PhysicsData component and physics system using suvat equations.
+- Refactor CECS ECS_add_component to return void* so we can remove redudant ECS_get_component after.
+
 TODOS:
 - Begin basic physics system.
 - Reimplement shadows.
