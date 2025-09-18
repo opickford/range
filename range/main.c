@@ -163,6 +163,24 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     }
 }
 
+void engine_on_lmbdown(Engine* engine)
+{
+    Scene* scene = &engine->scene;
+
+    // Create an entity
+    EntityID cube_entity = ECS_create_entity(&engine->ecs);
+
+    // Add a MeshInstance component.
+    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+    MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity,
+        COMPONENT_MeshInstance);
+    MeshInstance_init(mi, &scene->mesh_bases.bases[cube_base]);
+
+    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+    Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+    Transform_init(transform);
+}
+
 int main()
 {
 	Engine engine;

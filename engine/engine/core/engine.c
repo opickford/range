@@ -85,6 +85,7 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     // Set window callbacks.
     engine->window.on_resize = &engine_on_resize;
     engine->window.on_keyup = &engine_process_keyup;
+    engine->window.on_lmbdown = &engine_process_lmbdown;
 
     // Initialise the UI.
     status = ui_init(&engine->ui, &engine->renderer.target.canvas);
@@ -468,4 +469,11 @@ static void engine_process_keyup(void* ctx, WPARAM wParam)
         engine_on_keyup(engine, wParam);
     }
     }
+}
+
+static void engine_process_lmbdown(void* ctx)
+{
+    Engine* engine = (Engine*)ctx;
+
+    engine_on_lmbdown(ctx);
 }

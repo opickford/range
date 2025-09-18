@@ -34,6 +34,7 @@ typedef struct
 	void* ctx; // Set to Engine* so we can use it in the callbacks.
 	void (*on_resize)(void*);
 	void (*on_keyup)(void*, WPARAM);
+	void (*on_lmbdown)(void*);
 	
 	// Relative mouse movement from raw input.
 	int mouse_dx, mouse_dy;

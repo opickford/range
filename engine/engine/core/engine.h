@@ -65,6 +65,8 @@ void engine_on_update(Engine* engine, float dt);
 
 void engine_on_keyup(Engine* engine, WPARAM wParam);
 
+void engine_on_lmbdown(Engine* engine);
+
 // Internal functions
 
 
@@ -75,5 +77,6 @@ void engine_handle_input(Engine* engine, float dt);
 static void engine_on_resize(void* ctx);
 
 static void engine_process_keyup(void* ctx, WPARAM wParam);
+static void engine_process_lmbdown(void* ctx); // TODO: I don't really like this naming 'lmbdown'
 
 #endif
