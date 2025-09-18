@@ -43,8 +43,6 @@ void create_map(Engine* engine)
     Transform* transform = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform_init(transform);
     
-    // TODO: adding this component breaks clipping
-
     PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
     PhysicsData_init(physics_data);
     physics_data->force = (V3){ 0,0,1 };
@@ -61,9 +59,9 @@ void create_map(Engine* engine)
     */
     //scene->models.mis_texture_ids[0] = 0;
 
-    //scene->ambient_light = (V3){ 1,1,1 };
+    scene->ambient_light = (V3){ 1,1,1 };
 
-    scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
+    //scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
     scene->bg_colour = 0x11111111;
     
     // TODO: Should the camera be part of the scene??
@@ -179,6 +177,17 @@ void engine_on_lmbdown(Engine* engine)
     ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform_init(transform);
+    transform->position = engine->renderer.camera.position;
+    transform->rotation = engine->renderer.camera.direction;
+    transform->scale = (V3){ 0.1,0.1,0.1 };
+
+    PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
+    PhysicsData_init(physics_data);
+
+    // TODO: Dt?
+    float speed = 20;
+    physics_data->force = v3_mul_f(engine->renderer.camera.direction, speed);
+
 }
 
 int main()
