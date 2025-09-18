@@ -13,13 +13,14 @@ add_subdirectory(engine/maths)
 add_subdirectory(engine/core)
 add_subdirectory(engine/renderer)
 add_subdirectory(engine/ui)
+add_subdirectory(engine/physics)
 
 add_library(engine INTERFACE)
 
 
 target_link_libraries(engine 
     INTERFACE 
-        core common maths renderer ui utils)
+        core common maths renderer physics ui utils)
 
 set_target_properties(engine PROPERTIES FOLDER "Engine")
 
