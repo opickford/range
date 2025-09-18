@@ -1101,6 +1101,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
     //		 we also do the bounding sphere stuff.....
     const MeshBase* mbs = scene->mesh_bases.bases;
 
+    int vsps_offset = 0;
     for (int si = 0; si < render_system->num_archetypes; ++si)
     {
         const ArchetypeID archetype_id = render_system->archetype_ids[si];
@@ -1114,7 +1115,6 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
 
         V3* vsps = frame_data->view_space_positions.data;
         BoundingSphere* view_space_bounding_spheres = frame_data->view_space_bounding_spheres.data;
-        int vsps_offset = 0;
 
         for (int i = 0; i < archetype->entity_count; ++i)
         {            
