@@ -72,69 +72,6 @@ void engine_on_init(Engine* engine)
     g_debug_shadows = 0;
 
     create_map(engine);
-
-    /*
-    // Create a scene
-    Scene* scene = &engine->scenes[0];
-    Status status = scene_init(scene);
-
-    scene->ambient_light.x = 0.1f;
-    scene->ambient_light.y = 0.1f;
-    scene->ambient_light.z = 0.1f;
-
-    if (STATUS_OK != status)
-    {
-        log_error("Failed to scene_init because of %s", status_to_str(status));
-        return;
-    }
-
-    engine->current_scene_id = 0;
-    ++engine->scenes_count;
-    
-    // Setup scene for shadow testing.
-    // TODO: Could be nice to have a wrapper so I dont need to include the buffers param?
-    load_model_base_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/range/res/models/cube.obj");
-    load_model_base_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/range/res/models/suzanne.obj");
-    
-    V3 eulers = { 0, 0, 0 };
-
-    create_model_instances(&scene->models, &engine->renderer.buffers, 0, 1);
-    V3 plane_pos = { 0, 0, -4 };
-    V3 plane_scale = { 5.f, 0.1f, 10.f };
-    mi_set_transform(&scene->models, 0, plane_pos, eulers, plane_scale);
-
-    if (0)
-    {
-
-        create_model_instances(&scene->models, &engine->renderer.buffers, 0, 2);
-        V3 pos0 = { -1, 1, 3 };
-        V3 pos1 = { 1, 1, 3 };
-        
-        V3 scale = { 0.5, 1, 0.5 };
-        mi_set_transform(&scene->models, 1, pos0, eulers, scale);
-        mi_set_transform(&scene->models, 2, pos1, eulers, scale);
-    }
-    else
-    {
-        
-        create_model_instances(&scene->models, &engine->renderer.buffers, 1, 1);
-        V3 pos = { 0, 1, 0 };
-
-        V3 scale = { 1, 1, 1 };
-        mi_set_transform(&scene->models, 1, pos, eulers, scale);  
-        
-    }
-
-    V3 pl_pos0 = { 0, 2, 14 };
-    V3 pl_col0 = { 1, 1, 1 };
-    point_lights_create(&scene->point_lights, &engine->renderer.buffers, pl_pos0, pl_col0, 50.f);
-
-    engine->renderer.camera.position.z = 20;
-
-    // TODO: Maybe this is something that should be called after making changes to the models and lights?
-    // TODO: But either way, we need to find a better way of doing this automatically because otherwise
-    //       it will definitely cause some mistakes.
-    render_buffers_resize(&engine->renderer.buffers);*/
 }
 
 void engine_on_update(Engine* engine, float dt)
@@ -178,29 +115,14 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
         Transform_init(transform);
         transform->position = pos;
-
-        /*
-        MeshInstanceID inst = mesh_instances_add(&scene->mesh_instances);
-        scene_MeshInstance_set_base(scene, inst, mb_id);
-        scene_MeshInstance_set_albedo(scene, inst, colour);
-        mesh_instances_get(&scene->mesh_instances, inst)->position = pos;
-
-        */
         
         break;
     }
     case VK_F2:
     {
         //g_draw_normals = !g_draw_normals;
-
         Scene* scene = &engine->scene;
         
-        
-        /*
-        if (scene->mesh_instances.count > 0)
-            mesh_instances_remove(&scene->mesh_instances,
-                scene->mesh_instances.id_to_index[scene->mesh_instances.count - 1]);*/
-
         break;
     }
     case VK_F3:
@@ -235,12 +157,6 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
 
         ECS_destroy_entity(&engine->ecs, 0);
 
-
-        /*
-        Scene* scene = &engine->scenes[engine->current_scene_id];
-        if (scene->lights.point_lights.count > 0)
-            PointLights_remove(&scene->lights.point_lights, scene->lights.point_lights.index_to_id[0]);
-            */
         break;
     }
     case VK_F5:
@@ -250,11 +166,6 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         MeshInstance_init(mi, &engine->scene.mesh_bases.bases[0]);
         MeshInstance_set_albedo(mi, &engine->scene.mesh_bases.bases[0], (V3) { 1, 0, 0 });
 
-        /*
-        Scene* scene = &engine->scenes[engine->current_scene_id];
-        if (scene->lights.point_lights.count > 0)
-            PointLights_remove(&scene->lights.point_lights, scene->lights.point_lights.index_to_id[0]);
-            */
         break;
     }
     }
