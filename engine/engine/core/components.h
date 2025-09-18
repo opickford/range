@@ -4,6 +4,9 @@
 #include <cecs/ecs.h>
 
 #include "transform.h"
+#include "physics/physics.h"
+#include "mesh_instance.h"
+#include "lights.h"
 
 // TODO: Is XMacro pattern necessary here?
 
@@ -11,7 +14,8 @@
 #define CORE_COMPONENTS_LIST \
     X(MeshInstance) \
     X(PointLight) \
-    X(Transform)
+    X(Transform) \
+    X(PhysicsData)
 
 // TODO: Should this be like COMPONENT_ID_...?
 #define X(T) ComponentID COMPONENT_##T;
