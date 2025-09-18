@@ -35,22 +35,20 @@ void create_map(Engine* engine)
     EntityID cube_entity = ECS_create_entity(&engine->ecs);
 
     // Add a MeshInstance component.
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-    MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, 
-        COMPONENT_MeshInstance);
+    MeshInstance* mi = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
     MeshInstance_init(mi, &scene->mesh_bases.bases[cube_base]);
 
     mi->texture_id = 0;
 
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-    Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+    Transform* transform = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform_init(transform);
+    
+    // TODO: adding this component breaks clipping
 
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
-    PhysicsData* physics_data = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
+    PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
     PhysicsData_init(physics_data);
     physics_data->force = (V3){ 0,0,1 };
-
+    
     Assert(resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp"));
 
 
@@ -62,6 +60,8 @@ void create_map(Engine* engine)
     mi_set_transform(&scene->models, 0, (V3) { 0, 0, -5 }, (V3) { 0, 0, 0 }, (V3) { 5, 5, 5 });
     */
     //scene->models.mis_texture_ids[0] = 0;
+
+    //scene->ambient_light = (V3){ 1,1,1 };
 
     scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
     scene->bg_colour = 0x11111111;
@@ -110,16 +110,14 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
         EntityID cube_entity = ECS_create_entity(&engine->ecs);
-        ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-        MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+        MeshInstance* mi = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
         MeshInstance_init(mi, &scene->mesh_bases.bases[sphere_base]);
         MeshInstance_set_albedo(mi, &scene->mesh_bases.bases[sphere_base], colour);
 
-        ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-        Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+        Transform* transform = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
         Transform_init(transform);
         transform->position = pos;
-        
+
         break;
     }
     case VK_F2:
@@ -145,8 +143,7 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
         EntityID e = ECS_create_entity(&engine->ecs);
-        ECS_add_component(&engine->ecs, e, COMPONENT_PointLight);
-        PointLight* pl = ECS_get_component(&engine->ecs, e, COMPONENT_PointLight);
+        PointLight* pl = ECS_add_component(&engine->ecs, e, COMPONENT_PointLight);
         pl->position = pos;
         pl->colour = colour;
         pl->strength = 1.f;
@@ -160,15 +157,6 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         ECS_remove_component(&engine->ecs, 0, COMPONENT_MeshInstance);
 
         ECS_destroy_entity(&engine->ecs, 0);
-
-        break;
-    }
-    case VK_F5:
-    {
-        ECS_add_component(&engine->ecs, 0, COMPONENT_MeshInstance);
-        MeshInstance* mi = ECS_get_component(&engine->ecs, 0, COMPONENT_MeshInstance);
-        MeshInstance_init(mi, &engine->scene.mesh_bases.bases[0]);
-        MeshInstance_set_albedo(mi, &engine->scene.mesh_bases.bases[0], (V3) { 1, 0, 0 });
 
         break;
     }
