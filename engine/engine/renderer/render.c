@@ -1102,6 +1102,8 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
     const MeshBase* mbs = scene->mesh_bases.bases;
 
     int vsps_offset = 0;
+    int vsns_offset = 0;
+
     for (int si = 0; si < render_system->num_archetypes; ++si)
     {
         const ArchetypeID archetype_id = render_system->archetype_ids[si];
@@ -1165,8 +1167,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
 
         // Convert object space normals to view space.
         V3* vsns = frame_data->view_space_normals.data;
-        int vsns_offset = 0;
-
+        
         for (int i = 0; i < archetype->entity_count; ++i)
         {
             MeshInstance* mi = &mis[i];
