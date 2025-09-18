@@ -26,6 +26,7 @@ typedef struct
     // TODO: Defining these in the engine struct feels awful, should be a static?
     SystemID render_system_id;
     SystemID lighting_system_id;
+    SystemID physics_system_id;
 
 	// Engine components.
 	Window window;

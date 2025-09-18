@@ -46,6 +46,13 @@ static void Engine_setup_ecs(Engine* engine)
         system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PointLight);
 
     }
+
+    {
+        engine->physics_system_id = ECS_register_system(ecs);
+        System* system = &engine->ecs.systems[engine->physics_system_id];
+        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) |
+                                    COMPONENT_ID_TO_BITSET(COMPONENT_Transform);
+    }
 }
 
 
@@ -174,6 +181,9 @@ void engine_run(Engine* engine)
        
         M4 view_matrix;
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
+
+        // Apply physics
+        Physics_tick(&engine->ecs, &engine->ecs.systems[engine->physics_system_id], dt);
 
         // Clear the canvas.
         timer_restart(&t);
