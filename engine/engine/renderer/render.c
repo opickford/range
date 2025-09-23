@@ -47,8 +47,7 @@ void debug_draw_point_lights(
         const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
         Archetype* archetype = &ecs->archetypes[archetype_id];
 
-        int pls_i = Archetype_find_component_list(archetype, COMPONENT_PointLight);
-        PointLight* pls = archetype->component_lists[pls_i];
+        PointLight* pls = Archetype_get_component_list(archetype, COMPONENT_PointLight);
 
         for (int i = 0; i < archetype->entity_count; ++i)
         {
@@ -1111,11 +1110,8 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         const ArchetypeID archetype_id = render_system->archetype_ids[si];
         Archetype* archetype = &ecs->archetypes[archetype_id];
 
-        int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
-        MeshInstance* mis = archetype->component_lists[mis_i];
-
-        int transforms_i = Archetype_find_component_list(archetype, COMPONENT_Transform);
-        const Transform* transforms = archetype->component_lists[transforms_i];
+        MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
+        const Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
 
         V3* vsps = frame_data->view_space_positions.data;
 
@@ -1260,8 +1256,7 @@ void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* fr
         const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
         Archetype* archetype = &ecs->archetypes[archetype_id];
 
-        int pls_i = Archetype_find_component_list(archetype, COMPONENT_PointLight);
-        PointLight* pls = archetype->component_lists[pls_i];
+        PointLight* pls = Archetype_get_component_list(archetype, COMPONENT_PointLight);
 
         for (int i = 0; i < archetype->entity_count; ++i)
         {
@@ -1298,8 +1293,7 @@ void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* fra
         const ArchetypeID archetype_id = render_system->archetype_ids[si];
         Archetype* archetype = &ecs->archetypes[archetype_id];
 
-        int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
-        MeshInstance* mis = archetype->component_lists[mis_i];
+        MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
     
         for (int i = 0; i < archetype->entity_count; ++i)
         {
@@ -1503,8 +1497,7 @@ void light_front_faces(
                     const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
                     Archetype* archetype = &ecs->archetypes[archetype_id];
 
-                    int pls_i = Archetype_find_component_list(archetype, COMPONENT_PointLight);
-                    PointLight* pls = archetype->component_lists[pls_i];
+                    PointLight* pls = Archetype_get_component_list(archetype, COMPONENT_PointLight);
 
                     for (int i = 0; i < archetype->entity_count; ++i)
                     {

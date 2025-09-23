@@ -258,8 +258,7 @@ void engine_run(Engine* engine)
             const ArchetypeID archetype_id = render_system->archetype_ids[si];
             Archetype* archetype = &ecs->archetypes[archetype_id];
 
-            int mis_i = Archetype_find_component_list(archetype, COMPONENT_MeshInstance);
-            MeshInstance* mis = archetype->component_lists[mis_i];
+            MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
 
             for (int i = 0; i < archetype->entity_count; ++i)
             {
