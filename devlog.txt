@@ -1,7 +1,6 @@
 10/9/25
 - Fixed heap corruption bug from CECS causing sporadic crash on startup.
 
-
 14/9/25
 - Refactored some parts of clipping and prepare_for_clipping
 - Reimplemented UVs
@@ -18,9 +17,12 @@
 for starting physics implementation.
 
 18/9/25
-- Begin implementation of physics, basic PhysicsData component and physics system using suvat equations.
+- Begin implementation of basic physics system, basic PhysicsData component and physics system using suvat equations.
 - Refactor CECS ECS_add_component to return void* so we can remove redudant ECS_get_component after.
 
+23/9/25
+- Refactor CECS ECS_find_component_list -> ECS_get_component_list for simplicity.
+
 TODOS:
-- Begin basic physics system.
+- Refactor PointLight position to be a Transform component so the physics system can update it?
 - Reimplement shadows.
