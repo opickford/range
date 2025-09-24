@@ -62,11 +62,11 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 		int rowOffset = (row * (font->char_height + 1) * scale) * canvas->width;
 		int targetRow = startPixel + (font->char_width + 1) * scale * count + rowOffset;
 
-		int sourceRow = font_get_char_index(font, c);
+		int sourceRow = Font_get_char_offset(font, c);
 
 		if (sourceRow == -1)
 		{
-			count++;
+			++count;
 			continue;
 		}
 			
@@ -81,7 +81,7 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 				int i = targetPixel;
 
 				// Only draw the filled in pixels from the source.
-				if (font->pixels[sourceRow + x])
+				if (font->atlas.pixels.data[sourceRow++])
 				{
 					for (int y2 = 0; y2 < scale; ++y2)
 					{
@@ -97,9 +97,6 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 				// Move the target pixel along by the pixel width.
 				targetPixel += scale;
 			}
-
-			// Increment the source row.
-			sourceRow += font->bitmap_width;
 
 			// Increment the target row.
 			targetRow += canvas->width * scale;

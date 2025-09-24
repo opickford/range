@@ -4,99 +4,119 @@
 
 #include <Windows.h>
 
-Status font_init(Font* font)
+static int get_char_index(const Font* font, char c)
 {
-	// Initialise the font struct.
+    // TODO: Switch to a map of precalculated offsets possibly?
+    int defined = 0;
+    int char_index;
+
+    for (char_index = 0; char_index < strlen(font->defined_chars); ++char_index)
+    {
+        if (font->defined_chars[char_index] == c)
+        {
+            defined = 1;
+            break;
+        }
+    }
+
+    if (!defined)
+    {
+        log_error("Char not defined: %c", c);
+        return -1;
+    }
+
+    return char_index;
+}
+
+static int get_initial_atlas_char_offset(const Font* font, 
+    const int initial_atlas_width, char c)
+{
+    // Returns the offset to the char in the given font atlas, therefore,
+    // requires the initial atlas width.
+
+    int char_index = get_char_index(font, c);
+    if (-1 == char_index) return -1;
+
+    // Calculate the position of the char on the bitmap.
+    int cy = (char_index / font->chars_per_row);
+    int cx = char_index - font->chars_per_row * cy;
+
+    // Add one to the charHeight as there is 1 pixel between rows.
+    int rowOffset = cy * (font->char_height + 1) * initial_atlas_width;
+
+    // Add one to the charWidth as there is 1 pixel between characters.
+    int colOffset = cx * (font->char_width + 1);
+
+    return rowOffset + colOffset;
+}
+
+Status Font_init(Font* font)
+{
+    // TODO: There are strict rules about the input axis, should write these
+    //       out properly!!! pixel gap between rows/cols etc
+    
+    // Initialise the font struct.
 	memset(font, 0, sizeof(Font));
 
 	// Initialise the character data.
+    // TODO: Allow this to be set?
 	font->defined_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()[]{}<>/*:#%!?.,'\"@&$";
 	font->chars_per_row = 13;
 	font->char_width = 5;
 	font->char_height = 9;
 
-	// TODO: Make this some sort of load_bitmap function.
-	// Load the bitmap containing the defined characters.
-	HBITMAP h_bitmap = LoadImageA(NULL, 
-		"C:/Users/olive/source/repos/range/res/fonts/minogram_6x10_font.bmp",
-		IMAGE_BITMAP,
-		0, 0,
-		LR_LOADFROMFILE
-	);
+    // Read the given font atlas.
+    Canvas src;
+    // TODO: Stop hardcoding this path.
+    Status status = Canvas_init_from_bitmap(&src, "C:/Users/olive/source/repos/range/res/fonts/minogram_6x10_font.bmp");
+    if (STATUS_OK != status)
+    {
+        log_error("Failed to load font atlas bitmap, status: %s", Status_to_str(status));
+        return status;
+    }
 
-	if (!h_bitmap)
-	{
-		log_error("Failed to load font bitmap.");
-		return STATUS_WIN32_FAILURE;
-	}
+    // The atlas will be transformed to a flat array with no padding.
+    status = Canvas_init(&font->atlas, 
+        (size_t)(font->char_width * font->char_height) * strlen(font->defined_chars),
+        1);
 
-	// Get bitmap properties.
-	BITMAP bitmap = { 0 };
-	GetObject(h_bitmap, sizeof(BITMAP), &bitmap);
+    // TODO: Should this sort of boilerplate error handling code simply be assertions?
+    //       Or potentially some define like RETURN_IF_FAILED(msg, status, ...)?
+    if (STATUS_OK != status)
+    {
+        log_error("Failed to init font atlas canvas, status: %s", Status_to_str(status));
+        return status;
+    }
 
-	// Create a compatible device context.
-	HDC hdc = GetDC(NULL);
-	HDC hdc_mem = CreateCompatibleDC(hdc);
-	SelectObject(hdc_mem, h_bitmap);
+    // Rotate the atlas so that a whole char is continuous in memory, also
+    // removes any unnecessary rows/cols between src atlas chars.
+    int out = 0;
+    for (int i = 0; i < strlen(font->defined_chars); ++i)
+    {
+        int src_row = get_initial_atlas_char_offset(font, src.width,
+            font->defined_chars[i]);
 
-	// Prepare bitmap info.
-	BITMAPINFO bmi;
-	ZeroMemory(&bmi, sizeof(BITMAPINFO));
-	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biWidth = bitmap.bmWidth;
-	bmi.bmiHeader.biHeight = -bitmap.bmHeight;
-	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biBitCount = bitmap.bmBitsPixel;
-	bmi.bmiHeader.biCompression = BI_RGB;
+        for (int j = 0; j < font->char_height; ++j)
+        {
+            for (int k = 0; k < font->char_width; ++k)
+            {
+                font->atlas.pixels.data[out++] = src.pixels.data[src_row + k];
+            }
 
-	// Store the bitmap info.
-	font->bitmap_width = bitmap.bmWidth;
-
-	// Allocate memory for pixels.
-	font->pixels = malloc((size_t)bitmap.bmWidthBytes * bitmap.bmHeight);
-
-	// Get the pixels.
-	GetDIBits(hdc_mem, h_bitmap, 0, bitmap.bmHeight, font->pixels, &bmi, DIB_RGB_COLORS);
-
-	// Clear the bitmap.
-	if (!DeleteObject(h_bitmap))
-	{
-		log_error("Failed to release font bitmap.");
-	}
+            // Increment row
+            src_row += src.width;
+        }
+    }
 
 	return STATUS_OK;
 }
 
-int font_get_char_index(Font* font, char c)
+int Font_get_char_offset(Font* font, char c)
 {
-	// TODO: Switch to a map of precalculated offsets possibly?
-	int defined = 0;
-	int charIndex;
-
-	for (charIndex = 0; charIndex < strlen(font->defined_chars); ++charIndex)
-	{
-		if (font->defined_chars[charIndex] == c)
-		{
-			defined = 1;
-			break;
-		}
-	}
-
-	if (!defined)
-	{
-		log_error("Char not defined: %c", c);
-		return -1;
-	}
-
-	// Calculate the position of the char on the bitmap.
-	int cy = (charIndex / font->chars_per_row);
-	int cx = charIndex - font->chars_per_row * cy;
-
-	// Add one to the charHeight as there is 1 pixel between rows.
-	int rowOffset = cy * (font->char_height + 1) * font->bitmap_width;
-
-	// Add one to the charWidth as there is 1 pixel between characters.
-	int colOffset = cx * (font->char_width + 1);
-
-	return rowOffset + colOffset;
+    // TODO: Switch to a map of precalculated offsets possibly?
+    int char_index = get_char_index(font, c);
+    if (-1 == char_index) return -1;
+    
+    // Chars are stored simply in a flat array.
+    return font->char_width * font->char_height * char_index;
 }

@@ -46,11 +46,7 @@ void create_map(Engine* engine)
     Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform_init(transform);
 
-
-    Assert(resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp"));
-
-
-    
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
 
     /*
     mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");

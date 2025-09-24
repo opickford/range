@@ -23,7 +23,7 @@ inline Status render_target_init(RenderTarget* rt, const int width, const int he
 {
     memset(rt, 0, sizeof(RenderTarget));
 
-    Status status = canvas_init(&rt->canvas, width, height);
+    Status status = Canvas_init(&rt->canvas, width, height);
     if (STATUS_OK != status)
     {
         return status;
