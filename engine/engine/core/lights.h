@@ -19,11 +19,10 @@ a red colour.
 
 */
 
-// TODO: Crefactor to component.
-
 typedef int PointLightID;
 typedef int ShadowCastingPointLightID;
 
+// TODO: This having a position is a bit of an issue if we want to connect it to physics, do we want Transform here?
 typedef struct
 {
 	V3 position;
