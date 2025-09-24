@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-Status canvas_init(Canvas* canvas, int width, int height)
+Status Canvas_init(Canvas* canvas, int width, int height)
 {
 	memset(canvas, 0, sizeof(Canvas));
 
@@ -31,7 +31,7 @@ Status canvas_init(Canvas* canvas, int width, int height)
 	return STATUS_OK;
 }
 
-Status canvas_init_from_bitmap(Canvas* canvas, const char* file)
+Status Canvas_init_from_bitmap(Canvas* canvas, const char* file)
 {
     // TODO: Do we need to use Windows.h here? If we're only loading
     //       bitmaps, the image loading code should be quite simple.
@@ -107,7 +107,7 @@ Status canvas_init_from_bitmap(Canvas* canvas, const char* file)
     return STATUS_OK;
 }
 
-Status canvas_write_to_bitmap(const Canvas* canvas, const char* file)
+Status Canvas_write_to_bmp(const Canvas* canvas, const char* file)
 {
     // TODO: TEMP: Copied from: https://stackoverflow.com/a/55504419
 
@@ -183,6 +183,8 @@ Status canvas_write_to_bitmap(const Canvas* canvas, const char* file)
     }
 
     fclose(imageFile);
+
+    return STATUS_OK;
 }
 
 Status canvas_resize(Canvas* canvas, int width, int height)

@@ -19,7 +19,7 @@ typedef enum
 
 } Status;
 
-inline const char* status_to_str(Status status)
+inline const char* Status_to_str(Status status)
 {
     switch (status) 
     {
@@ -33,13 +33,15 @@ inline const char* status_to_str(Status status)
     }
 }
 
+// TODO: Rename?
+/*
 #ifndef NDEBUG
 #include <assert.h>
-inline void Assert(Status status) { assert(status == STATUS_OK); };
+#DEFINE Assert(Status status) { assert(status == STATUS_OK); };
 #else
 inline void Assert(Status status) {};
 #endif
-
+*/
 
 
 #endif

@@ -2,7 +2,7 @@
 
 Status ui_init(UI* ui, Canvas* canvas)
 {
-	Status status = font_init(&ui->font);
+	Status status = Font_init(&ui->font);
 	if (STATUS_OK != status)
 	{
 		return status;

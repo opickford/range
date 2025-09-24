@@ -12,6 +12,8 @@ may be split off into it's own project.
 Generate the .sln file:
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 
+TODO: Make a .bat for this ^
+
 TODO: Update this
 TODO: Add requirements (Windows, CECS)
 

@@ -42,15 +42,12 @@ void create_map(Engine* engine)
 
     Transform* transform = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform_init(transform);
-    
+
     PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
     PhysicsData_init(physics_data);
     physics_data->force = (V3){ 0,0,1 };
     
-    Assert(resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp"));
-
-
-    
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
 
     /*
     mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");

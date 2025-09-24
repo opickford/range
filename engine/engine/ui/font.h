@@ -1,6 +1,7 @@
 #ifndef FONT_H
 #define FONT_H
 
+#include "core/canvas.h"
 #include "common/status.h"
 
 typedef struct
@@ -9,15 +10,14 @@ typedef struct
 	int char_height;
 	int chars_per_row;
 
-	int bitmap_width;
-
 	const char* defined_chars;
-	unsigned int* pixels;
+
+    Canvas atlas;
 
 } Font;
 
-Status font_init(Font* font);
+Status Font_init(Font* font);
 
-int font_get_char_index(Font* font, char c);
+int Font_get_char_offset(Font* font, char c);
 
 #endif
