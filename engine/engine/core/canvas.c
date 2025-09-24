@@ -107,7 +107,7 @@ Status Canvas_init_from_bitmap(Canvas* canvas, const char* file)
     return STATUS_OK;
 }
 
-Status canvas_write_to_bitmap(const Canvas* canvas, const char* file)
+Status Canvas_write_to_bmp(const Canvas* canvas, const char* file)
 {
     // TODO: TEMP: Copied from: https://stackoverflow.com/a/55504419
 
@@ -183,6 +183,8 @@ Status canvas_write_to_bitmap(const Canvas* canvas, const char* file)
     }
 
     fclose(imageFile);
+
+    return STATUS_OK;
 }
 
 Status canvas_resize(Canvas* canvas, int width, int height)

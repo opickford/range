@@ -16,8 +16,8 @@ typedef struct
 
 } Font;
 
-Status font_init(Font* font);
+Status Font_init(Font* font);
 
-int font_get_char_index(Font* font, char c);
+int Font_get_char_offset(Font* font, char c);
 
 #endif
