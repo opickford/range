@@ -63,7 +63,7 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     Status status = renderer_init(&engine->renderer, (int)(window_width / engine->upscaling_factor), (int)(window_height / engine->upscaling_factor));
     if (STATUS_OK != status)
     {
-        log_error("Failed to renderer_init because of %s", status_to_str(status));
+        log_error("Failed to renderer_init because of %s", Status_to_str(status));
         return status;
     }
 
@@ -71,7 +71,7 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     status = window_init(&engine->window, &engine->renderer.target.canvas, (void*)engine, window_width, window_height);
     if (STATUS_OK != status)
     {
-        log_error("Failed to window_init because of %s", status_to_str(status));
+        log_error("Failed to window_init because of %s", Status_to_str(status));
         return status;
     }
 
@@ -84,7 +84,7 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     status = ui_init(&engine->ui, &engine->renderer.target.canvas);
     if (STATUS_OK != status)
     {
-        log_error("Failed to ui_init because of %s", status_to_str(status));
+        log_error("Failed to ui_init because of %s", Status_to_str(status));
         return status;
     }
 

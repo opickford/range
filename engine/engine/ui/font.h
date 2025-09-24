@@ -1,6 +1,7 @@
 #ifndef FONT_H
 #define FONT_H
 
+#include "core/canvas.h"
 #include "common/status.h"
 
 typedef struct
@@ -9,10 +10,9 @@ typedef struct
 	int char_height;
 	int chars_per_row;
 
-	int bitmap_width;
-
 	const char* defined_chars;
-	unsigned int* pixels;
+
+    Canvas atlas;
 
 } Font;
 

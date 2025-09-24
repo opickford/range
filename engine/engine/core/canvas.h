@@ -14,7 +14,7 @@ typedef struct
 
 } Canvas;
 
-Status canvas_init(Canvas* canvas, int width, int height);
+Status Canvas_init(Canvas* canvas, int width, int height);
 
 Status canvas_resize(Canvas* canvas, int width, int height);
 
@@ -24,7 +24,7 @@ void canvas_draw(const Canvas* source, Canvas* target, int x_offset, int y_offse
 
 void canvas_destroy(Canvas* canvas);
 
-Status canvas_init_from_bitmap(Canvas* canvas, const char* file);
+Status Canvas_init_from_bitmap(Canvas* canvas, const char* file);
 
 Status canvas_write_to_bitmap(const Canvas* canvas, const char* file);
 

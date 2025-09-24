@@ -19,7 +19,7 @@ typedef enum
 
 } Status;
 
-inline const char* status_to_str(Status status)
+inline const char* Status_to_str(Status status)
 {
     switch (status) 
     {
