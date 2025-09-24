@@ -174,10 +174,18 @@ void engine_on_lmbdown(Engine* engine)
         COMPONENT_MeshInstance);
     MeshInstance_init(mi, &scene->mesh_bases.bases[cube_base]);
 
+    V3 colour =
+    {
+        random_float(),
+        random_float(),
+        random_float()
+    };
+    MeshInstance_set_albedo(mi, &scene->mesh_bases.bases[cube_base], colour);
+
     ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform_init(transform);
-    transform->position = engine->renderer.camera.position;
+    transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
     transform->rotation = engine->renderer.camera.direction;
     transform->scale = (V3){ 0.1,0.1,0.1 };
 
