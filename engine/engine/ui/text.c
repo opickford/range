@@ -30,7 +30,7 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 	int scaled_x = (int)(text->x / upscaling_factor);
 	int scaled_y = (int)(text->y / upscaling_factor);
 
-	int startPixel = scaled_y * canvas->width + scaled_x;
+	int start_pixel = scaled_y * canvas->width + scaled_x;
 
 	// For scaling the font, we draw the pixel as a rect with
 	// width and height = scale.
@@ -59,12 +59,12 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 		// Calculate the start pixel of the char we're drawing, 
 		// taking into account for the number of characters drawn and 
 		// the space between them.
-		int rowOffset = (row * (font->char_height + 1) * scale) * canvas->width;
-		int targetRow = startPixel + (font->char_width + 1) * scale * count + rowOffset;
+		int row_offset = (row * (font->char_height + 1) * scale) * canvas->width;
+		int target_row = start_pixel + (font->char_width + 1) * scale * count + row_offset;
 
-		int sourceRow = Font_get_char_offset(font, c);
+		int src_offset = Font_get_char_offset(font, c);
 
-		if (sourceRow == -1)
+		if (src_offset == -1)
 		{
 			++count;
 			continue;
@@ -74,14 +74,14 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 		// draw it.
 		for (int y = 0; y < font->char_height; ++y)
 		{
-			int targetPixel = targetRow;
+			int target_pixel = target_row;
 
 			for (int x = 0; x < font->char_width; ++x)
 			{
-				int i = targetPixel;
+				int i = target_pixel;
 
 				// Only draw the filled in pixels from the source.
-				if (font->atlas.pixels.data[sourceRow++])
+				if (font->atlas.pixels.data[src_offset++])
 				{
 					for (int y2 = 0; y2 < scale; ++y2)
 					{
@@ -95,11 +95,11 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 				}
 
 				// Move the target pixel along by the pixel width.
-				targetPixel += scale;
+				target_pixel += scale;
 			}
 
 			// Increment the target row.
-			targetRow += canvas->width * scale;
+			target_row += canvas->width * scale;
 		}
 		count++;
 	}
