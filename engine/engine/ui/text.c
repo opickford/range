@@ -2,7 +2,6 @@
 
 #include <string.h>
 
-#define _USE_MATH_DEFINES
 #include <math.h>
 
 Text text_create(char* str, int x, int y, int colour, int scale)
