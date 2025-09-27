@@ -1689,8 +1689,6 @@ void clip_project_and_draw(
 	Scene* scene,
     const Resources* resources)
 {
-    // TODO: Clipping crashes for scale 0, how to handle??? simply ignore mi???
-
 	// Input
 	const MeshInstance* mis = frame_data->visible_mis.data;
 	const MeshBase* mbs = scene->mesh_bases.bases;
