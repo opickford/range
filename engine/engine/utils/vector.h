@@ -13,6 +13,17 @@ This vector implementation wraps a raw data array and a capacity.
 
 */
 
+// TODO: Rather than doing it this way, we could do a technique where creating the vector allocates a header space (size, capacity)? then it simply returns
+//       a pointer offset to the data! This would be much nicer I think. This would allow us to retain type information. 
+//       
+//       this would enable us to iterate on the pointer too!! Rather than doing .data constantly!
+
+// TODO: Or rather than name this vector, this could be a dynamic array or something?
+
+// TODO: make this implementation mimic std::vector, e.g. reserve would reserve the next number of elements?
+//       however, this would change a lot of the way i work with them, e.g. we would need push_back methods
+//       as there is no std::vector method to ensure the vector has enough space for something.
+
 // TODO: Init function?
 #define Vector_destroy(v) do { if ((v).data) free((v).data); } while(0)
 
