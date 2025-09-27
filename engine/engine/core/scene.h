@@ -11,8 +11,8 @@
 // TODO: This should more be storing metadata of the scene, the ecs contains lights and instances etc.
 typedef struct
 {
-	// TODO: really this should be made up of entities.
-	MeshBases mesh_bases;
+	MeshBases mesh_bases; // TODO: Should these simply be global? 
+                          // TODO: Make Vector
 
 	V3 ambient_light;
     int bg_colour;
