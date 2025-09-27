@@ -27,6 +27,7 @@ typedef struct
     SystemID render_system_id;
     SystemID lighting_system_id;
     SystemID physics_system_id;
+    SystemID collision_system_id;
 
 	// Engine components.
 	Window window;

@@ -53,6 +53,14 @@ static void Engine_setup_ecs(Engine* engine)
         system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) |
                                     COMPONENT_ID_TO_BITSET(COMPONENT_Transform);
     }
+
+    {
+        engine->collision_system_id = ECS_register_system(ecs);
+        System* system = &engine->ecs.systems[engine->collision_system_id];
+        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) |
+                                    COMPONENT_ID_TO_BITSET(COMPONENT_Transform) |
+                                    COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance);
+    }
 }
 
 
@@ -184,7 +192,7 @@ void engine_run(Engine* engine)
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
 
         // Apply physics
-        Physics_tick(&engine->ecs, &engine->ecs.systems[engine->physics_system_id], dt);
+        Physics_tick(&engine->ecs, &engine->ecs.systems[engine->physics_system_id], &engine->ecs.systems[engine->collision_system_id], dt);
 
         // Clear the canvas.
         timer_restart(&t);

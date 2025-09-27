@@ -16,6 +16,6 @@ typedef struct
 
 void PhysicsData_init(PhysicsData* data);
 
-void Physics_tick(ECS* ecs, System* physics_system, float dt);
+void Physics_tick(ECS* ecs, System* physics_system, System* collision_system, float dt);
 
 #endif
