@@ -3,6 +3,9 @@
 #include "core/components.h"
 
 #include "maths/vector3.h"
+#include "maths/matrix4.h"
+#include "maths/vector_maths.h"
+
 
 static void apply_forces(ECS* ecs, System* physics_system)
 {
@@ -58,8 +61,106 @@ static void apply_velocities(ECS* ecs, System* physics_system, float dt)
     }
 }
 
-static void handle_collisions(ECS* ecs, System* collision_system, float dt)
+static void update_collision_caches(ECS* ecs, Scene* scene, System* collision_system)
 {
+    // TODO: Eventually we might want specific collision meshes to simplify it?
+    // TODO: E.g. we don't need the higher detail meshes to collide with, but not needed for now.
+    for (int si = 0; si < collision_system->num_archetypes; ++si)
+    {
+        const ArchetypeID archetype_id = collision_system->archetype_ids[si];
+        Archetype* archetype = &ecs->archetypes[archetype_id];
+
+        const Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
+        const MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
+        CollisionCache* collision_caches = Archetype_get_component_list(archetype, COMPONENT_CollisionCache);
+
+        // Update world space positions of entity, update centre of bounding sphere.
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {
+            CollisionCache* collision_cache = &collision_caches[i];
+
+            if (!collision_cache->dirty)
+            {
+                continue;
+            }
+
+            const Transform transform = transforms[i];
+            const MeshInstance* mi = &mis[i];
+            const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
+
+            Vector_reserve(collision_cache->wsps, mb->num_positions);
+
+            // Calculate model matrix.
+            // TODO: rotation or direction or eulers?
+            M4 model_matrix;
+            m4_model_matrix(transform.position, transform.rotation, transform.scale, model_matrix);
+
+            // Update the centre of the bounding sphere.
+            V4 world_space_centre;
+            m4_mul_v4(
+                model_matrix,
+                v3_to_v4(mb->centre, 1.f),
+                &world_space_centre);
+
+            // Write out the bounding sphere.
+            collision_cache->bs.centre = v4_xyz(world_space_centre);
+
+            // Convert object space positions to world space.
+            for (int j = 0; j < mb->num_positions; ++j)
+            {
+                const V4 osp = v3_to_v4(mb->object_space_positions.data[j], 1.f);
+                V4 wsp;
+                m4_mul_v4(model_matrix, osp, &wsp);
+
+                collision_cache->wsps.data[j].x = wsp.x;
+                collision_cache->wsps.data[j].y = wsp.y;
+                collision_cache->wsps.data[j].z = wsp.z;
+            }
+
+            collision_cache->dirty = 0;
+        }
+
+        // Update bounding sphere radius
+        for (int i = 0; i < archetype->entity_count; ++i)
+        {
+            CollisionCache* collision_cache = &collision_caches[i];
+
+            if (!collision_cache->scale_dirty)
+            {
+                continue;
+            }
+
+            const Transform transform = transforms[i];
+            const MeshInstance* mi = &mis[i];
+            const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
+
+            BoundingSphere* bs = &collision_cache->bs;
+            V3 centre = bs->centre;
+
+            // Calculate the new radius of the mi's bounding sphere.
+            float radius_squared = -1;
+
+            for (int j = 0; j < mb->num_positions; ++j)
+            {
+                V3 v = collision_cache->wsps.data[j];
+                V3 between = v3_sub_v3(v, centre);
+
+                radius_squared = max(size_squared(between), radius_squared);
+            }
+
+            bs->radius = sqrtf(radius_squared);
+
+            collision_cache->scale_dirty = 0;
+        }
+    }
+}
+
+static void handle_collisions(ECS* ecs, Scene* scene, System* collision_system, float dt)
+{
+    update_collision_caches(ecs, scene, collision_system);
+    
+
+
     for (int si = 0; si < collision_system->num_archetypes; ++si)
     {
         const ArchetypeID archetype_id = collision_system->archetype_ids[si];
@@ -67,15 +168,30 @@ static void handle_collisions(ECS* ecs, System* collision_system, float dt)
 
         PhysicsData* physics_datas = Archetype_get_component_list(archetype, COMPONENT_PhysicsData);
         Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
-        Transform* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
+        const Transform* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
+        const CollisionCache* collision_caches = Archetype_get_component_list(archetype, COMPONENT_CollisionCache);
 
         for (int i = 0; i < archetype->entity_count; ++i)
         {
             PhysicsData* physics_data = &physics_datas[i];
+            
+            // If entity not moving, it cannot have collided with something.
+            if (physics_data->velocity.x == 0 &&
+                physics_data->velocity.y == 0 &&
+                physics_data->velocity.z == 0)
+            {
+                continue;
+            }
+
             Transform* transform = &transforms[i];
-            MeshInstance* mi = &mis[i];
+            const MeshInstance* mi = &mis[i];
+            const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
+            const CollisionCache* collision_cache = &collision_caches[i];
+            
+            // TODO: Broad phase check bounding sphere vs bounding sphere?
+            // TODO: We already calculate boudning sphere i n
 
-
+            
 
         }
     }
@@ -89,11 +205,23 @@ void PhysicsData_init(PhysicsData* data)
     data->mass = 1.f;
 }
 
-void Physics_tick(ECS* ecs, System* physics_system, System* collision_system, float dt)
+void Physics_tick(ECS* ecs, Scene* scene, System* physics_system, System* collision_system, float dt)
 {
     apply_forces(ecs, physics_system);
 
-    handle_collisions(ecs, collision_system, dt);
+    handle_collisions(ecs, scene, collision_system, dt);
 
     apply_velocities(ecs, physics_system, dt);
+}
+
+void CollisionCache_init(CollisionCache* cc)
+{
+    memset(cc, 0, sizeof(CollisionCache));
+    cc->dirty = 1;
+    cc->scale_dirty = 1;
+}
+
+void CollisionCache_destroy(CollisionCache* cc)
+{
+    Vector_destroy(cc->wsps);
 }

@@ -17,6 +17,8 @@ MeshBaseID cube_base;
 
 void create_map(Engine* engine)
 {
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
+    
     // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     
     // TODO: Also for models, the scene could be global? I think MBs should be 
@@ -46,8 +48,10 @@ void create_map(Engine* engine)
     PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
     PhysicsData_init(physics_data);
     physics_data->force = (V3){ 0,0,1 };
+
+    CollisionCache* collision_cache = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_CollisionCache);
+    CollisionCache_init(collision_cache);
     
-    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
 
     /*
     mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");
