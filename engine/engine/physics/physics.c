@@ -191,8 +191,6 @@ static void handle_collisions(ECS* ecs, Scene* scene, System* collision_system, 
             
             // TODO: This iteration is getting painfully messy. Look into iterators. or some macro
 
-            // TODO: Broad phase check bounding sphere vs bounding sphere - change the colours of the mesh or something so i can visualise this.
-            //       have it so one moves into another.
             for (int si1 = 0; si1 < collision_system->num_archetypes; ++si1)
             {
                 const ArchetypeID archetype_id1 = collision_system->archetype_ids[si1];
@@ -200,6 +198,7 @@ static void handle_collisions(ECS* ecs, Scene* scene, System* collision_system, 
 
                 const MeshInstance* mis1 = Archetype_get_component_list(archetype1, COMPONENT_MeshInstance);
                 const CollisionCache* collision_caches1 = Archetype_get_component_list(archetype1, COMPONENT_CollisionCache);
+                PhysicsData* physics_datas1 = Archetype_get_component_list(archetype1, COMPONENT_PhysicsData);
 
                 for (int i = 0; i < archetype1->entity_count; ++i)
                 {
@@ -207,22 +206,32 @@ static void handle_collisions(ECS* ecs, Scene* scene, System* collision_system, 
 
                     // Don't collide with self.
                     if (mi1 == mi) continue;
-
+                    
+                    // Test if spheres overlap.
                     const CollisionCache* collision_cache1 = &collision_caches1[i];
                     
-                    const BoundingSphere bs0 = collision_cache->bs;
+                    BoundingSphere bs0 = collision_cache->bs;
                     const BoundingSphere bs1 = collision_cache1->bs;
+
+                    // Account for entity1's velocity.
+                    PhysicsData* physics_data1 = &physics_datas1[i];
+                    const V3 rel_v = v3_sub_v3(physics_data->velocity, physics_data1->velocity);
+
+                    // 'Sweep' sphere to account for velocities, otherwise we would miss
+                    // collisions at low fps or high velocity. Instead of sweeping just
+                    // scale and move bounding sphere.
+                    v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
+                    bs0.radius += 0.5f * size(rel_v) * dt;
 
                     const float dist = size_squared(v3_sub_v3(bs1.centre, bs0.centre));
                     const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
-
+                    
                     if (dist <= n)
                     {
-                        // TODO: Collided!!! save to list or something?
+                        (&physics_datas1[i])->velocity = (V3){ 0,0,0 };
+                        // TODO: Potentially collided.
+
                     }
-
-
-
                 }
             }
             
