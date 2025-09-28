@@ -79,10 +79,11 @@ static void update_collision_caches(ECS* ecs, Scene* scene, System* collision_sy
         {
             CollisionCache* collision_cache = &collision_caches[i];
 
-            if (!collision_cache->dirty)
-            {
-                continue;
-            }
+            // TODO: Where can we actually set this?????? after appling forces???
+            //if (!collision_cache->dirty)
+            //{
+            //    continue;
+            //}
 
             const Transform transform = transforms[i];
             const MeshInstance* mi = &mis[i];
@@ -159,8 +160,6 @@ static void handle_collisions(ECS* ecs, Scene* scene, System* collision_system, 
 {
     update_collision_caches(ecs, scene, collision_system);
     
-
-
     for (int si = 0; si < collision_system->num_archetypes; ++si)
     {
         const ArchetypeID archetype_id = collision_system->archetype_ids[si];
@@ -168,7 +167,7 @@ static void handle_collisions(ECS* ecs, Scene* scene, System* collision_system, 
 
         PhysicsData* physics_datas = Archetype_get_component_list(archetype, COMPONENT_PhysicsData);
         Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
-        const Transform* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
+        const MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
         const CollisionCache* collision_caches = Archetype_get_component_list(archetype, COMPONENT_CollisionCache);
 
         for (int i = 0; i < archetype->entity_count; ++i)
@@ -183,12 +182,54 @@ static void handle_collisions(ECS* ecs, Scene* scene, System* collision_system, 
                 continue;
             }
 
+            // TODO: Calculate potential collisions broad phase??
+
             Transform* transform = &transforms[i];
             const MeshInstance* mi = &mis[i];
             const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
             const CollisionCache* collision_cache = &collision_caches[i];
             
-            // TODO: Broad phase check bounding sphere vs bounding sphere?
+            // TODO: This iteration is getting painfully messy. Look into iterators. or some macro
+
+            // TODO: Broad phase check bounding sphere vs bounding sphere - change the colours of the mesh or something so i can visualise this.
+            //       have it so one moves into another.
+            for (int si1 = 0; si1 < collision_system->num_archetypes; ++si1)
+            {
+                const ArchetypeID archetype_id1 = collision_system->archetype_ids[si1];
+                Archetype* archetype1 = &ecs->archetypes[archetype_id1];
+
+                const MeshInstance* mis1 = Archetype_get_component_list(archetype1, COMPONENT_MeshInstance);
+                const CollisionCache* collision_caches1 = Archetype_get_component_list(archetype1, COMPONENT_CollisionCache);
+
+                for (int i = 0; i < archetype1->entity_count; ++i)
+                {
+                    MeshInstance* mi1 = &mis1[i];
+
+                    // Don't collide with self.
+                    if (mi1 == mi) continue;
+
+                    const CollisionCache* collision_cache1 = &collision_caches1[i];
+                    
+                    const BoundingSphere bs0 = collision_cache->bs;
+                    const BoundingSphere bs1 = collision_cache1->bs;
+
+                    const float dist = size_squared(v3_sub_v3(bs1.centre, bs0.centre));
+                    const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
+
+                    if (dist <= n)
+                    {
+                        // TODO: Collided!!! save to list or something?
+                    }
+
+
+
+                }
+            }
+            
+
+
+
+
             // TODO: We already calculate boudning sphere i n
 
             

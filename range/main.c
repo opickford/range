@@ -197,6 +197,13 @@ void engine_on_lmbdown(Engine* engine)
     float speed = 20;
     physics_data->force = v3_mul_f(engine->renderer.camera.direction, speed);
 
+    // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
+
+    CollisionCache* collision_cache = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_CollisionCache);
+    CollisionCache_init(collision_cache);
+
+
+    
 }
 
 int main()

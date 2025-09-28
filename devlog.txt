@@ -23,6 +23,13 @@ for starting physics implementation.
 23/9/25
 - Refactor CECS ECS_find_component_list -> ECS_get_component_list for simplicity.
 
+24/9/25
+- Optimise font rendering by transforming input atlas to be more cache friendly so that a single character is 
+  continuous in memory. Remove padding from atlas to avoid wasting cache.
+
+27/9/25
+- Begin implementation of collision system.
+
 TODOS:
 - Refactor PointLight position to be a Transform component so the physics system can update it?
 - Reimplement shadows.

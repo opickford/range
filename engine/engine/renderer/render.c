@@ -2199,7 +2199,14 @@ void render(
         &renderer->settings
     );
 
-   // debug_draw_normals(&renderer->target.canvas, &renderer->frame_data, &renderer->settings, scene);
+    // debug_draw_normals(&renderer->target.canvas, &renderer->frame_data, &renderer->settings, scene);
+
+    int hw = renderer->target.canvas.width / 2;
+    int hh = renderer->target.canvas.height / 2;
+    int centre = hh * renderer->target.canvas.width + hw;
+
+    // TODO: ew.
+    renderer->target.canvas.pixels.data[centre] = 0x00FF0000;
 }
 /*
 void update_depth_maps(Renderer* renderer, const Scene* scene)

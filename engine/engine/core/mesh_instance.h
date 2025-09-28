@@ -35,6 +35,7 @@ typedef struct
 	MeshBaseID mb_id; // TODO: Rename as base?
 	int texture_id;
 
+    // TODO: How do we ensure that this is set????
 	uint8_t has_scale_changed; // Determines if the bounding sphere needs updating.
 
 	// Per instance data
