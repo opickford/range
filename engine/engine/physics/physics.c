@@ -64,8 +64,10 @@ static void apply_velocities(ECS* ecs, System* physics_system, float dt)
     }
 }
 
-static void update_collision_mesh_bounding_sphere(Collider* collider, const MeshInstance* mi, const MeshBase* mb, const Transform transform)
+static void update_collision_mesh_bounding_sphere(Collider* collider, const MeshInstance* mi, const Transform transform)
 {
+    const MeshBase* mb = collider->shape.mesh.mb;
+
     Vector_reserve(collider->shape.mesh.wsps, mb->num_positions);
 
     // Calculate model matrix.
@@ -153,7 +155,9 @@ static void update_colliders(ECS* ecs, Scene* scene, System* collision_system)
                 const Transform transform = transforms[i];
                 const MeshInstance* mi = &mis[i];
                 const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
-                update_collision_mesh_bounding_sphere(collider, mb, mi, transform);
+                
+                collider->shape.mesh.mb = mb;
+                update_collision_mesh_bounding_sphere(collider, mi, transform);
                 break;
             }
             case COLLISION_SHAPE_ELLIPSOID:
@@ -165,7 +169,7 @@ static void update_colliders(ECS* ecs, Scene* scene, System* collision_system)
                 // TODO: I don't like this very much... e.g. if we used an ellipsoid collider on a 
                 //       cube this wouldn't work, but then i suppose that's also wrong..... for now it's fine.
                 collider->shape.bs.radius = max(collider->shape.ellipsoid.x, max(collider->shape.ellipsoid.y, collider->shape.ellipsoid.z));
-                //printf("%s\n\n", v3_to_str(collider->shape.ellipsoid));
+                
                 break;
             }
             default:
@@ -392,11 +396,10 @@ void Collider_init(Collider* c)
     memset(c, 0, sizeof(Collider));
     c->shape.dirty = 1;
     c->shape.scale_dirty = 1;
-    c->shape.type = COLLISION_SHAPE_ELLIPSOID;
 
-    // TODO: Should this be tied to the scale? Is this how we want it to work?
-    // TODO: How do we get the correct scale??
-    c->shape.ellipsoid = (V3){ 1, 1, 1 }; 
+    // TODO: Should we default to this??? Note we cannot set the ellipsoid
+    //       as this would put random values into the other union members.
+    c->shape.type = COLLISION_SHAPE_ELLIPSOID; 
 }
 
 void Collider_destroy(Collider* c)

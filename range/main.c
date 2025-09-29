@@ -51,15 +51,21 @@ void create_map(Engine* engine)
 
     Collider* collider = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Collider);
     Collider_init(collider);
+    
+    collider->shape.type = COLLISION_SHAPE_MESH;
 
+    /*
+    // TODO: TEMP: Currently setting the spawned cube to have an ellipsoid collider, but this is just for the 
+    //             broad phase which is using the sphere.
     // Normally to calculate bounding sphere of square we would half the scale, however,
     // the input .obj goes from -1 to 1, so the length is 2.
     V3 half_sqrd = v3_mul_v3(transform->scale, transform->scale);
     float radius = sqrtf(half_sqrd.x + half_sqrd.y + half_sqrd.z);
     collider->shape.ellipsoid = v3_uniform(radius);
     printf("%f\n", radius);
+    */
     scene->ambient_light = v3_uniform(1.f);
-
+    
     scene->bg_colour = 0x11111111;
     
     // TODO: Should the camera be part of the scene??
