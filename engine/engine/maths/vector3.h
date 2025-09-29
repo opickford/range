@@ -124,6 +124,11 @@ inline V3 v3_sub_v3(V3 v0, V3 v1)
 	return (V3) { v0.x - v1.x, v0.y - v1.y, v0.z - v1.z };
 }
 
+inline V3 v3_uniform(float n)
+{
+    return (V3) { n, n, n };
+}
+
 /*
 inline void v3_write(float* out, V3 v)
 {
