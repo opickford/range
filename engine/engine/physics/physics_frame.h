@@ -9,10 +9,11 @@
 
 typedef struct
 {
+    // Collider collides with a target.
     ArchetypeID collider_aid;
     int collider_offset;
 
-    ArchetypeID aid_target;
+    ArchetypeID target_aid;
     int target_offset;
 
 } PotentialCollision;

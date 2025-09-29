@@ -47,11 +47,17 @@ void create_map(Engine* engine)
 
     PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
     PhysicsData_init(physics_data);
-    physics_data->force = (V3){ 0,0,1 };
+    //physics_data->force = (V3){ 0,0,1 };
 
     Collider* collider = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Collider);
     Collider_init(collider);
 
+    // Normally to calculate bounding sphere of square we would half the scale, however,
+    // the input .obj goes from -1 to 1, so the length is 2.
+    V3 half_sqrd = v3_mul_v3(transform->scale, transform->scale);
+    float radius = sqrtf(half_sqrd.x + half_sqrd.y + half_sqrd.z);
+    collider->shape.ellipsoid = v3_uniform(radius);
+    printf("%f\n", radius);
     scene->ambient_light = v3_uniform(1.f);
 
     scene->bg_colour = 0x11111111;
@@ -160,11 +166,14 @@ void engine_on_lmbdown(Engine* engine)
     // Create an entity
     EntityID cube_entity = ECS_create_entity(&engine->ecs);
 
+    MeshBase* mb = &scene->mesh_bases.bases[sphere_base];
+
     // Add a MeshInstance component.
     ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
     MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity,
         COMPONENT_MeshInstance);
-    MeshInstance_init(mi, &scene->mesh_bases.bases[cube_base]);
+    MeshInstance_init(mi, mb);
+
 
     V3 colour =
     {
@@ -172,7 +181,7 @@ void engine_on_lmbdown(Engine* engine)
         random_float(),
         random_float()
     };
-    MeshInstance_set_albedo(mi, &scene->mesh_bases.bases[cube_base], colour);
+    MeshInstance_set_albedo(mi, mb, colour);
 
     ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
     Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
@@ -185,7 +194,7 @@ void engine_on_lmbdown(Engine* engine)
     PhysicsData_init(physics_data);
 
     // TODO: Dt?
-    float speed = 20;
+    float speed = 2;
     physics_data->force = v3_mul_f(engine->renderer.camera.direction, speed);
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!

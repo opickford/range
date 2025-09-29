@@ -30,6 +30,11 @@ for starting physics implementation.
 27/9/25
 - Begin implementation of collision system.
 
+29/9/25
+- Implement Collider component with a CollisionShape tagged union to enable defining different shape interactions, 
+  this essentially automatically allowed for multiple spheres to collide into each other with some temp hacked
+  code in the narrow phase to just stop entities when they collide! Very cool to see and a good step forward.
+
 TODOS:
 - Refactor PointLight position to be a Transform component so the physics system can update it?
 - Reimplement shadows.

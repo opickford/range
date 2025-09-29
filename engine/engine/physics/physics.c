@@ -165,6 +165,7 @@ static void update_colliders(ECS* ecs, Scene* scene, System* collision_system)
                 // TODO: I don't like this very much... e.g. if we used an ellipsoid collider on a 
                 //       cube this wouldn't work, but then i suppose that's also wrong..... for now it's fine.
                 collider->shape.bs.radius = max(collider->shape.ellipsoid.x, max(collider->shape.ellipsoid.y, collider->shape.ellipsoid.z));
+                //printf("%s\n\n", v3_to_str(collider->shape.ellipsoid));
                 break;
             }
             default:
@@ -177,6 +178,11 @@ static void update_colliders(ECS* ecs, Scene* scene, System* collision_system)
 
 static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, System* collision_system, float dt)
 {
+    // Broad phase is purely bounding sphere tests
+    // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
+
+
+    physics_frame->num_potential_collisions = 0;
 
     // TODO: Would be nicer to get the number of entities in a system (VIEW) or something instead?
 
@@ -190,11 +196,7 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
     }
 
     // TODO: Idk what the calc is.
-    physics_frame->num_potential_collisions = num_entities * num_entities;
-
-    Vector_reserve(physics_frame->broad_phase_collisions, physics_frame->num_potential_collisions);
-
-    // TODO: Reserve number of potential collisions, this is where the push_back would be handy.
+    Vector_reserve(physics_frame->broad_phase_collisions, num_entities * num_entities);
 
     /*
     TODO: Only need to compare past the entity like
@@ -244,17 +246,17 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
 
                 // TODO: The entity should realistically define it's narrow phase, as it's narrow phase may simply be 
                 //       sphere etc, but not needed for now as we only want player to face collision.
-                for (int i = 0; i < archetype1->entity_count; ++i)
+                for (int j = 0; j < archetype1->entity_count; ++j)
                 {
-                    MeshInstance* mi1 = &mis1[i];
+                    MeshInstance* mi1 = &mis1[j];
 
                     // Don't collide with self.
                     if (mi1 == mi) continue;
 
-                    const Collider* collider1 = &colliders1[i];
+                    const Collider* collider1 = &colliders1[j];
 
                     // Account for entity1's velocity.
-                    PhysicsData* physics_data1 = &physics_datas1[i];
+                    PhysicsData* physics_data1 = &physics_datas1[j];
                     const V3 rel_v = v3_sub_v3(physics_data->velocity, physics_data1->velocity);
 
                     BoundingSphere bs0 = collider->shape.bs;
@@ -273,7 +275,13 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
                     if (dist <= n)
                     {
                         // TODO: Write out potential collision, doesn't have to be perfect for now.
-                        mi1->texture_id = -1;
+                        PotentialCollision pc = {
+                            .collider_aid = archetype_id,
+                            .collider_offset = i,
+                            .target_aid = archetype_id1,
+                            .target_offset = j
+                        };
+                        physics_frame->broad_phase_collisions.data[physics_frame->num_potential_collisions++] = pc;
 
                     }
                 }
@@ -287,9 +295,24 @@ static void narrow_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sy
     
     for (int i = 0; i < physics_frame->num_potential_collisions; ++i)
     {
-        PotentialCollision potential_collision = physics_frame->broad_phase_collisions.data[i];
+        PotentialCollision pc = physics_frame->broad_phase_collisions.data[i];
 
+        Archetype* ca = &ecs->archetypes[pc.collider_aid];
 
+        Collider* collider = &(((Collider*)(Archetype_get_component_list(ca, COMPONENT_Collider)))[pc.collider_offset]);
+        Transform* collider_transform = &(((Transform*)(Archetype_get_component_list(ca, COMPONENT_Transform)))[pc.collider_offset]);
+        PhysicsData* collider_pd = &(((PhysicsData*)(Archetype_get_component_list(ca, COMPONENT_PhysicsData)))[pc.collider_offset]);
+
+        collider_pd->velocity = v3_uniform(0);
+
+        Archetype* ta = &ecs->archetypes[pc.target_aid];
+        Collider* target_collider = &(((Collider*)(Archetype_get_component_list(ta, COMPONENT_Collider)))[pc.target_offset]);
+        Transform* target_transform = &(((Transform*)(Archetype_get_component_list(ta, COMPONENT_Transform)))[pc.target_offset]);
+        PhysicsData* target_pd = &(((PhysicsData*)(Archetype_get_component_list(ta, COMPONENT_PhysicsData)))[pc.target_offset]);
+
+        //printf("%s\n", v3_to_str(target_pd->velocity));
+        //v3_mul_eq_f(&target_pd->velocity, -1);
+        //printf("%s\n\n", v3_to_str(target_pd->velocity));
 
     }
     /*
