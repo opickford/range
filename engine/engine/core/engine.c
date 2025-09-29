@@ -33,6 +33,7 @@ static void Engine_setup_ecs(Engine* engine)
     // TODO: How does the render system also process lights.
 
     // Setup systems.
+    // TODO: These will all be converted to views?
     {
         engine->render_system_id = ECS_register_system(ecs);
         System* system = &engine->ecs.systems[engine->render_system_id];
@@ -60,7 +61,7 @@ static void Engine_setup_ecs(Engine* engine)
         system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) |
                                     COMPONENT_ID_TO_BITSET(COMPONENT_Transform) |
                                     COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) |
-                                    COMPONENT_ID_TO_BITSET(COMPONENT_CollisionCache);
+                                    COMPONENT_ID_TO_BITSET(COMPONENT_Collider);
     }
 }
 

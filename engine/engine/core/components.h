@@ -17,7 +17,7 @@
     X(PointLight) \
     X(Transform) \
     X(PhysicsData) \
-    X(CollisionCache)
+    X(Collider)
 
 // TODO: Should this be like COMPONENT_ID_...?
 #define X(T) ComponentID COMPONENT_##T;

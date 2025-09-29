@@ -49,20 +49,11 @@ void create_map(Engine* engine)
     PhysicsData_init(physics_data);
     physics_data->force = (V3){ 0,0,1 };
 
-    CollisionCache* collision_cache = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_CollisionCache);
-    CollisionCache_init(collision_cache);
-    
+    Collider* collider = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Collider);
+    Collider_init(collider);
 
-    /*
-    mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");
-    mi_create(&scene->models, &engine->renderer.buffers, 0, 1);
-    mi_set_transform(&scene->models, 0, (V3) { 0, 0, -5 }, (V3) { 0, 0, 0 }, (V3) { 5, 5, 5 });
-    */
-    //scene->models.mis_texture_ids[0] = 0;
+    scene->ambient_light = v3_uniform(1.f);
 
-    scene->ambient_light = (V3){ 1,1,1 };
-
-    //scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
     scene->bg_colour = 0x11111111;
     
     // TODO: Should the camera be part of the scene??
@@ -188,7 +179,7 @@ void engine_on_lmbdown(Engine* engine)
     Transform_init(transform);
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
     transform->rotation = engine->renderer.camera.direction;
-    transform->scale = (V3){ 0.1,0.1,0.1 };
+    transform->scale = v3_uniform(0.1f);
 
     PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
     PhysicsData_init(physics_data);
@@ -199,11 +190,9 @@ void engine_on_lmbdown(Engine* engine)
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
 
-    CollisionCache* collision_cache = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_CollisionCache);
-    CollisionCache_init(collision_cache);
-
-
-    
+    Collider* collider = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Collider);
+    Collider_init(collider);
+    collider->shape.ellipsoid = transform->scale;
 }
 
 int main()

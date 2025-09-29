@@ -25,19 +25,45 @@ void PhysicsData_init(PhysicsData* data);
 
 void Physics_tick(ECS* ecs, Scene* scene, System* physics_system, System* collision_system, float dt);
 
+typedef enum
+{
+    COLLISION_SHAPE_ELLIPSOID,
+    COLLISION_SHAPE_MESH
+} CollisionShapeType;
 
 typedef struct
 {
+    MeshBase* mb;
+    Vector(V3) wsps;
+} CollisionMesh;
+
+// TODO: I want to refactor this into something like a Collider?
+typedef struct
+{
+    CollisionShapeType type;
+
+    union
+    {
+        CollisionMesh mesh;
+        V3 ellipsoid;
+    };
+
     // TODO: How do we ensure that these are set???? Just down to user???
     uint8_t dirty; // Recalculate world space positions
     uint8_t scale_dirty; // Recalculate bounding sphere radius
 
-    Vector(V3) wsps;
+    // TODO: For broad phase. But surely we don't need this if the type isn't a Mesh?
     BoundingSphere bs;
 
-} CollisionCache;
+} CollisionShape;
 
-void CollisionCache_init(CollisionCache* cc);
-void CollisionCache_destroy(CollisionCache* cc);
+typedef struct
+{
+    // TODO: In the future this could contain some callback etc.
+    CollisionShape shape;
+} Collider;
+
+void Collider_init(Collider* c);
+void Collider_destroy(Collider* c);
 
 #endif
