@@ -205,9 +205,30 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
     /*
     TODO: Only need to compare past the entity like
 
+    
+    */
+
+    /*
+    TODO: A static mesh may not have physics data, therefore, the inner loop shouldn't use the
+            collision system as it requires the physics data component.
+
+    TODO: Refactor System into a View as makes more sense
+
+    TODO: Refactor loop into separate ones. One for the moving vs moving and one for moving vs static
+
+    this means physicsdata + collider vs physicsdata + collider and physicsdata + collider vs collider
+
+    For this we are obviously going to need two views, however, the no physicsdata would also give
+    entities that have physicsdata. For this we are going to need to update the ECS to allow a view
+    to say it must NOT have a component. So we will have to edit ComponentsSignature to have a not mask
+    ComponentsBitset so we set that it must NOT have the PhysicsData, this should solve our issue.
+
+    Note we can do this thing for the moving entities:
     for i in entities
         for j = i + 1 in entities
-    
+
+
+
     */
 
     for (int si = 0; si < collision_system->num_archetypes; ++si)
@@ -239,6 +260,9 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
 
             // TODO: This iteration is getting painfully messy. Look into iterators. or some macro
 
+            
+            
+            
             for (int si1 = 0; si1 < collision_system->num_archetypes; ++si1)
             {
                 const ArchetypeID archetype_id1 = collision_system->archetype_ids[si1];
@@ -364,7 +388,6 @@ static void handle_collisions(PhysicsFrame* physics_frame, ECS* ecs, Scene* scen
 
     // TODO: The broad phase should calculate pairs of collisions for the entire 
 }
-    
 
 void PhysicsData_init(PhysicsData* data)
 {
