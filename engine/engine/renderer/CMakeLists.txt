@@ -22,7 +22,7 @@ add_library(renderer STATIC
 
 target_link_libraries(renderer 
     PUBLIC
-        cecs::cecs core maths utils)
+        cecs::cecs chds::chds core maths utils)
 
 target_include_directories(renderer 
     PUBLIC
