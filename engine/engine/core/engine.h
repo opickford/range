@@ -21,13 +21,13 @@
 
 typedef struct
 {
-    ECS ecs;
+    ECS* ecs;
 
     // TODO: Defining these in the engine struct feels awful, should be a static?
-    SystemID render_system_id;
-    SystemID lighting_system_id;
-    SystemID physics_system_id;
-    SystemID collision_system_id;
+    ViewID render_view_id;
+    ViewID lighting_view_id;
+    ViewID physics_view_id;
+    ViewID collision_view_id;
 
 	// Engine components.
 	Window window;

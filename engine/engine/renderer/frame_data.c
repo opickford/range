@@ -14,12 +14,12 @@
 
 Status frame_data_init(
     ECS* ecs, 
-    System* render_system,
-    System* lighting_system,
+    ViewID render_view,
+    ViewID lighting_view,
     FrameData* frame_data, 
     Scene* scene)
 {
-    // TODO: A big issue with this system is that it will simply fail if 
+    // TODO: A big issue with this view is that it will simply fail if 
     //       we don't have enough memory, honestly no clue how we could
     //       get around this.
 
@@ -36,14 +36,12 @@ Status frame_data_init(
 
     const MeshBase* mbs = scene->mesh_bases.bases;
 
-    for (int si = 0; si < render_system->num_archetypes; ++si)
+    ViewIter it = ECS_view_iter(ecs, render_view);
+    while (ECS_view_iter_next(&it))
     {
-        const ArchetypeID archetype_id = render_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
+        MeshInstance* mis = ECS_get_column(it, COMPONENT_MeshInstance);
 
-        MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
-
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             MeshInstance* mi = &mis[i];
 
@@ -101,16 +99,13 @@ Status frame_data_init(
     Vector_reserve(frame_data->temp_clipped_faces0, components_per_vertex * max_tris_at_once * STRIDE_FACE_VERTICES);
     Vector_reserve(frame_data->temp_clipped_faces1, components_per_vertex * max_tris_at_once * STRIDE_FACE_VERTICES);
 
-    // Lighting system
-    // TODO: I feel like a lot of this could be done with a define or a function
+    // Lighting view
     int num_point_lights = 0;
-    for (int si = 0; si < lighting_system->num_archetypes; ++si)
+    ViewIter lighting_it = ECS_view_iter(ecs, lighting_view);
+    while (ECS_view_iter_next(&lighting_it))
     {
-        const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
-
         // TODO: If we introduce other lights this logic needs updating.
-        num_point_lights += archetype->entity_count;
+        num_point_lights += lighting_it.num_entities;
     }
 
     Vector_reserve(frame_data->point_lights_view_space_positions, num_point_lights * STRIDE_POSITION);

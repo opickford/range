@@ -14,6 +14,6 @@ target_include_directories(physics
 
 target_link_libraries(physics 
     PUBLIC 
-        cecs::cecs chds::chds core maths utils)
+        cecs::cecs core maths utils)
 
 set_target_properties(physics PROPERTIES FOLDER "Engine")

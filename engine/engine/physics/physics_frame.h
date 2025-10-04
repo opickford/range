@@ -2,9 +2,6 @@
 
 #include "utils/vector.h"
 
-
-#include <cecs/archetype.h>
-
 #include <string.h>
 
 typedef struct

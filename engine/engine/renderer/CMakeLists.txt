@@ -21,8 +21,8 @@ add_library(renderer STATIC
 )
 
 target_link_libraries(renderer 
-    PUBLIC
-        cecs::cecs chds::chds core maths utils)
+    PRIVATE
+        cecs::cecs core maths utils)
 
 target_include_directories(renderer 
     PUBLIC

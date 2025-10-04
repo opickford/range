@@ -35,6 +35,13 @@ for starting physics implementation.
   this essentially automatically allowed for multiple spheres to collide into each other with some temp hacked
   code in the narrow phase to just stop entities when they collide! Very cool to see and a good step forward.
 
+03/10/25
+- Begin CECS refactor of Systems -> Views
+
+04/10/25
+- Finish CECS refactor, implented lots archetype iterators, hide CHDS dependency, hid private/internal functionality,
+  this can now be version 1.0.0 of the CECS lib.
+
 TODOS:
 - Refactor PointLight position to be a Transform component so the physics system can update it?
 - Reimplement shadows.

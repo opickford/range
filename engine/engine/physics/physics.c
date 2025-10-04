@@ -10,7 +10,7 @@
 
 #include "utils/logger.h"
 
-static void apply_forces(ECS* ecs, System* physics_system)
+static void apply_forces(ECS* ecs, ViewID physics_view)
 {
     // TODO: Air resistance
 
@@ -18,15 +18,14 @@ static void apply_forces(ECS* ecs, System* physics_system)
     static V3 acceleration = { 0, 0, 0 };
     //static V3 acceleration = { 0, -9.8f, 0 };
 
-    for (int si = 0; si < physics_system->num_archetypes; ++si)
+    ViewIter it = ECS_view_iter(ecs, physics_view);
+
+    while (ECS_view_iter_next(&it))
     {
-        const ArchetypeID archetype_id = physics_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
+        PhysicsData* physics_datas = ECS_get_column(it, COMPONENT_PhysicsData);
+        Transform* transforms = ECS_get_column(it, COMPONENT_Transform);
 
-        PhysicsData* physics_datas = Archetype_get_component_list(archetype, COMPONENT_PhysicsData);
-        Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
-
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             PhysicsData* physics_data = &physics_datas[i];
             Transform* transform = &transforms[i];
@@ -43,17 +42,15 @@ static void apply_forces(ECS* ecs, System* physics_system)
     }
 }
 
-static void apply_velocities(ECS* ecs, System* physics_system, float dt)
+static void apply_velocities(ECS* ecs, ViewID physics_view, float dt)
 {
-    for (int si = 0; si < physics_system->num_archetypes; ++si)
+    ViewIter it = ECS_view_iter(ecs, physics_view);
+    while (ECS_view_iter_next(&it))
     {
-        const ArchetypeID archetype_id = physics_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
+        PhysicsData* physics_datas = ECS_get_column(it, COMPONENT_PhysicsData);
+        Transform* transforms = ECS_get_column(it, COMPONENT_Transform);
 
-        PhysicsData* physics_datas = Archetype_get_component_list(archetype, COMPONENT_PhysicsData);
-        Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
-
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             PhysicsData* physics_data = &physics_datas[i];
             Transform* transform = &transforms[i];
@@ -124,21 +121,20 @@ static void update_collision_mesh_bounding_sphere(Collider* collider, const Mesh
     collider->shape.scale_dirty = 0;
 }
 
-static void update_colliders(ECS* ecs, Scene* scene, System* collision_system)
+static void update_colliders(ECS* ecs, Scene* scene, ViewID collision_view)
 {
     // TODO: Eventually we might want specific collision meshes to simplify it?
     // TODO: E.g. we don't need the higher detail meshes to collide with, but not needed for now.
-    for (int si = 0; si < collision_system->num_archetypes; ++si)
-    {
-        const ArchetypeID archetype_id = collision_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
 
-        const Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
-        const MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
-        Collider* colliders = Archetype_get_component_list(archetype, COMPONENT_Collider);
+    ViewIter it = ECS_view_iter(ecs, collision_view);
+    while (ECS_view_iter_next(&it))
+    {
+        const Transform* transforms = ECS_get_column(it, COMPONENT_Transform);
+        const MeshInstance* mis = ECS_get_column(it, COMPONENT_MeshInstance);
+        Collider* colliders = ECS_get_column(it, COMPONENT_Collider);
 
         // Update world space positions of entity, update centre of bounding sphere.
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             Collider* collider = &colliders[i];
 
@@ -180,7 +176,7 @@ static void update_colliders(ECS* ecs, Scene* scene, System* collision_system)
     }
 }
 
-static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, System* collision_system, float dt)
+static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, ViewID collision_view, float dt)
 {
     // Broad phase is purely bounding sphere tests
     // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
@@ -188,15 +184,15 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
 
     physics_frame->num_potential_collisions = 0;
 
-    // TODO: Would be nicer to get the number of entities in a system (VIEW) or something instead?
+    // TODO: Would be nicer to get the number of entities in a view (VIEW) or something instead?
 
     int num_entities = 0;
-    for (int si = 0; si < collision_system->num_archetypes; ++si)
     {
-        const ArchetypeID archetype_id = collision_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
-
-        num_entities += archetype->entity_count;
+        ViewIter it = ECS_view_iter(ecs, collision_view);
+        while (ECS_view_iter_next(&it))
+        {
+            num_entities += it.num_entities;
+        }
     }
 
     // TODO: Idk what the calc is.
@@ -210,9 +206,9 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
 
     /*
     TODO: A static mesh may not have physics data, therefore, the inner loop shouldn't use the
-            collision system as it requires the physics data component.
+            collision view as it requires the physics data component.
 
-    TODO: Refactor System into a View as makes more sense
+    TODO: Refactor View into a View as makes more sense
 
     TODO: Refactor loop into separate ones. One for the moving vs moving and one for moving vs static
 
@@ -231,17 +227,15 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
 
     */
 
-    for (int si = 0; si < collision_system->num_archetypes; ++si)
+    ViewIter it = ECS_view_iter(ecs, collision_view);
+    while (ECS_view_iter_next(&it))
     {
-        const ArchetypeID archetype_id = collision_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
+        PhysicsData* physics_datas = ECS_get_column(it, COMPONENT_PhysicsData);
+        Transform* transforms = ECS_get_column(it, COMPONENT_Transform);
+        const MeshInstance* mis = ECS_get_column(it, COMPONENT_MeshInstance);
+        const Collider* colliders = ECS_get_column(it, COMPONENT_Collider);
 
-        PhysicsData* physics_datas = Archetype_get_component_list(archetype, COMPONENT_PhysicsData);
-        Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
-        const MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
-        const Collider* colliders = Archetype_get_component_list(archetype, COMPONENT_Collider);
-
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             PhysicsData* physics_data = &physics_datas[i];
 
@@ -263,18 +257,16 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
             
             
             
-            for (int si1 = 0; si1 < collision_system->num_archetypes; ++si1)
+            ViewIter it1 = ECS_view_iter(ecs, collision_view);
+            while (ECS_view_iter_next(&it1))
             {
-                const ArchetypeID archetype_id1 = collision_system->archetype_ids[si1];
-                Archetype* archetype1 = &ecs->archetypes[archetype_id1];
-
-                const MeshInstance* mis1 = Archetype_get_component_list(archetype1, COMPONENT_MeshInstance);
-                const Collider* colliders1 = Archetype_get_component_list(archetype1, COMPONENT_Collider);
-                PhysicsData* physics_datas1 = Archetype_get_component_list(archetype1, COMPONENT_PhysicsData);
+                const MeshInstance* mis1 = ECS_get_column(it1, COMPONENT_MeshInstance);
+                const Collider* colliders1 = ECS_get_column(it1, COMPONENT_Collider);
+                PhysicsData* physics_datas1 = ECS_get_column(it1, COMPONENT_PhysicsData);
 
                 // TODO: The entity should realistically define it's narrow phase, as it's narrow phase may simply be 
                 //       sphere etc, but not needed for now as we only want player to face collision.
-                for (int j = 0; j < archetype1->entity_count; ++j)
+                for (int j = 0; j < it1.num_entities; ++j)
                 {
                     MeshInstance* mi1 = &mis1[j];
 
@@ -302,14 +294,17 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
 
                     if (dist <= n)
                     {
+                        // TODO:
+                        /*
                         // TODO: Write out potential collision, doesn't have to be perfect for now.
                         PotentialCollision pc = {
-                            .collider_aid = archetype_id,
+                            .collider_aid = it_id,
                             .collider_offset = i,
-                            .target_aid = archetype_id1,
+                            .target_aid = it_id1,
                             .target_offset = j
                         };
                         physics_frame->broad_phase_collisions.data[physics_frame->num_potential_collisions++] = pc;
+                        */
 
                     }
                 }
@@ -318,26 +313,27 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sys
     }
 }
 
-static void narrow_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, System* collision_system, float dt)
+static void narrow_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, ViewID collision_view, float dt)
 {
     
     for (int i = 0; i < physics_frame->num_potential_collisions; ++i)
     {
         PotentialCollision pc = physics_frame->broad_phase_collisions.data[i];
 
-        Archetype* ca = &ecs->archetypes[pc.collider_aid];
+        /*
+        Archetype* ca = &ecs->its[pc.collider_aid];
 
-        Collider* collider = &(((Collider*)(Archetype_get_component_list(ca, COMPONENT_Collider)))[pc.collider_offset]);
-        Transform* collider_transform = &(((Transform*)(Archetype_get_component_list(ca, COMPONENT_Transform)))[pc.collider_offset]);
-        PhysicsData* collider_pd = &(((PhysicsData*)(Archetype_get_component_list(ca, COMPONENT_PhysicsData)))[pc.collider_offset]);
+        Collider* collider = &(((Collider*)(ECS_get_column(ca, COMPONENT_Collider)))[pc.collider_offset]);
+        Transform* collider_transform = &(((Transform*)(ECS_get_column(ca, COMPONENT_Transform)))[pc.collider_offset]);
+        PhysicsData* collider_pd = &(((PhysicsData*)(ECS_get_column(ca, COMPONENT_PhysicsData)))[pc.collider_offset]);
 
         collider_pd->velocity = v3_uniform(0);
 
-        Archetype* ta = &ecs->archetypes[pc.target_aid];
-        Collider* target_collider = &(((Collider*)(Archetype_get_component_list(ta, COMPONENT_Collider)))[pc.target_offset]);
-        Transform* target_transform = &(((Transform*)(Archetype_get_component_list(ta, COMPONENT_Transform)))[pc.target_offset]);
-        PhysicsData* target_pd = &(((PhysicsData*)(Archetype_get_component_list(ta, COMPONENT_PhysicsData)))[pc.target_offset]);
-
+        Archetype* ta = &ecs->its[pc.target_aid];
+        Collider* target_collider = &(((Collider*)(ECS_get_column(ta, COMPONENT_Collider)))[pc.target_offset]);
+        Transform* target_transform = &(((Transform*)(ECS_get_column(ta, COMPONENT_Transform)))[pc.target_offset]);
+        PhysicsData* target_pd = &(((PhysicsData*)(ECS_get_column(ta, COMPONENT_PhysicsData)))[pc.target_offset]);
+        */
         //printf("%s\n", v3_to_str(target_pd->velocity));
         //v3_mul_eq_f(&target_pd->velocity, -1);
         //printf("%s\n\n", v3_to_str(target_pd->velocity));
@@ -352,12 +348,12 @@ static void narrow_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Sy
     */
 }
 
-static void resolve_collisions(ECS* ecs, Scene* scene, System* collision_system, float dt)
+static void resolve_collisions(ECS* ecs, Scene* scene, ViewID collision_view, float dt)
 {
 
 }
 
-static void handle_collisions(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, System* collision_system, float dt)
+static void handle_collisions(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, ViewID collision_view, float dt)
 {
     /*
     TODO:
@@ -369,11 +365,11 @@ static void handle_collisions(PhysicsFrame* physics_frame, ECS* ecs, Scene* scen
 
     */
 
-    update_colliders(ecs, scene, collision_system);
+    update_colliders(ecs, scene, collision_view);
 
-    broad_phase(physics_frame, ecs, scene, collision_system, dt);
+    broad_phase(physics_frame, ecs, scene, collision_view, dt);
 
-    narrow_phase(physics_frame, ecs, scene, collision_system, dt);
+    narrow_phase(physics_frame, ecs, scene, collision_view, dt);
 
 
 
@@ -400,18 +396,18 @@ void PhysicsData_init(PhysicsData* data)
 // TODO: fix whatever rubbish this is.
 PhysicsFrame physics_frame;
 int initialised = 0;
-void Physics_tick(ECS* ecs, Scene* scene, System* physics_system, System* collision_system, float dt)
+void Physics_tick(ECS* ecs, Scene* scene, ViewID physics_view, ViewID collision_view, float dt)
 {
     if (!initialised)
     {
         PhysicsFrame_init(&physics_frame);
     }
 
-    apply_forces(ecs, physics_system);
+    apply_forces(ecs, physics_view);
 
-    handle_collisions(&physics_frame, ecs, scene, collision_system, dt);
+    handle_collisions(&physics_frame, ecs, scene, collision_view, dt);
 
-    apply_velocities(ecs, physics_system, dt);
+    apply_velocities(ecs, physics_view, dt);
 }
 
 void Collider_init(Collider* c)

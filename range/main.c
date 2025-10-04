@@ -34,22 +34,22 @@ void create_map(Engine* engine)
     mesh_base_from_obj(&scene->mesh_bases.bases[cube_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
 
     // Create an entity
-    EntityID cube_entity = ECS_create_entity(&engine->ecs);
+    EntityID cube_entity = ECS_create_entity(engine->ecs);
 
     // Add a MeshInstance component.
-    MeshInstance* mi = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+    MeshInstance* mi = ECS_add_component(engine->ecs, cube_entity, COMPONENT_MeshInstance);
     MeshInstance_init(mi, &scene->mesh_bases.bases[cube_base]);
 
     mi->texture_id = 0;
 
-    Transform* transform = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+    Transform* transform = ECS_add_component(engine->ecs, cube_entity, COMPONENT_Transform);
     Transform_init(transform);
 
-    PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
+    PhysicsData* physics_data = ECS_add_component(engine->ecs, cube_entity, COMPONENT_PhysicsData);
     PhysicsData_init(physics_data);
     //physics_data->force = (V3){ 0,0,1 };
 
-    Collider* collider = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Collider);
+    Collider* collider = ECS_add_component(engine->ecs, cube_entity, COMPONENT_Collider);
     Collider_init(collider);
     
     collider->shape.type = COLLISION_SHAPE_MESH;
@@ -111,12 +111,12 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
 
         const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
-        EntityID cube_entity = ECS_create_entity(&engine->ecs);
-        MeshInstance* mi = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
+        EntityID cube_entity = ECS_create_entity(engine->ecs);
+        MeshInstance* mi = ECS_add_component(engine->ecs, cube_entity, COMPONENT_MeshInstance);
         MeshInstance_init(mi, &scene->mesh_bases.bases[sphere_base]);
         MeshInstance_set_albedo(mi, &scene->mesh_bases.bases[sphere_base], colour);
 
-        Transform* transform = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+        Transform* transform = ECS_add_component(engine->ecs, cube_entity, COMPONENT_Transform);
         Transform_init(transform);
         transform->position = pos;
 
@@ -144,8 +144,8 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         
         const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
-        EntityID e = ECS_create_entity(&engine->ecs);
-        PointLight* pl = ECS_add_component(&engine->ecs, e, COMPONENT_PointLight);
+        EntityID e = ECS_create_entity(engine->ecs);
+        PointLight* pl = ECS_add_component(engine->ecs, e, COMPONENT_PointLight);
         pl->position = pos;
         pl->colour = colour;
         pl->strength = 1.f;
@@ -154,11 +154,11 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     }
     case VK_F4:
     {
-        MeshInstance* mi = ECS_get_component(&engine->ecs, 0, COMPONENT_MeshInstance);
+        MeshInstance* mi = ECS_get_component(engine->ecs, 0, COMPONENT_MeshInstance);
         MeshInstance_destroy(mi);
-        ECS_remove_component(&engine->ecs, 0, COMPONENT_MeshInstance);
+        ECS_remove_component(engine->ecs, 0, COMPONENT_MeshInstance);
 
-        ECS_destroy_entity(&engine->ecs, 0);
+        ECS_destroy_entity(engine->ecs, 0);
 
         break;
     }
@@ -170,13 +170,13 @@ void engine_on_lmbdown(Engine* engine)
     Scene* scene = &engine->scene;
 
     // Create an entity
-    EntityID cube_entity = ECS_create_entity(&engine->ecs);
+    EntityID cube_entity = ECS_create_entity(engine->ecs);
 
     MeshBase* mb = &scene->mesh_bases.bases[cube_base];
 
     // Add a MeshInstance component.
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-    MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity,
+    ECS_add_component(engine->ecs, cube_entity, COMPONENT_MeshInstance);
+    MeshInstance* mi = ECS_get_component(engine->ecs, cube_entity,
         COMPONENT_MeshInstance);
     MeshInstance_init(mi, mb);
 
@@ -189,14 +189,14 @@ void engine_on_lmbdown(Engine* engine)
     };
     MeshInstance_set_albedo(mi, mb, colour);
 
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-    Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
+    ECS_add_component(engine->ecs, cube_entity, COMPONENT_Transform);
+    Transform* transform = ECS_get_component(engine->ecs, cube_entity, COMPONENT_Transform);
     Transform_init(transform);
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
     transform->rotation = engine->renderer.camera.direction;
     transform->scale = v3_uniform(0.1f);
 
-    PhysicsData* physics_data = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_PhysicsData);
+    PhysicsData* physics_data = ECS_add_component(engine->ecs, cube_entity, COMPONENT_PhysicsData);
     PhysicsData_init(physics_data);
 
     // TODO: Dt?
@@ -205,7 +205,7 @@ void engine_on_lmbdown(Engine* engine)
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
 
-    Collider* collider = ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Collider);
+    Collider* collider = ECS_add_component(engine->ecs, cube_entity, COMPONENT_Collider);
     Collider_init(collider);
     collider->shape.ellipsoid = transform->scale;
 }

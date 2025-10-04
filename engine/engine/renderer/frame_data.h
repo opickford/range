@@ -62,8 +62,8 @@ typedef struct
 
 Status frame_data_init(
     ECS* ecs, 
-    System* render_system, 
-    System* lighting_system, 
+    ViewID render_view, 
+    ViewID lighting_view, 
     FrameData* frame_data, 
     Scene* scene);
 

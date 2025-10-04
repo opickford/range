@@ -23,7 +23,7 @@ typedef struct
 
 void PhysicsData_init(PhysicsData* data);
 
-void Physics_tick(ECS* ecs, Scene* scene, System* physics_system, System* collision_system, float dt);
+void Physics_tick(ECS* ecs, Scene* scene, ViewID physics_view, ViewID collision_view, float dt);
 
 typedef enum
 {

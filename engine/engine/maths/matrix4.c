@@ -75,7 +75,7 @@ void m4_rotation(const float pitch, const float yaw, const float roll, M4 out)
 {
 	// TODO: Look into quarternions. https://en.wikipedia.org/wiki/Quaternion
 
-	// In a right handed coordinate system, the rotations are counter clockwise 
+	// In a right handed coordinate view, the rotations are counter clockwise 
 	// around the axis when looking at the axis. So for example, a positive yaw
 	// would make whatever we rotate turn left.
 	const float sinPitch = sinf(pitch);
@@ -281,7 +281,7 @@ void m4_projection(float fov, float aspect_ratio, float near_plane, float far_pl
 	out[8] = 0;
 	out[9] = 0;
 	out[10] = -(far_plane + near_plane) / (far_plane - near_plane);
-	out[11] = -1; // This negation our right handed coordinate system into a left handed coordinate system in ndc space?
+	out[11] = -1; // This negation our right handed coordinate view into a left handed coordinate view in ndc space?
 	out[12] = 0;
 	out[13] = 0;
 	out[14] = -2 * far_plane * near_plane / (far_plane - near_plane);

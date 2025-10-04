@@ -30,7 +30,7 @@ add_library (core STATIC
 
 target_link_libraries(core 
     PUBLIC
-        cecs::cecs chds::chds common maths utils
+        cecs::cecs common maths utils
 )
 
 target_include_directories(core 

@@ -33,7 +33,7 @@
 void debug_draw_point_lights(
     Canvas* canvas, 
     const ECS* ecs,
-    const System* lighting_system,
+    const ViewID lighting_view,
     const FrameData* frame_data, 
     const RenderSettings* settings
     )
@@ -42,14 +42,12 @@ void debug_draw_point_lights(
     int vsps_offset = 0;
 
     // Debug draw point light icons as rects.
-    for (int si = 0; si < lighting_system->num_archetypes; ++si)
+    ViewIter it = ECS_view_iter(ecs, lighting_view);
+    while (ECS_view_iter_next(&it))
     {
-        const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
+        PointLight* pls = ECS_get_column(it, COMPONENT_PointLight);
 
-        PointLight* pls = Archetype_get_component_list(archetype, COMPONENT_PointLight);
-
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             V4 p = v3_to_v4(vsps[vsps_offset], 1.f);
             ++vsps_offset;
@@ -1058,7 +1056,7 @@ void project(const Canvas* canvas, const M4 projection_matrix, V4 v, V4* out)
 {
 	// TODO: Rename view space to screen space?
 
-	// Opengl uses a right handed coordinate system, camera looks down the -z axis,
+	// Opengl uses a right handed coordinate view, camera looks down the -z axis,
 	// however, NDC space is left handed, from -1 to 1 in all axis. 
 	// Therefore, the perspective projection matrix copies and inverts the 
 	// initial depth z, to w' in v_projected.
@@ -1069,7 +1067,7 @@ void project(const Canvas* canvas, const M4 projection_matrix, V4 v, V4* out)
 	m4_mul_v4(projection_matrix, v, &v_projected);
 
 	// Perform perspective divide to bring to NDC space.
-	// NDC space is a left handed coordinate system from -1 to 1 in all axis.
+	// NDC space is a left handed coordinate view from -1 to 1 in all axis.
 	const float inv_w = 1.0f / v_projected.w; // Precalculate the perspective divide.
 
 	v_projected.x *= inv_w;
@@ -1094,7 +1092,7 @@ void project(const Canvas* canvas, const M4 projection_matrix, V4 v, V4* out)
 	out->w = inv_w;
 }
 
-void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const M4 view_matrix)
+void model_to_view_space(ECS* ecs, ViewID render_view, FrameData* frame_data, Scene* scene, const M4 view_matrix)
 {
     // TODO: Could split this into multiple functions.
 
@@ -1105,17 +1103,15 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
     int vsps_offset = 0;
     int vsns_offset = 0;
 
-    for (int si = 0; si < render_system->num_archetypes; ++si)
+    ViewIter it = ECS_view_iter(ecs, render_view);
+    while (ECS_view_iter_next(&it))
     {
-        const ArchetypeID archetype_id = render_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
-
-        MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
-        const Transform* transforms = Archetype_get_component_list(archetype, COMPONENT_Transform);
+        MeshInstance* mis = ECS_get_column(it, COMPONENT_MeshInstance);
+        const Transform* transforms = ECS_get_column(it, COMPONENT_Transform);
 
         V3* vsps = frame_data->view_space_positions.data;
 
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {            
             MeshInstance* mi = &mis[i];
             Transform transform = transforms[i];
@@ -1165,7 +1161,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         // Convert object space normals to view space.
         V3* vsns = frame_data->view_space_normals.data;
 
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             MeshInstance* mi = &mis[i];
             Transform transform = transforms[i];
@@ -1202,7 +1198,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
         }
 
         // TODO: I believe the bounding sphere is the same for the sphere and cube for some reason????
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             MeshInstance* mi = &mis[i];
 
@@ -1240,7 +1236,7 @@ void model_to_view_space(ECS* ecs, System* render_system, FrameData* frame_data,
     }	
 }
 
-void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* frame_data, const Scene* scene, const M4 view_matrix)
+void lights_world_to_view_space(ECS* ecs, ViewID lighting_view, FrameData* frame_data, const Scene* scene, const M4 view_matrix)
 {
 	// This could be made more efficient by having an array of input world
 	// space positions, however, we will never be able to support enough lights
@@ -1251,14 +1247,12 @@ void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* fr
 
     int vsps_offset = 0;
 
-    for (int si = 0; si < lighting_system->num_archetypes; ++si)
+    ViewIter it = ECS_view_iter(ecs, lighting_view);
+    while (ECS_view_iter_next(&it))
     {
-        const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
+        PointLight* pls = ECS_get_column(it, COMPONENT_PointLight);
 
-        PointLight* pls = Archetype_get_component_list(archetype, COMPONENT_PointLight);
-
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             V4 v_view_space;
             m4_mul_v4(view_matrix, v3_to_v4(pls[i].position, 1.f),
@@ -1275,7 +1269,7 @@ void lights_world_to_view_space(ECS* ecs, System* lighting_system, FrameData* fr
     }
 }
 
-void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum)
+void broad_phase_frustum_culling(ECS* ecs, ViewID render_view, FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum)
 {
 	// Performs broad phase frustum culling on the models, writes out the planes
 	// that need to be clipped against.
@@ -1288,14 +1282,12 @@ void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* fra
 	const int num_planes = view_frustum->planes_count;
 	const Plane* planes = view_frustum->planes;
 
-    for (int si = 0; si < render_system->num_archetypes; ++si)
+    ViewIter it = ECS_view_iter(ecs, render_view);
+    while (ECS_view_iter_next(&it))
     {
-        const ArchetypeID archetype_id = render_system->archetype_ids[si];
-        Archetype* archetype = &ecs->archetypes[archetype_id];
-
-        MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
+        MeshInstance* mis = ECS_get_column(it, COMPONENT_MeshInstance);
     
-        for (int i = 0; i < archetype->entity_count; ++i)
+        for (int i = 0; i < it.num_entities; ++i)
         {
             MeshInstance* mi = &mis[i];
             const BoundingSphere bs = mi->view_space_bounding_sphere;
@@ -1344,7 +1336,7 @@ void broad_phase_frustum_culling(ECS* ecs, System* render_system, FrameData* fra
 	frame_data->num_visible_mis = visible_mis_count;
 }
 
-void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene)
+void cull_backfaces(ECS* ecs, ViewID render_view, FrameData* frame_data, Scene* scene)
 {
 	const MeshBase* mbs = scene->mesh_bases.bases;
 
@@ -1397,8 +1389,8 @@ void cull_backfaces(ECS* ecs, System* render_system, FrameData* frame_data, Scen
 
 void light_front_faces(
     ECS* ecs, 
-    System* render_system, 
-    System* lighting_system, 
+    ViewID render_view, 
+    ViewID lighting_view, 
     FrameData* frame_data, 
     Scene* scene, 
     const V3 ambient)
@@ -1492,14 +1484,13 @@ void light_front_faces(
 				V3 diffuse = { 0 };
                 
                 int pl_vsps_offset = 0;
-                for (int si = 0; si < lighting_system->num_archetypes; ++si)
+
+                ViewIter it = ECS_view_iter(ecs, lighting_view);
+                while (ECS_view_iter_next(&it))
                 {
-                    const ArchetypeID archetype_id = lighting_system->archetype_ids[si];
-                    Archetype* archetype = &ecs->archetypes[archetype_id];
+                    PointLight* pls = ECS_get_column(it, COMPONENT_PointLight);
 
-                    PointLight* pls = Archetype_get_component_list(archetype, COMPONENT_PointLight);
-
-                    for (int i = 0; i < archetype->entity_count; ++i)
+                    for (int i = 0; i < it.num_entities; ++i)
                     {
                         const V3 pl_vsp = point_light_vsps[pl_vsps_offset];
                         ++pl_vsps_offset;
@@ -1569,7 +1560,7 @@ void light_front_faces(
 	}
 }
 
-void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data, Scene* scene)
+void prepare_for_clipping(ECS* ecs, ViewID render_view, FrameData* frame_data, Scene* scene)
 {
     // TODO: Comments on how the data is packed together.
 
@@ -1682,7 +1673,7 @@ void prepare_for_clipping(ECS* ecs, System* render_system, FrameData* frame_data
 }
 
 void clip_project_and_draw(
-    System* render_system,
+    ViewID render_view,
 	Renderer* renderer,
 	RenderTarget* rt,
 	FrameData* frame_data,
@@ -2151,50 +2142,50 @@ void project_and_draw_clipped_textured(
 
 void render(
     ECS* ecs,
-    System* render_system,
-    System* lighting_system,
+    ViewID render_view,
+    ViewID lighting_view,
 	Renderer* renderer,
 	Scene* scene,
 	const Resources* resources,
 	const M4 view_matrix)
 {
-    // This render function is using the render and lighting 'systems' honestly
+    // This render function is using the render and lighting 'views' honestly
     // they're more like views at this point.
 
-    // TODO: I realy don't like passing the ecs and systems, feels very messy.
+    // TODO: I realy don't like passing the ecs and views, feels very messy.
     //       Not sure though, doesn't matter loads. 
 	
-	frame_data_init(ecs, render_system, lighting_system, &renderer->frame_data, scene);
+	frame_data_init(ecs, render_view, lighting_view, &renderer->frame_data, scene);
 
 	// Convert positions and normals from object space to view space.
 	// Also update mesh instance's bounding spheres.
 	// TODO: Rename object space? or model space??/
-	model_to_view_space(ecs, render_system, &renderer->frame_data, 
+	model_to_view_space(ecs, render_view, &renderer->frame_data, 
 		scene, view_matrix);
 
 	// Convert light positions from world space to view space.
-	lights_world_to_view_space(ecs, lighting_system, &renderer->frame_data,
+	lights_world_to_view_space(ecs, lighting_view, &renderer->frame_data,
 		scene, view_matrix);
 
-	broad_phase_frustum_culling(ecs, render_system, &renderer->frame_data, scene, &renderer->settings.view_frustum);
+	broad_phase_frustum_culling(ecs, render_view, &renderer->frame_data, scene, &renderer->settings.view_frustum);
 
-	cull_backfaces(ecs, render_system, &renderer->frame_data, scene);
+	cull_backfaces(ecs, render_view, &renderer->frame_data, scene);
 
     // TODO: Need to profile actually to find the issues before doing all this stupid stuff.
 
     // TODO: Honestly a lot of this code just feels awful to read.
 
-	light_front_faces(ecs, render_system, lighting_system, &renderer->frame_data, scene, scene->ambient_light);
+	light_front_faces(ecs, render_view, lighting_view, &renderer->frame_data, scene, scene->ambient_light);
 
-	prepare_for_clipping(ecs, render_system, &renderer->frame_data, scene);
+	prepare_for_clipping(ecs, render_view, &renderer->frame_data, scene);
 
-	clip_project_and_draw(render_system, renderer, &renderer->target, &renderer->frame_data, scene, resources);
+	clip_project_and_draw(render_view, renderer, &renderer->target, &renderer->frame_data, scene, resources);
 
     // DEBUGGING
     debug_draw_point_lights(
         &renderer->target.canvas, 
         ecs,
-        lighting_system,
+        lighting_view,
         &renderer->frame_data,
         &renderer->settings
     );

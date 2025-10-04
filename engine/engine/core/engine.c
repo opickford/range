@@ -16,56 +16,28 @@
 // Internal helpers.
 static void Engine_setup_ecs(Engine* engine)
 {
-    /*
-    
-    TODO: Honestly my systems at the moment are more just collections of 
-    archetypes that match their bitset, the 'system' is not really right?
-    it's kinda more of a view of the entities with certain components?
-    
-    */
-
-    ECS* ecs = &engine->ecs;
-    ECS_init(ecs);
+    ECS* ecs = ECS_create();
+    engine->ecs = ecs;
 
     // Setup core components, MeshInstance etc.
     CoreComponents_init(ecs);
 
-    // TODO: How does the render system also process lights.
+    // Setup views.
+    engine->render_view_id = ECS_view(ecs, 
+        COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | COMPONENT_ID_TO_BITSET(COMPONENT_Transform), 
+        0);
+    
+    engine->lighting_view_id = ECS_view(ecs, COMPONENT_ID_TO_BITSET(COMPONENT_PointLight), 0);
 
-    // Setup systems.
-    // TODO: These will all be converted to views?
-    {
-        engine->render_system_id = ECS_register_system(ecs);
-        System* system = &engine->ecs.systems[engine->render_system_id];
-        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | 
-                                    COMPONENT_ID_TO_BITSET(COMPONENT_Transform);
-    }
+    engine->physics_view_id = ECS_view(ecs, 
+        COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) | COMPONENT_ID_TO_BITSET(COMPONENT_Transform), 
+        0);
 
-    {
-        engine->lighting_system_id = ECS_register_system(ecs);
-        System* system = &engine->ecs.systems[engine->lighting_system_id];
-        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PointLight);
-
-    }
-
-    {
-        engine->physics_system_id = ECS_register_system(ecs);
-        System* system = &engine->ecs.systems[engine->physics_system_id];
-        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) |
-                                    COMPONENT_ID_TO_BITSET(COMPONENT_Transform);
-    }
-
-    {
-        engine->collision_system_id = ECS_register_system(ecs);
-        System* system = &engine->ecs.systems[engine->collision_system_id];
-        system->components_bitset = COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) |
-                                    COMPONENT_ID_TO_BITSET(COMPONENT_Transform) |
-                                    COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) |
-                                    COMPONENT_ID_TO_BITSET(COMPONENT_Collider);
-    }
+    engine->collision_view_id = ECS_view(ecs, 
+        COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) | COMPONENT_ID_TO_BITSET(COMPONENT_Transform) |
+        COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | COMPONENT_ID_TO_BITSET(COMPONENT_Collider),
+        0);
 }
-
-
 
 Status engine_init(Engine* engine, int window_width, int window_height)
 {
@@ -111,10 +83,7 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     // Initialise a random seed. TODO: Might not want this for testing.
     srand((unsigned int)time(NULL));
 
-    // Initialise the ECS.
-    ECS_init(&engine->ecs);
-
-    // Initialise components and systems.
+    // Initialise components and views.
     Engine_setup_ecs(engine);
 
     log_info("Fired engine_on_init event.");
@@ -194,7 +163,7 @@ void engine_run(Engine* engine)
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
 
         // Apply physics
-        Physics_tick(&engine->ecs, &engine->scene, &engine->ecs.systems[engine->physics_system_id], &engine->ecs.systems[engine->collision_system_id], dt);
+        Physics_tick(engine->ecs, &engine->scene, engine->physics_view_id, engine->collision_view_id, dt);
 
         // Clear the canvas.
         timer_restart(&t);
@@ -204,14 +173,14 @@ void engine_run(Engine* engine)
         // Render scene.
         timer_restart(&t);
         
-        // TODO: Render system..............
+        // TODO: Render view..............
 
-        // TODO: How will this work as a system?
+        // TODO: How will this work as a view?
 
             
-        render(&engine->ecs, 
-            &engine->ecs.systems[engine->render_system_id], 
-            &engine->ecs.systems[engine->lighting_system_id], 
+        render(engine->ecs, 
+            engine->render_view_id, 
+            engine->lighting_view_id, 
             &engine->renderer, 
             &engine->scene, 
             &engine->resources,
@@ -261,16 +230,13 @@ void engine_run(Engine* engine)
         
         int total_faces = 0;
         int mis_count = 0;
-        const ECS* ecs = &engine->ecs;
-        const System* render_system = &ecs->systems[engine->render_system_id];
-        for (int si = 0; si < render_system->num_archetypes; ++si)
+        const ECS* ecs = engine->ecs;
+        ViewIter it = ECS_view_iter(ecs, engine->render_view_id);
+        while (ECS_view_iter_next(&it))
         {
-            const ArchetypeID archetype_id = render_system->archetype_ids[si];
-            Archetype* archetype = &ecs->archetypes[archetype_id];
+            MeshInstance* mis = ECS_get_column(it, COMPONENT_MeshInstance);
 
-            MeshInstance* mis = Archetype_get_component_list(archetype, COMPONENT_MeshInstance);
-
-            for (int i = 0; i < archetype->entity_count; ++i)
+            for (int i = 0; i < it.num_entities; ++i)
             {
                 MeshInstance* mi = &mis[i];
 
