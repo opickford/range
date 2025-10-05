@@ -8,9 +8,9 @@
 
 #include "common/status.h"
 
-#include "utils/vector.h"
-
 #include <cecs/ecs.h>
+
+#include <chds/vector.h>
 
 #include <stdint.h>
 

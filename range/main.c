@@ -9,7 +9,6 @@
 #include <engine/maths/vector3.h>
 #include <engine/common/status.h>
 
-
 float* directions;
 
 MeshBaseID sphere_base;

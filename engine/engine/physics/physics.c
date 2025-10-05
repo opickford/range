@@ -85,13 +85,13 @@ static void update_collision_mesh_bounding_sphere(Collider* collider, const Mesh
     // Convert object space positions to world space.
     for (int j = 0; j < mb->num_positions; ++j)
     {
-        const V4 osp = v3_to_v4(mb->object_space_positions.data[j], 1.f);
+        const V4 osp = v3_to_v4(mb->object_space_positions[j], 1.f);
         V4 wsp;
         m4_mul_v4(model_matrix, osp, &wsp);
 
-        collider->shape.mesh.wsps.data[j].x = wsp.x;
-        collider->shape.mesh.wsps.data[j].y = wsp.y;
-        collider->shape.mesh.wsps.data[j].z = wsp.z;
+        collider->shape.mesh.wsps[j].x = wsp.x;
+        collider->shape.mesh.wsps[j].y = wsp.y;
+        collider->shape.mesh.wsps[j].z = wsp.z;
     }
 
     collider->shape.dirty = 0;
@@ -110,7 +110,7 @@ static void update_collision_mesh_bounding_sphere(Collider* collider, const Mesh
 
     for (int j = 0; j < mb->num_positions; ++j)
     {
-        V3 v = collider->shape.mesh.wsps.data[j];
+        V3 v = collider->shape.mesh.wsps[j];
         V3 between = v3_sub_v3(v, centre);
 
         radius_squared = max(size_squared(between), radius_squared);
@@ -199,16 +199,8 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vie
     Vector_reserve(physics_frame->broad_phase_collisions, num_entities * num_entities);
 
     /*
-    TODO: Only need to compare past the entity like
-
-    
-    */
-
-    /*
     TODO: A static mesh may not have physics data, therefore, the inner loop shouldn't use the
             collision view as it requires the physics data component.
-
-    TODO: Refactor View into a View as makes more sense
 
     TODO: Refactor loop into separate ones. One for the moving vs moving and one for moving vs static
 
@@ -252,11 +244,6 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vie
             const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
             const Collider* collider = &colliders[i];
 
-            // TODO: This iteration is getting painfully messy. Look into iterators. or some macro
-
-            
-            
-            
             ViewIter it1 = ECS_view_iter(ecs, collision_view);
             while (ECS_view_iter_next(&it1))
             {
@@ -303,7 +290,7 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vie
                             .target_aid = it_id1,
                             .target_offset = j
                         };
-                        physics_frame->broad_phase_collisions.data[physics_frame->num_potential_collisions++] = pc;
+                        physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
                         */
 
                     }
@@ -318,7 +305,7 @@ static void narrow_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vi
     
     for (int i = 0; i < physics_frame->num_potential_collisions; ++i)
     {
-        PotentialCollision pc = physics_frame->broad_phase_collisions.data[i];
+        PotentialCollision pc = physics_frame->broad_phase_collisions[i];
 
         /*
         Archetype* ca = &ecs->its[pc.collider_aid];

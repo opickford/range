@@ -6,7 +6,7 @@
 
 #include "common/status.h"
 
-#include "utils/vector.h"
+#include <chds/vector.h>
 
 #include <stdio.h>
 

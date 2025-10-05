@@ -5,7 +5,7 @@
 
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/engine/libs")
 find_package(cecs REQUIRED)
-#find_package(chds REQUIRED)
+find_package(chds REQUIRED)
 
 # Compile the engine as a static .lib to be used by the game/tools.
 add_subdirectory(engine/common)
@@ -17,7 +17,6 @@ add_subdirectory(engine/ui)
 add_subdirectory(engine/physics)
 
 add_library(engine INTERFACE)
-
 
 target_link_libraries(engine 
     INTERFACE 

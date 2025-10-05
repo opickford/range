@@ -257,7 +257,7 @@ void window_display(Window* window)
             window->width, window->height,
             0, 0,
             window->canvas->width, window->canvas->height,
-            window->canvas->pixels.data,
+            window->canvas->pixels,
             &window->bitmap,
             DIB_RGB_COLORS,
             SRCCOPY);
@@ -271,7 +271,7 @@ void window_display(Window* window)
             0, 0,
             0,
             window->height,
-            window->canvas->pixels.data,
+            window->canvas->pixels,
             &window->bitmap,
             DIB_RGB_COLORS);
     }

@@ -19,14 +19,14 @@ Status Canvas_init(Canvas* canvas, int width, int height)
     const size_t length = (size_t)width * height * 4;
     Vector_reserve(canvas->pixels, length);
 	
-	if (!canvas->pixels.data)
+	if (!canvas->pixels)
 	{
 		log_error("Failed to allocate memory for canvas pixels.");
 		return STATUS_ALLOC_FAILURE;
 	}
     
     // Clear the allocated memory otherwise we might get artificats.
-    memset(canvas->pixels.data, 0, length * sizeof(*canvas->pixels.data));
+    memset(canvas->pixels, 0, length * sizeof(*canvas->pixels));
 
 	return STATUS_OK;
 }
@@ -79,13 +79,13 @@ Status Canvas_init_from_bitmap(Canvas* canvas, const char* file)
 
     // Allocate memory for pixels
     Vector_reserve(canvas->pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
-    if (!canvas->pixels.data)
+    if (!canvas->pixels)
     {
         return STATUS_ALLOC_FAILURE;
     }
 
     // Get the pixels buffer.
-    GetDIBits(mem_hdc, h_bitmap, 0, bitmap.bmHeight, canvas->pixels.data, &bmi, DIB_RGB_COLORS);
+    GetDIBits(mem_hdc, h_bitmap, 0, bitmap.bmHeight, canvas->pixels, &bmi, DIB_RGB_COLORS);
 
     // Cleanup.
     if (!DeleteObject(h_bitmap))
@@ -169,7 +169,7 @@ Status Canvas_write_to_bmp(const Canvas* canvas, const char* file)
     fileHeader[5] = (unsigned char)(fileSize >> 24);
     fileHeader[10] = (unsigned char)(fileHeaderSize + infoHeaderSize);
 
-    unsigned char* image = (unsigned char*)canvas->pixels.data;
+    unsigned char* image = (unsigned char*)canvas->pixels;
 
     FILE* imageFile = fopen(file, "wb");
 
@@ -201,7 +201,7 @@ Status canvas_resize(Canvas* canvas, int width, int height)
     Vector_reserve(canvas->pixels, length);
 
 	// Check the allocation worked.
-	if (!canvas->pixels.data)
+	if (!canvas->pixels)
 	{
 		log_error("Failed to reallocate memory for canvas pixels on resize.");
 		return STATUS_ALLOC_FAILURE;
@@ -218,7 +218,7 @@ void canvas_fill(Canvas* canvas, const unsigned int colour)
 {
 	// TODO: Look for some sort of blit or fill function 
 	const int length = canvas->width * canvas->height;	
-	unsigned int* ptr = canvas->pixels.data;
+	unsigned int* ptr = canvas->pixels;
 	
 	unsigned int i = length;
 	
@@ -232,8 +232,8 @@ void canvas_fill(Canvas* canvas, const unsigned int colour)
 
 void canvas_draw(const Canvas* source, Canvas* target, int x_offset, int y_offset)
 {
-    int* source_data = source->pixels.data;
-    int* target_data = target->pixels.data;
+    int* source_data = source->pixels;
+    int* target_data = target->pixels;
 
     for (int y = 0; y < source->height; ++y)
     {

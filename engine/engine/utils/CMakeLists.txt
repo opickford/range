@@ -4,8 +4,6 @@ add_library(utils STATIC
     str_utils.h
     str_utils.c
     timer.h
-	vector.h
-	vector.c
 )
 
 target_include_directories(utils 

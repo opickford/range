@@ -24,9 +24,12 @@ Status MeshInstance_set_base(MeshInstance* mi, const MeshBase* mb)
 	// Grow the vertex albedos buffer, there should be one albedo
 	// per vertex.
 
-    Vector_resize(mi->vertex_alebdos, mb->num_faces * STRIDE_FACE_VERTICES);
+    // TODO: Should be able to shrink vector to fit!!!! or a resize method to do this.
+    //Vector_resize(mi->vertex_alebdos, mb->num_faces * STRIDE_FACE_VERTICES);
+    Vector_reserve(mi->vertex_alebdos, mb->num_faces * STRIDE_FACE_VERTICES);
 
-    if (!mi->vertex_alebdos.capacity == mb->num_faces * STRIDE_FACE_VERTICES)
+    // TODO: Nicer way to check if vector resize succeeded?
+    if (Vector_capacity(mi->vertex_alebdos) != mb->num_faces * STRIDE_FACE_VERTICES)
     {
         return STATUS_ALLOC_FAILURE;
     }
@@ -43,9 +46,9 @@ void MeshInstance_set_albedo(MeshInstance* mi, const MeshBase* mb, V3 albedo)
 {
 	for (int i = 0; i < mb->num_faces * STRIDE_FACE_VERTICES; ++i)
 	{
-		mi->vertex_alebdos.data[i].x = albedo.x;
-		mi->vertex_alebdos.data[i].y = albedo.y;
-		mi->vertex_alebdos.data[i].z = albedo.z;
+		mi->vertex_alebdos[i].x = albedo.x;
+		mi->vertex_alebdos[i].y = albedo.y;
+		mi->vertex_alebdos[i].z = albedo.z;
 	}
 }
 

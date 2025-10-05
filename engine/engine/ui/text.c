@@ -33,7 +33,7 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 
 	// For scaling the font, we draw the pixel as a rect with
 	// width and height = scale.
-    int* canvas_data = canvas->pixels.data;
+    int* canvas_data = canvas->pixels;
 
 	int count = 0;
 	int row = 0;
@@ -80,7 +80,7 @@ void text_draw(Canvas* canvas, Text* text, Font* font, float upscaling_factor)
 				int i = target_pixel;
 
 				// Only draw the filled in pixels from the source.
-				if (font->atlas.pixels.data[src_offset++])
+				if (font->atlas.pixels[src_offset++])
 				{
 					for (int y2 = 0; y2 < scale; ++y2)
 					{

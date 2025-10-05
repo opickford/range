@@ -100,7 +100,7 @@ Status Font_init(Font* font)
         {
             for (int k = 0; k < font->char_width; ++k)
             {
-                font->atlas.pixels.data[out++] = src.pixels.data[src_row + k];
+                font->atlas.pixels[out++] = src.pixels[src_row + k];
             }
 
             // Increment row

@@ -6,9 +6,9 @@
 #include "maths/vector3.h"
 #include "maths/bounding_sphere.h"
 
-#include "utils/vector.h"
-
 #include <cecs/ecs.h>
+
+#include <chds/vector.h>
 
 #include <stdint.h>
 
