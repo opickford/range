@@ -1,5 +1,10 @@
 #pragma once
 
+#ifndef PHYSICS_FRAME_H
+#define PHYSICS_FRAME_H
+
+#include <cecs/archetype.h>
+
 #include <chds/vector.h>
 
 #include <string.h>
@@ -27,8 +32,6 @@ typedef struct
 
 typedef struct
 {
-    // TODO: Here lies the issue with my vector implementation, no idea of how mcuh data taken.
-    int num_potential_collisions;
     Vector(PotentialCollision) broad_phase_collisions;
 
 } PhysicsFrame;
@@ -42,3 +45,5 @@ inline void PhysicsFrame_destroy(PhysicsFrame* pf)
 {
     Vector_destroy(pf->broad_phase_collisions);
 }
+
+#endif

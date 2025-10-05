@@ -1,6 +1,8 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
+#include "physics_frame.h"
+
 #include "core/scene.h"
 
 #include "maths/vector3.h"
@@ -21,13 +23,13 @@ typedef struct
 
     ECS* ecs;
 
+    PhysicsFrame frame;
+
     // Views
     ViewID physics_view; // TODO: Rename physicsdata view?
     ViewID moving_colliders_view;
     ViewID static_colliders_view;
     ViewID colliders_view;
-
-    // TODO: Could contain the physicsframe.
 
 } Physics;
 
