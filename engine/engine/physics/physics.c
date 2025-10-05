@@ -246,11 +246,6 @@ static void broad_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* sc
 
     this means physicsdata + collider vs physicsdata + collider and physicsdata + collider vs collider
 
-    For this we are obviously going to need two views, however, the no physicsdata would also give
-    entities that have physicsdata. For this we are going to need to update the ECS to allow a view
-    to say it must NOT have a component. So we will have to edit ComponentsSignature to have a not mask
-    ComponentsBitset so we set that it must NOT have the PhysicsData, this should solve our issue.
-
     Note we can do this thing for the moving entities:
     for i in entities
         for j = i + 1 in entities
@@ -269,20 +264,138 @@ static void broad_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* sc
         {
             PhysicsData* physics_data = &physics_datas[i];
 
+            // TODO: Because of testing only past the current moving entity,
+            //       we cannot have this check as it means a static mesh
+            //       wouldn't 'collide' with a moving one...
+            /*
             // If entity not moving, it cannot have collided with something.
             if (physics_data->velocity.x == 0 &&
                 physics_data->velocity.y == 0 &&
                 physics_data->velocity.z == 0)
             {
                 continue;
-            }
+            }*/
 
             Transform* transform = &transforms[i];
             const MeshInstance* mi = &mis[i];
             const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
             const Collider* collider = &colliders[i];
 
-            // TODO: Not 
+            // Iterate from the current entity, will this work????
+            // TODO: This might not work if we don't resolve collisions
+            //       properly between two entities!!!!!!! Otherwise only
+            //       one will be updated!!!!!!
+            ViewIter it_from_it0 = it;
+
+            // TODO: THE ITERATOR HAS ALREADY MOVED ON AT THIS POINT!!! ANNOYING
+            //       BECAUSE OF COUNT ISSUE, SHOULD FIX IN CECS TBF.
+            // TODO: TEMP: HACK TO MOVE BACK TO CURRENT ARCHETYPE!!!!
+            --it_from_it0.current;
+            --it_from_it0.aid;
+            
+            // Check each remaining moving entity
+            while (ECS_view_iter_next(&it_from_it0))
+            {
+                // TODO: Detect.
+                const MeshInstance* mis1 = ECS_get_column(it_from_it0, COMPONENT_MeshInstance);
+                const Collider* colliders1 = ECS_get_column(it_from_it0, COMPONENT_Collider);
+                PhysicsData* physics_datas1 = ECS_get_column(it_from_it0, COMPONENT_PhysicsData);
+
+                // Start past current entity
+                for (int j = i + 1; j < it_from_it0.num_entities; ++j)
+                {
+                    MeshInstance* mi1 = &mis1[j];
+
+                    // TODO: Cannot collide with self for now, leave this as reminder
+                    //       until the logic is validated.
+                    // Don't collide with self.
+                    //if (mi1 == mi) continue;
+
+                    const Collider* collider1 = &colliders1[j];
+
+                    // Account for entity1's velocity.
+                    PhysicsData* physics_data1 = &physics_datas1[j];
+                    const V3 rel_v = v3_sub_v3(physics_data->velocity, physics_data1->velocity);
+
+                    BoundingSphere bs0 = collider->shape.bs;
+                    const BoundingSphere bs1 = collider1->shape.bs;
+
+                    // 'Sweep' sphere to account for velocities, otherwise we would miss
+                    // collisions at low fps or high velocity. Instead of sweeping just
+                    // scale and move bounding sphere.
+                    v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
+                    bs0.radius += 0.5f * size(rel_v) * dt;
+
+                    // Test for overlap.
+                    const float dist = size_squared(v3_sub_v3(bs1.centre, bs0.centre));
+                    const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
+
+                    if (dist <= n)
+                    {
+                        printf("potentially collidign WITH MOVING!\n");
+                        // TODO:
+
+                        // TODO: Write out potential collision, doesn't have to be perfect for now.
+                        //PotentialCollision pc = {
+                        //    .collider_aid = it_id,
+                        //    .collider_offset = i,
+                        //    .target_aid = it_id1,
+                        //    .target_offset = j
+                        //};
+                        //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
+                    }
+                }
+            }
+
+            // Check with each static entity
+            ViewIter sc_it = ECS_view_iter(physics->ecs, 
+                physics->static_colliders_view);
+
+            while (ECS_view_iter_next(&sc_it))
+            {
+                // TODO: Detect.
+                const MeshInstance* mis1 = ECS_get_column(sc_it, COMPONENT_MeshInstance);
+                const Collider* colliders1 = ECS_get_column(sc_it, COMPONENT_Collider);
+
+                // Start past current entity
+                for (int j = 0; j < sc_it.num_entities; ++j)
+                {
+                    MeshInstance* mi1 = &mis1[j];
+                    const Collider* collider1 = &colliders1[j];
+
+                    BoundingSphere bs0 = collider->shape.bs;
+                    const BoundingSphere bs1 = collider1->shape.bs;
+
+                    // 'Sweep' sphere to account for velocities, otherwise we would miss
+                    // collisions at low fps or high velocity. Instead of sweeping just
+                    // scale and move bounding sphere.
+                    v3_add_v3(bs0.centre, v3_mul_f(physics_data->velocity, 0.5f * dt));
+                    bs0.radius += 0.5f * size(physics_data->velocity) * dt;
+
+                    // Test for overlap.
+                    const float dist = size_squared(v3_sub_v3(bs1.centre, bs0.centre));
+                    const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
+
+                    if (dist <= n)
+                    {
+                        printf("potentially collidign - WITH STATIC!\n");
+                        // TODO:
+
+                        // TODO: Write out potential collision, doesn't have to be perfect for now.
+                        //PotentialCollision pc = {
+                        //    .collider_aid = it_id,
+                        //    .collider_offset = i,
+                        //    .target_aid = it_id1,
+                        //    .target_offset = j
+                        //};
+                        //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
+                    }
+                }
+            }
+
+
+
+            /*
             ViewIter it1 = ECS_view_iter(physics->ecs, physics->colliders_view);
             while (ECS_view_iter_next(&it1))
             {
@@ -321,20 +434,20 @@ static void broad_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* sc
                     if (dist <= n)
                     {
                         // TODO:
-                        /*
+                        
                         // TODO: Write out potential collision, doesn't have to be perfect for now.
-                        PotentialCollision pc = {
-                            .collider_aid = it_id,
-                            .collider_offset = i,
-                            .target_aid = it_id1,
-                            .target_offset = j
-                        };
-                        physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
-                        */
+                        //PotentialCollision pc = {
+                        //    .collider_aid = it_id,
+                        //    .collider_offset = i,
+                        //    .target_aid = it_id1,
+                        //    .target_offset = j
+                        //};
+                        //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
+                        
 
                     }
                 }
-            }
+            }*/
         }
     }
 }
