@@ -40,7 +40,14 @@ for starting physics implementation.
 
 04/10/25
 - Finish CECS refactor, implented lots archetype iterators, hide CHDS dependency, hid private/internal functionality,
-  this can now be version 1.0.0 of the CECS lib.
+  this can now be version 1.0.0 of the CECS lib. Implement 'exclude' feature for views.
+
+05/10/25
+- Update engine to CECS refactor.
+- Update engine to use CHDS vector.
+- Reimplement broad phase collision detection. Separate moving vs moving and moving vs static entity checks.
+  This enables an optimisation of only checking past the outer loop entity for the moving vs moving. Note, this 
+  required the CECS implementation of 'exclude' for views.
 
 TODOS:
 - Refactor PointLight position to be a Transform component so the physics system can update it?
