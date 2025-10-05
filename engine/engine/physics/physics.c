@@ -10,7 +10,48 @@
 
 #include "utils/logger.h"
 
-static void apply_forces(ECS* ecs, ViewID physics_view)
+static void Physics_setup_views(Physics* physics, ECS* ecs)
+{
+    physics->physics_view = ECS_view(ecs,
+        COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) | 
+        COMPONENT_ID_TO_BITSET(COMPONENT_Transform),
+        0);
+
+    physics->colliders_view = ECS_view(ecs,
+        COMPONENT_ID_TO_BITSET(COMPONENT_Transform) | 
+        COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | 
+        COMPONENT_ID_TO_BITSET(COMPONENT_Collider),
+        0);
+
+    // TODO: Currently these views a MeshInstance is this correct?
+
+    // Note, may not actually be moving, just has physicsdata so COULD be moving.
+    physics->moving_colliders_view = ECS_view(ecs,
+        COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) | 
+        COMPONENT_ID_TO_BITSET(COMPONENT_Transform) |
+        COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | 
+        COMPONENT_ID_TO_BITSET(COMPONENT_Collider),
+        0);
+
+    // Static means no physics data.
+    physics->static_colliders_view = ECS_view(ecs,
+        COMPONENT_ID_TO_BITSET(COMPONENT_Transform) | 
+        COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | 
+        COMPONENT_ID_TO_BITSET(COMPONENT_Collider),
+        COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData));
+}
+
+Status Physics_init(Physics* physics, ECS* ecs)
+{
+    memset(physics, 0, sizeof(Physics));
+    physics->ecs = ecs;
+
+    Physics_setup_views(physics, ecs);
+
+    return STATUS_OK;
+}
+
+static void apply_forces(Physics* physics)
 {
     // TODO: Air resistance
 
@@ -18,7 +59,7 @@ static void apply_forces(ECS* ecs, ViewID physics_view)
     static V3 acceleration = { 0, 0, 0 };
     //static V3 acceleration = { 0, -9.8f, 0 };
 
-    ViewIter it = ECS_view_iter(ecs, physics_view);
+    ViewIter it = ECS_view_iter(physics->ecs, physics->physics_view);
 
     while (ECS_view_iter_next(&it))
     {
@@ -42,9 +83,9 @@ static void apply_forces(ECS* ecs, ViewID physics_view)
     }
 }
 
-static void apply_velocities(ECS* ecs, ViewID physics_view, float dt)
+static void apply_velocities(Physics* physics, float dt)
 {
-    ViewIter it = ECS_view_iter(ecs, physics_view);
+    ViewIter it = ECS_view_iter(physics->ecs, physics->physics_view);
     while (ECS_view_iter_next(&it))
     {
         PhysicsData* physics_datas = ECS_get_column(it, COMPONENT_PhysicsData);
@@ -121,12 +162,11 @@ static void update_collision_mesh_bounding_sphere(Collider* collider, const Mesh
     collider->shape.scale_dirty = 0;
 }
 
-static void update_colliders(ECS* ecs, Scene* scene, ViewID collision_view)
+static void update_colliders(Physics* physics, Scene* scene)
 {
     // TODO: Eventually we might want specific collision meshes to simplify it?
     // TODO: E.g. we don't need the higher detail meshes to collide with, but not needed for now.
-
-    ViewIter it = ECS_view_iter(ecs, collision_view);
+    ViewIter it = ECS_view_iter(physics->ecs, physics->colliders_view);
     while (ECS_view_iter_next(&it))
     {
         const Transform* transforms = ECS_get_column(it, COMPONENT_Transform);
@@ -176,7 +216,7 @@ static void update_colliders(ECS* ecs, Scene* scene, ViewID collision_view)
     }
 }
 
-static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, ViewID collision_view, float dt)
+static void broad_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* scene, float dt)
 {
     // Broad phase is purely bounding sphere tests
     // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
@@ -188,7 +228,7 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vie
 
     int num_entities = 0;
     {
-        ViewIter it = ECS_view_iter(ecs, collision_view);
+        ViewIter it = ECS_view_iter(physics->ecs, physics->colliders_view);
         while (ECS_view_iter_next(&it))
         {
             num_entities += it.num_entities;
@@ -215,11 +255,9 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vie
     for i in entities
         for j = i + 1 in entities
 
-
-
     */
 
-    ViewIter it = ECS_view_iter(ecs, collision_view);
+    ViewIter it = ECS_view_iter(physics->ecs, physics->moving_colliders_view);
     while (ECS_view_iter_next(&it))
     {
         PhysicsData* physics_datas = ECS_get_column(it, COMPONENT_PhysicsData);
@@ -244,7 +282,8 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vie
             const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
             const Collider* collider = &colliders[i];
 
-            ViewIter it1 = ECS_view_iter(ecs, collision_view);
+            // TODO: Not 
+            ViewIter it1 = ECS_view_iter(physics->ecs, physics->colliders_view);
             while (ECS_view_iter_next(&it1))
             {
                 const MeshInstance* mis1 = ECS_get_column(it1, COMPONENT_MeshInstance);
@@ -300,7 +339,7 @@ static void broad_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vie
     }
 }
 
-static void narrow_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, ViewID collision_view, float dt)
+static void narrow_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* scene, float dt)
 {
     
     for (int i = 0; i < physics_frame->num_potential_collisions; ++i)
@@ -335,12 +374,12 @@ static void narrow_phase(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, Vi
     */
 }
 
-static void resolve_collisions(ECS* ecs, Scene* scene, ViewID collision_view, float dt)
+static void resolve_collisions(Physics* physics, Scene* scene, float dt)
 {
 
 }
 
-static void handle_collisions(PhysicsFrame* physics_frame, ECS* ecs, Scene* scene, ViewID collision_view, float dt)
+static void handle_collisions(Physics* physics, PhysicsFrame* physics_frame, Scene* scene, float dt)
 {
     /*
     TODO:
@@ -352,11 +391,11 @@ static void handle_collisions(PhysicsFrame* physics_frame, ECS* ecs, Scene* scen
 
     */
 
-    update_colliders(ecs, scene, collision_view);
+    update_colliders(physics, scene);
 
-    broad_phase(physics_frame, ecs, scene, collision_view, dt);
+    broad_phase(physics, physics_frame, scene, dt);
 
-    narrow_phase(physics_frame, ecs, scene, collision_view, dt);
+    narrow_phase(physics, physics_frame, scene, dt);
 
 
 
@@ -383,18 +422,18 @@ void PhysicsData_init(PhysicsData* data)
 // TODO: fix whatever rubbish this is.
 PhysicsFrame physics_frame;
 int initialised = 0;
-void Physics_tick(ECS* ecs, Scene* scene, ViewID physics_view, ViewID collision_view, float dt)
+void Physics_tick(Physics* physics, Scene* scene, float dt)
 {
     if (!initialised)
     {
         PhysicsFrame_init(&physics_frame);
     }
 
-    apply_forces(ecs, physics_view);
+    apply_forces(physics);
 
-    handle_collisions(&physics_frame, ecs, scene, collision_view, dt);
+    handle_collisions(physics, &physics_frame, scene, dt);
 
-    apply_velocities(ecs, physics_view, dt);
+    apply_velocities(physics, dt);
 }
 
 void Collider_init(Collider* c)

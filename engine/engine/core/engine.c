@@ -22,21 +22,14 @@ static void Engine_setup_ecs(Engine* engine)
     // Setup core components, MeshInstance etc.
     CoreComponents_init(ecs);
 
+    // TODO: Systems should initialise their own views.
+
     // Setup views.
     engine->render_view_id = ECS_view(ecs, 
         COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | COMPONENT_ID_TO_BITSET(COMPONENT_Transform), 
         0);
     
     engine->lighting_view_id = ECS_view(ecs, COMPONENT_ID_TO_BITSET(COMPONENT_PointLight), 0);
-
-    engine->physics_view_id = ECS_view(ecs, 
-        COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) | COMPONENT_ID_TO_BITSET(COMPONENT_Transform), 
-        0);
-
-    engine->collision_view_id = ECS_view(ecs, 
-        COMPONENT_ID_TO_BITSET(COMPONENT_PhysicsData) | COMPONENT_ID_TO_BITSET(COMPONENT_Transform) |
-        COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | COMPONENT_ID_TO_BITSET(COMPONENT_Collider),
-        0);
 }
 
 Status engine_init(Engine* engine, int window_width, int window_height)
@@ -47,6 +40,9 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     // Set some default settings.
     engine->upscaling_factor = 1;
     engine->handle_input = 0;
+
+    // Initialise components and views.
+    Engine_setup_ecs(engine);
 
     // Initialise the renderer.
     Status status = renderer_init(&engine->renderer, (int)(window_width / engine->upscaling_factor), (int)(window_height / engine->upscaling_factor));
@@ -77,15 +73,19 @@ Status engine_init(Engine* engine, int window_width, int window_height)
         return status;
     }
 
+    // Initialise the physics system.
+    if (STATUS_OK != Physics_init(&engine->physics, engine->ecs))
+    {
+        log_error("Failed to Physics_init because of %s", Status_to_str(status));
+        return status;
+    }
+
     // Initialise the resources.
     resources_init(&engine->resources);
 
     // Initialise a random seed. TODO: Might not want this for testing.
     srand((unsigned int)time(NULL));
-
-    // Initialise components and views.
-    Engine_setup_ecs(engine);
-
+    
     log_info("Fired engine_on_init event.");
     engine_on_init(engine);
 
@@ -163,7 +163,7 @@ void engine_run(Engine* engine)
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
 
         // Apply physics
-        Physics_tick(engine->ecs, &engine->scene, engine->physics_view_id, engine->collision_view_id, dt);
+        Physics_tick(&engine->physics, &engine->scene, dt);
 
         // Clear the canvas.
         timer_restart(&t);

@@ -27,13 +27,16 @@ typedef struct
     ViewID render_view_id;
     ViewID lighting_view_id;
     ViewID physics_view_id;
-    ViewID collision_view_id;
+
+    ViewID moving_collider_view_id;
+    ViewID static_collider_view_id;
 
 	// Engine components.
 	Window window;
 	UI ui;
 	Renderer renderer;
 	Resources resources; // Works fine for now, potentially something to refactor.
+    Physics physics;
 
 	// Scene data. - I don't think the engine needs to manage multiple.
     // TODO: Only manage one scene.

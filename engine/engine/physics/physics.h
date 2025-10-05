@@ -6,11 +6,30 @@
 #include "maths/vector3.h"
 #include "maths/bounding_sphere.h"
 
+#include "common/status.h"
+
 #include <cecs/ecs.h>
 
 #include <chds/vector.h>
 
 #include <stdint.h>
+
+// TODO: Rename -> PhysicsSystem?
+typedef struct
+{
+    // TODO: Should this contain a scene also?
+
+    ECS* ecs;
+
+    // Views
+    ViewID physics_view; // TODO: Rename physicsdata view?
+    ViewID moving_colliders_view;
+    ViewID static_colliders_view;
+    ViewID colliders_view;
+
+    // TODO: Could contain the physicsframe.
+
+} Physics;
 
 // TODO: Move to separate file?
 typedef struct
@@ -23,7 +42,8 @@ typedef struct
 
 void PhysicsData_init(PhysicsData* data);
 
-void Physics_tick(ECS* ecs, Scene* scene, ViewID physics_view, ViewID collision_view, float dt);
+Status Physics_init(Physics* physics, ECS* ecs);
+void Physics_tick(Physics* physics, Scene* scene, float dt);
 
 typedef enum
 {
@@ -37,7 +57,6 @@ typedef struct
     Vector(V3) wsps;
 } CollisionMesh;
 
-// TODO: I want to refactor this into something like a Collider?
 typedef struct
 {
     CollisionShapeType type;
