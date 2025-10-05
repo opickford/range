@@ -287,14 +287,8 @@ static void broad_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* sc
             //       one will be updated!!!!!!
             ViewIter it_from_it0 = it;
 
-            // TODO: THE ITERATOR HAS ALREADY MOVED ON AT THIS POINT!!! ANNOYING
-            //       BECAUSE OF COUNT ISSUE, SHOULD FIX IN CECS TBF.
-            // TODO: TEMP: HACK TO MOVE BACK TO CURRENT ARCHETYPE!!!!
-            --it_from_it0.current;
-            --it_from_it0.aid;
-            
             // Check each remaining moving entity
-            while (ECS_view_iter_next(&it_from_it0))
+            do
             {
                 // TODO: Detect.
                 const MeshInstance* mis1 = ECS_get_column(it_from_it0, COMPONENT_MeshInstance);
@@ -336,16 +330,16 @@ static void broad_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* sc
                         // TODO:
 
                         // TODO: Write out potential collision, doesn't have to be perfect for now.
-                        //PotentialCollision pc = {
-                        //    .collider_aid = it_id,
-                        //    .collider_offset = i,
-                        //    .target_aid = it_id1,
-                        //    .target_offset = j
-                        //};
-                        //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
+                        PotentialCollision pc = {
+                            .collider_aid = it.aid,
+                            .collider_offset = i,
+                            .target_aid = it_from_it0.aid,
+                            .target_offset = j
+                        };
+                        physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
                     }
                 }
-            }
+            } while (ECS_view_iter_next(&it_from_it0));
 
             // Check with each static entity
             ViewIter sc_it = ECS_view_iter(physics->ecs, 
@@ -392,69 +386,12 @@ static void broad_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* sc
                     }
                 }
             }
-
-
-
-            /*
-            ViewIter it1 = ECS_view_iter(physics->ecs, physics->colliders_view);
-            while (ECS_view_iter_next(&it1))
-            {
-                const MeshInstance* mis1 = ECS_get_column(it1, COMPONENT_MeshInstance);
-                const Collider* colliders1 = ECS_get_column(it1, COMPONENT_Collider);
-                PhysicsData* physics_datas1 = ECS_get_column(it1, COMPONENT_PhysicsData);
-
-                // TODO: The entity should realistically define it's narrow phase, as it's narrow phase may simply be 
-                //       sphere etc, but not needed for now as we only want player to face collision.
-                for (int j = 0; j < it1.num_entities; ++j)
-                {
-                    MeshInstance* mi1 = &mis1[j];
-
-                    // Don't collide with self.
-                    if (mi1 == mi) continue;
-
-                    const Collider* collider1 = &colliders1[j];
-
-                    // Account for entity1's velocity.
-                    PhysicsData* physics_data1 = &physics_datas1[j];
-                    const V3 rel_v = v3_sub_v3(physics_data->velocity, physics_data1->velocity);
-
-                    BoundingSphere bs0 = collider->shape.bs;
-                    const BoundingSphere bs1 = collider1->shape.bs;
-
-                    // 'Sweep' sphere to account for velocities, otherwise we would miss
-                    // collisions at low fps or high velocity. Instead of sweeping just
-                    // scale and move bounding sphere.
-                    v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
-                    bs0.radius += 0.5f * size(rel_v) * dt;
-
-                    // Test for overlap.
-                    const float dist = size_squared(v3_sub_v3(bs1.centre, bs0.centre));
-                    const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
-
-                    if (dist <= n)
-                    {
-                        // TODO:
-                        
-                        // TODO: Write out potential collision, doesn't have to be perfect for now.
-                        //PotentialCollision pc = {
-                        //    .collider_aid = it_id,
-                        //    .collider_offset = i,
-                        //    .target_aid = it_id1,
-                        //    .target_offset = j
-                        //};
-                        //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
-                        
-
-                    }
-                }
-            }*/
         }
     }
 }
 
 static void narrow_phase(Physics* physics, PhysicsFrame* physics_frame, Scene* scene, float dt)
-{
-    
+{    
     for (int i = 0; i < physics_frame->num_potential_collisions; ++i)
     {
         PotentialCollision pc = physics_frame->broad_phase_collisions[i];

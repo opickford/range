@@ -4,8 +4,18 @@
 
 #include <string.h>
 
+// TODO: Should this just store the necessary for each entity, i think so? Would make it easier to unpack right and less computations....
+// TODO: An issue with pointers would be if a collision called a 
+//       callback that created a new entity which could invalidate 
+//       the pointers maybe? But not an issue for now.
+
 typedef struct
 {
+    //MeshInstance* mi0;
+    //Collider* c0;
+    //PhysicsData* pd0;
+
+
     // Collider collides with a target.
     ArchetypeID collider_aid;
     int collider_offset;
