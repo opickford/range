@@ -23,10 +23,7 @@ Status MeshInstance_set_base(MeshInstance* mi, const MeshBase* mb)
 {
 	// Grow the vertex albedos buffer, there should be one albedo
 	// per vertex.
-
-    // TODO: Should be able to shrink vector to fit!!!! or a resize method to do this.
-    //Vector_resize(mi->vertex_alebdos, mb->num_faces * STRIDE_FACE_VERTICES);
-    Vector_reserve(mi->vertex_alebdos, mb->num_faces * STRIDE_FACE_VERTICES);
+    Vector_resize(mi->vertex_alebdos, mb->num_faces * STRIDE_FACE_VERTICES);
 
     // TODO: Nicer way to check if vector resize succeeded?
     if (Vector_capacity(mi->vertex_alebdos) != mb->num_faces * STRIDE_FACE_VERTICES)

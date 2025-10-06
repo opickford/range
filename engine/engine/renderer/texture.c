@@ -54,10 +54,7 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
     // Read the image as an array of ints
     Vector(int) temp_pixels = { 0 };
 
-    Vector_reserve(temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
-
-    // TODO: Resize or shrink_to_fit
-    //Vector_resize(temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
+    Vector_resize(temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
     if (Vector_capacity(temp_pixels) != bitmap.bmWidthBytes * bitmap.bmHeight)
     {
         return STATUS_ALLOC_FAILURE;
@@ -84,10 +81,8 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
     }
 
     
-    //Vector_resize(texture->pixels, texture->width * texture->height * 3);
-    // TODO: Resize or shrink_to_fit
-    Vector_reserve(texture->pixels, texture->width * texture->height * 3);
-
+    Vector_resize(texture->pixels, texture->width * texture->height * 3);
+    
     // TODO: Gotta test the texture a few ways, do we want r,g,b uint8? 3 floats? what.
     for (int i = 0; i < texture->width * texture->height; ++i)
     {

@@ -223,9 +223,7 @@ static void broad_phase(Physics* physics, Scene* scene, float dt)
     // Broad phase is purely bounding sphere tests
     // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
 
-    // TODO: Vector clear function to do this for me!!!
-    CHDS_VectorHeader* h = CHDS_Vector_header(physics->frame.broad_phase_collisions);
-    if (physics->frame.broad_phase_collisions && h) h->count = 0;
+    Vector_clear(physics->frame.broad_phase_collisions);
 
     // TODO: Would be nicer to get the number of entities in a view (VIEW) or something instead?
 
