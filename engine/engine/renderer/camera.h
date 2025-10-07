@@ -10,11 +10,11 @@ typedef struct
 	float yaw;
 	float roll;
 
-	V3 direction;
-	V3 position;
+	v3_t direction;
+	v3_t position;
 
-} Camera;
+} camera_t;
 
-void calculate_view_matrix(const Camera* camera, M4 out);
+void calculate_view_matrix(const camera_t* camera, m4_t out);
 
 #endif 

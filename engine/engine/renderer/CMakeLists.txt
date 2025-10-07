@@ -31,4 +31,4 @@ target_include_directories(renderer
         $<INSTALL_INTERFACE:include>
 )
 
-set_target_properties(renderer PROPERTIES FOLDER "Engine")
+set_target_properties(renderer PROPERTIES FOLDER "engine_t")

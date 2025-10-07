@@ -2,7 +2,7 @@
 
 #include "utils.h"
 
-void m4_mul_m4(const M4 m0, const M4 m1, M4 out)
+void m4_mul_m4(const m4_t m0, const m4_t m1, m4_t out)
 {
 	// Post-multiplication, this means the combined out 
 	// matrix will first apply m1, then m0.
@@ -34,7 +34,7 @@ void m4_mul_m4(const M4 m0, const M4 m1, M4 out)
 
 // TODO: Rename out? Any performance critical code 
 //		 can't be returning, takes too long.
-void m4_mul_v4(const M4 m, V4 v, V4* out)
+void m4_mul_v4(const m4_t m, v4_t v, v4_t* out)
 {
 	out->x = m[0] * v.x + m[4] * v.y + m[8] * v.z + m[12] * v.w;
 	out->y = m[1] * v.x + m[5] * v.y + m[9] * v.z + m[13] * v.w;
@@ -42,7 +42,7 @@ void m4_mul_v4(const M4 m, V4 v, V4* out)
 	out->w = m[3] * v.x + m[7] * v.y + m[11] * v.z + m[15] * v.w;
 }
 
-void m4_identity(M4 out)
+void m4_identity(m4_t out)
 {
 	out[0] = 1;
 	out[1] = 0;
@@ -63,7 +63,7 @@ void m4_identity(M4 out)
 }
 
 // TODO: Order of in/out?
-void m4_translation(V3 position, M4 out)
+void m4_translation(v3_t position, m4_t out)
 {
 	m4_identity(out);
 	out[12] = position.x;
@@ -71,7 +71,7 @@ void m4_translation(V3 position, M4 out)
 	out[14] = position.z;
 }
 
-void m4_rotation(const float pitch, const float yaw, const float roll, M4 out)
+void m4_rotation(const float pitch, const float yaw, const float roll, m4_t out)
 {
 	// TODO: Look into quarternions. https://en.wikipedia.org/wiki/Quaternion
 
@@ -89,7 +89,7 @@ void m4_rotation(const float pitch, const float yaw, const float roll, M4 out)
 	// TODO: I think labelling these as rotations around axis would make more sense tbf.
 
 	// Rotation around the x axis.
-	M4 pitch_rot;
+	m4_t pitch_rot;
 	m4_identity(pitch_rot);
 
 	pitch_rot[5] = cosPitch;
@@ -98,7 +98,7 @@ void m4_rotation(const float pitch, const float yaw, const float roll, M4 out)
 	pitch_rot[10] = cosPitch;
 
 	// Rotation around the y axis.
-	M4 yaw_rot;
+	m4_t yaw_rot;
 	m4_identity(yaw_rot);
 	
 	yaw_rot[0] = cosYaw;
@@ -107,7 +107,7 @@ void m4_rotation(const float pitch, const float yaw, const float roll, M4 out)
 	yaw_rot[10] = cosYaw;
 
 	// Rotation around the z axis.
-	M4 roll_rot;
+	m4_t roll_rot;
 	m4_identity(roll_rot);
 
 	roll_rot[0] = cosRoll;
@@ -127,7 +127,7 @@ void m4_rotation(const float pitch, const float yaw, const float roll, M4 out)
 	//		 order of matrix multplications a bit better.
 }
 
-void look_at(V3 position, V3 direction, M4 out)
+void look_at(v3_t position, v3_t direction, m4_t out)
 {
 	// TODO: This isn't quite right, most look_at matrices take to and from positions,
 	//		 then the camera would get set to the from position. 
@@ -135,14 +135,14 @@ void look_at(V3 position, V3 direction, M4 out)
 	//		 matrix from a position and direction.
 
 
-	V3 world_up = { 0, 1, 0 };
+	v3_t world_up = { 0, 1, 0 };
 
-	V3 x_axis;
+	v3_t x_axis;
 	if (fabsf(direction.y) == fabsf(world_up.y))
 	{
 		// If direction.y == -1, the cross product will return 0,0,0. 
 		// So hardcode the x axis to the world right?
-		x_axis = (V3){ 1,0,0 };
+		x_axis = (v3_t){ 1,0,0 };
 	}
 	else
 	{
@@ -150,7 +150,7 @@ void look_at(V3 position, V3 direction, M4 out)
 		x_axis = normalised(cross(world_up, direction));
 	}
 
-	V3 y_axis = cross(direction, x_axis);
+	v3_t y_axis = cross(direction, x_axis);
 
 	// Set the out matrix to the combined translation and rotation matrix.
 	m4_identity(out);
@@ -164,20 +164,20 @@ void look_at(V3 position, V3 direction, M4 out)
 	out[14] = dot(direction, position);
 }
 
-void m4_model_matrix(V3 position, V3 eulers, V3 scale, M4 out)
+void m4_model_matrix(v3_t position, v3_t eulers, v3_t scale, m4_t out)
 {
 	// TODO: Eventually gonna switch to quarternions for rotations.
 
 	// TODO: Look into avoiding the matrix multiplications? Can I set translation without multiplying?
 	//		 Pretty sure I can.
 	
-	M4 translation_m4;
+	m4_t translation_m4;
 	m4_translation(position, translation_m4);
 
-	M4 rotation_m4;
+	m4_t rotation_m4;
 	m4_rotation(eulers.x, eulers.y, eulers.z, rotation_m4);
 	
-	M4 scale_m4;
+	m4_t scale_m4;
 	m4_identity(scale_m4);
 	scale_m4[0] = scale.x;
 	scale_m4[5] = scale.y;
@@ -186,7 +186,7 @@ void m4_model_matrix(V3 position, V3 eulers, V3 scale, M4 out)
 
 	// We have to define an output matrix each time.
 	// Although in my opinion this is fine it makes it more clear.
-	M4 translation_rotation_m4;
+	m4_t translation_rotation_m4;
 
 	// We use post-matrix multiplication, so here, we end up
 	// scaling, then rotating, then translating.
@@ -194,14 +194,14 @@ void m4_model_matrix(V3 position, V3 eulers, V3 scale, M4 out)
 	m4_mul_m4(translation_rotation_m4, scale_m4, out);
 }
 
-void m4_normal_matrix(V3 eulers, V3 scale, M4 out)
+void m4_normal_matrix(v3_t eulers, v3_t scale, m4_t out)
 {
 	// Create a normal matrix from the given eulers and scale.
 	// Essentially no translation, keep the rotation, and inverse scale.
-	M4 rotation_m4;
+	m4_t rotation_m4;
 	m4_rotation(eulers.x, eulers.y, eulers.z, rotation_m4);
 
-	M4 scale_m4;
+	m4_t scale_m4;
 	m4_identity(scale_m4);
 	scale_m4[0] = 1.f / scale.x;
 	scale_m4[5] = 1.f / scale.y;
@@ -211,7 +211,7 @@ void m4_normal_matrix(V3 eulers, V3 scale, M4 out)
 }
 
 
-void m4_transposed(const M4 in, M4 out)
+void m4_transposed(const m4_t in, m4_t out)
 {
 	// Flip the matrix along the diagonal. Essentially column major to row major.
 	out[0] = in[0];
@@ -232,7 +232,7 @@ void m4_transposed(const M4 in, M4 out)
 	out[15] = in[15];
 }
 
-void m4_copy_m3(const M4 in, M4 out)
+void m4_copy_m3(const m4_t in, m4_t out)
 {
 	// TODO: Rename better? Like specific it takes the rotation ??? 
 	// or something about it overwritting the other values
@@ -260,7 +260,7 @@ void m4_copy_m3(const M4 in, M4 out)
 	out[15] = 1; // TODO: Not sure about this
 }
 
-void m4_projection(float fov, float aspect_ratio, float near_plane, float far_plane, M4 out)
+void m4_projection(float fov, float aspect_ratio, float near_plane, float far_plane, m4_t out)
 {
 	// TODO: Fov is vertical fov here.
 	// TODO: Comment all this properly to show I actually understand it all.
@@ -288,7 +288,7 @@ void m4_projection(float fov, float aspect_ratio, float near_plane, float far_pl
 	out[15] = 0;
 }
 
-char* m4_to_str(const M4 m)
+char* m4_to_str(const m4_t m)
 {
 	return format_str("%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f",
 		m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);

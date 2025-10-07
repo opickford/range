@@ -40,7 +40,7 @@ target_include_directories(core
         $<INSTALL_INTERFACE:include>
 )
 
-set_target_properties(core PROPERTIES FOLDER "Engine")
+set_target_properties(core PROPERTIES FOLDER "engine_t")
 
 # TODO: Add tests and install targets if needed.
 

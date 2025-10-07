@@ -16,4 +16,4 @@ target_link_libraries(physics
     PUBLIC 
         cecs::cecs chds::chds core maths utils)
 
-set_target_properties(physics PROPERTIES FOLDER "Engine")
+set_target_properties(physics PROPERTIES FOLDER "engine_t")

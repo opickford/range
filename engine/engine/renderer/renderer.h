@@ -10,16 +10,16 @@
 
 typedef struct
 {
-	RenderTarget target;
-	RenderSettings settings;
-	Camera camera;
+	render_target_t target;
+	render_settings_t settings;
+	camera_t camera;
 
 
-	FrameData frame_data;
+	frame_data_t frame_data;
 	
-} Renderer;
+} renderer_t;
 
-Status renderer_init(Renderer* renderer, int width, int height);
-Status renderer_resize(Renderer* renderer, int width, int height);
+status_t renderer_init(renderer_t* renderer, int width, int height);
+status_t renderer_resize(renderer_t* renderer, int width, int height);
 
 #endif

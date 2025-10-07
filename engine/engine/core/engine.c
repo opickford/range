@@ -14,41 +14,41 @@
 #include <stdlib.h>
 
 // Internal helpers.
-static void Engine_setup_ecs(Engine* engine)
+static void engine_setup_ecs(engine_t* engine)
 {
-    ECS* ecs = ECS_create();
+    cecs_t* ecs = cecs_create();
     engine->ecs = ecs;
 
-    // Setup core components, MeshInstance etc.
-    CoreComponents_init(ecs);
+    // Setup core components, mesh_instance_t etc.
+    core_components_init(ecs);
 
     // TODO: Systems should initialise their own views.
 
     // Setup views.
-    engine->render_view_id = ECS_view(ecs, 
-        COMPONENT_ID_TO_BITSET(COMPONENT_MeshInstance) | COMPONENT_ID_TO_BITSET(COMPONENT_Transform), 
+    engine->render_view_id = cecs_view(ecs, 
+        CECS_COMPONENT_ID_TO_BITSET(COMPONENT_MESH_INSTANCE) | CECS_COMPONENT_ID_TO_BITSET(COMPONENT_TRANSFORM), 
         0);
     
-    engine->lighting_view_id = ECS_view(ecs, COMPONENT_ID_TO_BITSET(COMPONENT_PointLight), 0);
+    engine->lighting_view_id = cecs_view(ecs, CECS_COMPONENT_ID_TO_BITSET(COMPONENT_POINT_LIGHT), 0);
 }
 
-Status engine_init(Engine* engine, int window_width, int window_height)
+status_t engine_init(engine_t* engine, int window_width, int window_height)
 {
     log_info("Initialising the engine.");
-    memset(engine, 0, sizeof(Engine));
+    memset(engine, 0, sizeof(engine_t));
 
     // Set some default settings.
     engine->upscaling_factor = 1;
     engine->handle_input = 0;
 
     // Initialise components and views.
-    Engine_setup_ecs(engine);
+    engine_setup_ecs(engine);
 
     // Initialise the renderer.
-    Status status = renderer_init(&engine->renderer, (int)(window_width / engine->upscaling_factor), (int)(window_height / engine->upscaling_factor));
+    status_t status = renderer_init(&engine->renderer, (int)(window_width / engine->upscaling_factor), (int)(window_height / engine->upscaling_factor));
     if (STATUS_OK != status)
     {
-        log_error("Failed to renderer_init because of %s", Status_to_str(status));
+        log_error("Failed to renderer_init because of %s", status_to_str(status));
         return status;
     }
 
@@ -56,7 +56,7 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     status = window_init(&engine->window, &engine->renderer.target.canvas, (void*)engine, window_width, window_height);
     if (STATUS_OK != status)
     {
-        log_error("Failed to window_init because of %s", Status_to_str(status));
+        log_error("Failed to window_init because of %s", status_to_str(status));
         return status;
     }
 
@@ -65,18 +65,18 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     engine->window.on_keyup = &engine_process_keyup;
     engine->window.on_lmbdown = &engine_process_lmbdown;
 
-    // Initialise the UI.
+    // Initialise the ui_t.
     status = ui_init(&engine->ui, &engine->renderer.target.canvas);
     if (STATUS_OK != status)
     {
-        log_error("Failed to ui_init because of %s", Status_to_str(status));
+        log_error("Failed to ui_init because of %s", status_to_str(status));
         return status;
     }
 
     // Initialise the physics system.
-    if (STATUS_OK != Physics_init(&engine->physics, engine->ecs))
+    if (STATUS_OK != physics_init(&engine->physics, engine->ecs))
     {
-        log_error("Failed to Physics_init because of %s", Status_to_str(status));
+        log_error("Failed to physics_init because of %s", status_to_str(status));
         return status;
     }
 
@@ -89,12 +89,12 @@ Status engine_init(Engine* engine, int window_width, int window_height)
     log_info("Fired engine_on_init event.");
     engine_on_init(engine);
 
-    log_info("Engine successfully initialised.");
+    log_info("engine_t successfully initialised.");
 
     return STATUS_OK;
 }
 
-void engine_run(Engine* engine)
+void engine_run(engine_t* engine)
 {
     // TEMP
     LARGE_INTEGER frequency = { 0 };
@@ -148,7 +148,7 @@ void engine_run(Engine* engine)
     engine->running = 1;
     while (engine->running)
     {
-        Timer t = timer_start();
+        timer_t t = timer_start();
 
         // Process the application window messages.
         if (!window_process_messages())
@@ -159,11 +159,11 @@ void engine_run(Engine* engine)
 
         snprintf(process_messages_str, sizeof(process_messages_str), "ProcMsgs: %d", timer_get_elapsed(&t));
        
-        M4 view_matrix;
+        m4_t view_matrix;
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
 
         // Apply physics
-        Physics_tick(&engine->physics, &engine->scene, dt);
+        physics_tick(&engine->physics, &engine->scene, dt);
 
         // Clear the canvas.
         timer_restart(&t);
@@ -230,18 +230,18 @@ void engine_run(Engine* engine)
         
         int total_faces = 0;
         int mis_count = 0;
-        const ECS* ecs = engine->ecs;
-        ViewIter it = ECS_view_iter(ecs, engine->render_view_id);
-        while (ECS_view_iter_next(&it))
+        const cecs_t* ecs = engine->ecs;
+        cecs_view_iter_t it = cecs_view_iter(ecs, engine->render_view_id);
+        while (cecs_view_iter_next(&it))
         {
-            MeshInstance* mis = ECS_get_column(it, COMPONENT_MeshInstance);
+            mesh_instance_t* mis = cecs_get_column(it, COMPONENT_MESH_INSTANCE);
 
             for (int i = 0; i < it.num_entities; ++i)
             {
-                MeshInstance* mi = &mis[i];
+                mesh_instance_t* mi = &mis[i];
 
-                const Scene* scene = &engine->scene;
-                const MeshBase* mb = &scene->mesh_bases.bases[mi->mb_id];
+                const scene_t* scene = &engine->scene;
+                const mesh_base_t* mb = &scene->mesh_bases.bases[mi->mb_id];
                 total_faces += mb->num_faces;
                 ++mis_count;
             }
@@ -251,16 +251,16 @@ void engine_run(Engine* engine)
     }
 }
 
-void engine_destroy(Engine* engine)
+void engine_destroy(engine_t* engine)
 {
     // TODO: this stuff.
     ui_destroy(&engine->ui);
     window_destroy(&engine->window);
 }
 
-void engine_handle_input(Engine* engine, float dt)
+void engine_handle_input(engine_t* engine, float dt)
 {
-    Camera* camera = &engine->renderer.camera;
+    camera_t* camera = &engine->renderer.camera;
 
     if (!engine->handle_input)
     {
@@ -339,15 +339,15 @@ void engine_handle_input(Engine* engine, float dt)
     }
     if (keys['A'] & KeyDown)
     {
-        V3 up = { 0, 1, 0 };
-        V3 right = normalised(cross(camera->direction, up));
+        v3_t up = { 0, 1, 0 };
+        v3_t right = normalised(cross(camera->direction, up));
 
         v3_sub_eq_v3(&camera->position, v3_mul_f(right, meters_per_second));
     }
     if (keys['D'] & KeyDown)
     {
-        V3 up = { 0, 1, 0 };
-        V3 right = normalised(cross(camera->direction, up));
+        v3_t up = { 0, 1, 0 };
+        v3_t right = normalised(cross(camera->direction, up));
 
         v3_add_eq_v3(&camera->position, v3_mul_f(right, meters_per_second));
     }
@@ -361,12 +361,12 @@ void engine_handle_input(Engine* engine, float dt)
     }
 }
 
-// Window events
+// window_t events
 static void engine_on_resize(void* ctx)
 {
-    Engine* engine = (Engine*)ctx;
+    engine_t* engine = (engine_t*)ctx;
 
-    Status status = renderer_resize(&engine->renderer, 
+    status_t status = renderer_resize(&engine->renderer, 
         (int)(engine->window.width / engine->upscaling_factor), 
         (int)(engine->window.height / engine->upscaling_factor));
 
@@ -385,7 +385,7 @@ static void engine_on_resize(void* ctx)
 
 static void engine_process_keyup(void* ctx, WPARAM wParam) 
 {
-    Engine* engine = (Engine*)ctx;
+    engine_t* engine = (engine_t*)ctx;
 
     // Handle any engine specific keybinds, if
     // not engine specific, pass to user callback.
@@ -448,7 +448,7 @@ static void engine_process_keyup(void* ctx, WPARAM wParam)
 
 static void engine_process_lmbdown(void* ctx)
 {
-    Engine* engine = (Engine*)ctx;
+    engine_t* engine = (engine_t*)ctx;
 
     engine_on_lmbdown(ctx);
 }

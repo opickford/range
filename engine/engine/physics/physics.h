@@ -12,7 +12,7 @@
 
 #include <cecs/ecs.h>
 
-#include <chds/vector.h>
+#include <chds/vec.h>
 
 #include <stdint.h>
 
@@ -21,52 +21,52 @@ typedef struct
 {
     // TODO: Should this contain a scene also?
 
-    ECS* ecs;
+    cecs_t* ecs;
 
-    PhysicsFrame frame;
+    physics_frame_t frame;
 
     // Views
-    ViewID physics_view; // TODO: Rename physicsdata view?
-    ViewID moving_colliders_view;
-    ViewID static_colliders_view;
-    ViewID colliders_view;
+    cecs_view_id_t physics_view; // TODO: Rename physicsdata view?
+    cecs_view_id_t moving_colliders_view;
+    cecs_view_id_t static_colliders_view;
+    cecs_view_id_t colliders_view;
 
-} Physics;
+} physics_t;
 
 // TODO: Move to separate file?
 typedef struct
 {
-    V3 force;
-    V3 velocity;
+    v3_t force;
+    v3_t velocity;
 
     float mass;
-} PhysicsData;
+} physics_data_t;
 
-void PhysicsData_init(PhysicsData* data);
+void physics_data_init(physics_data_t* data);
 
-Status Physics_init(Physics* physics, ECS* ecs);
-void Physics_tick(Physics* physics, Scene* scene, float dt);
+status_t physics_init(physics_t* physics, cecs_t* ecs);
+void physics_tick(physics_t* physics, scene_t* scene, float dt);
 
 typedef enum
 {
     COLLISION_SHAPE_ELLIPSOID,
     COLLISION_SHAPE_MESH
-} CollisionShapeType;
+} collision_shape_type_t;
 
 typedef struct
 {
-    MeshBase* mb;
-    Vector(V3) wsps;
-} CollisionMesh;
+    mesh_base_t* mb;
+    chds_vec(v3_t) wsps;
+} collision_mesh_t;
 
 typedef struct
 {
-    CollisionShapeType type;
+    collision_shape_type_t type;
 
     union
     {
-        CollisionMesh mesh;
-        V3 ellipsoid;
+        collision_mesh_t mesh;
+        v3_t ellipsoid;
     };
 
     // TODO: How do we ensure that these are set???? Just down to user???
@@ -74,17 +74,17 @@ typedef struct
     uint8_t scale_dirty; // Recalculate bounding sphere radius
 
     // TODO: For broad phase. But surely we don't need this if the type isn't a Mesh?
-    BoundingSphere bs;
+    bounding_sphere_t bs;
 
-} CollisionShape;
+} collision_shape_t;
 
 typedef struct
 {
     // TODO: In the future this could contain some callback etc.
-    CollisionShape shape;
-} Collider;
+    collision_shape_t shape;
+} collider_t;
 
-void Collider_init(Collider* c);
-void Collider_destroy(Collider* c);
+void collider_init(collider_t* c);
+void collider_destroy(collider_t* c);
 
 #endif

@@ -45,14 +45,14 @@ void parse_obj_counts(FILE* file, int* num_positions, int* num_uvs, int* num_nor
 	}
 }
 
-// MeshBase API
-Status mesh_base_init(MeshBase* mb)
+// mesh_base_t API
+status_t mesh_base_init(mesh_base_t* mb)
 {
-	memset(mb, 0, sizeof(MeshBase));
+	memset(mb, 0, sizeof(mesh_base_t));
 	return STATUS_OK;
 }
 
-Status mesh_base_from_obj(MeshBase* mb, const char* filename)
+status_t mesh_base_from_obj(mesh_base_t* mb, const char* filename)
 {
 	// TODO: Eventually could check the filetype.
 	FILE* file = fopen(filename, "r");
@@ -70,14 +70,14 @@ Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 	parse_obj_counts(file, &mb->num_positions, &mb->num_uvs, &mb->num_normals, &mb->num_faces);
 
 	// Allocate the buffers.
-    Vector_reserve(mb->object_space_positions, mb->num_positions);
-    Vector_reserve(mb->object_space_normals, mb->num_normals);
-    Vector_reserve(mb->uvs, mb->num_uvs);
+    chds_vec_reserve(mb->object_space_positions, mb->num_positions);
+    chds_vec_reserve(mb->object_space_normals, mb->num_normals);
+    chds_vec_reserve(mb->uvs, mb->num_uvs);
 
 	const int num_vertices = mb->num_faces * STRIDE_FACE_VERTICES;
-	Vector_reserve(mb->position_indices, num_vertices);
-	Vector_reserve(mb->normal_indices, num_vertices);
-	Vector_reserve(mb->uv_indices, num_vertices);
+	chds_vec_reserve(mb->position_indices, num_vertices);
+	chds_vec_reserve(mb->normal_indices, num_vertices);
+	chds_vec_reserve(mb->uv_indices, num_vertices);
 
 	int positions_offset = 0;
 	int normals_offset = 0;
@@ -226,28 +226,28 @@ Status mesh_base_from_obj(MeshBase* mb, const char* filename)
 	return STATUS_OK;
 }
 
-void mesh_base_destroy(MeshBase* mb)
+void mesh_base_destroy(mesh_base_t* mb)
 {
-    Vector_destroy(mb->object_space_positions);
-	Vector_destroy(mb->object_space_normals);
-	Vector_destroy(mb->uvs);
-	Vector_destroy(mb->position_indices);
-	Vector_destroy(mb->normal_indices);
-	Vector_destroy(mb->uv_indices);
+    chds_vec_destroy(mb->object_space_positions);
+	chds_vec_destroy(mb->object_space_normals);
+	chds_vec_destroy(mb->uvs);
+	chds_vec_destroy(mb->position_indices);
+	chds_vec_destroy(mb->normal_indices);
+	chds_vec_destroy(mb->uv_indices);
 }
 
-// MeshBases API
-Status mesh_bases_init(MeshBases* mbs)
+// mesh_bases_t API
+status_t mesh_bases_init(mesh_bases_t* mbs)
 {
-	memset(mbs, 0, sizeof(MeshBases));
+	memset(mbs, 0, sizeof(mesh_bases_t));
 	return STATUS_OK;
 }
 
-MeshBaseID mesh_bases_add(MeshBases* mbs)
+mesh_base_id_t mesh_bases_add(mesh_bases_t* mbs)
 {
 	// Grow the array of mesh instances.
 	const int new_count = mbs->count + 1;
-	MeshBase* new_bases = realloc(mbs->bases, new_count * sizeof(MeshBase));
+	mesh_base_t* new_bases = realloc(mbs->bases, new_count * sizeof(mesh_base_t));
 
 	if (!new_bases)
 	{
@@ -255,20 +255,20 @@ MeshBaseID mesh_bases_add(MeshBases* mbs)
 		return STATUS_ALLOC_FAILURE;
 	}
 
-	const MeshBaseID mb_id = mbs->count;
+	const mesh_base_id_t mb_id = mbs->count;
 
 	mbs->bases = new_bases;
 	mbs->count = new_count;
 
-	// Initialise the new MeshBase.
-	MeshBase* mb = &mbs->bases[mb_id];
+	// Initialise the new mesh_base_t.
+	mesh_base_t* mb = &mbs->bases[mb_id];
 	mesh_base_init(mb);
 	mb->id = mb_id;
 
 	return mb_id;
 }
 
-void mesh_bases_destroy(MeshBases* mbs)
+void mesh_bases_destroy(mesh_bases_t* mbs)
 {
 	free(mbs->bases);
 }

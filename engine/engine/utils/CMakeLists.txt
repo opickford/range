@@ -17,4 +17,4 @@ target_link_libraries(utils
     PUBLIC 
         common)
 
-set_target_properties(utils PROPERTIES FOLDER "Engine")
+set_target_properties(utils PROPERTIES FOLDER "engine_t")

@@ -14,36 +14,36 @@
 #if 1
 typedef struct
 {
-	Texture* textures;
+	texture_t* textures;
 	int textures_count;
 
-} Resources;
+} resources_t;
 
-inline void resources_init(Resources* resources)
+inline void resources_init(resources_t* resources)
 {
-	memset(resources, 0, sizeof(Resources));
+	memset(resources, 0, sizeof(resources_t));
 }
 
 // TODO: This could return some TextureID that can be used for indexing the texture.
-inline Status resources_load_texture(Resources* resources, const char* file)
+inline status_t resources_load_texture(resources_t* resources, const char* file)
 {
 	// Get the texture's index.
 	int i = resources->textures_count;
 
 	// Make room for the new texture.
-	Texture* textures_temp = realloc(resources->textures, (size_t)(resources->textures_count + 1) * sizeof(Texture));
+	texture_t* textures_temp = realloc(resources->textures, (size_t)(resources->textures_count + 1) * sizeof(texture_t));
 	if (!textures_temp)
 	{
-		log_error("Failed to grow textures array in resources_load_texture because of %s.\n", Status_to_str(STATUS_ALLOC_FAILURE));
+		log_error("Failed to grow textures array in resources_load_texture because of %s.\n", status_to_str(STATUS_ALLOC_FAILURE));
 		return STATUS_ALLOC_FAILURE;
 	}
 	resources->textures = textures_temp;
 
 	// Try load the texture.
-	Status status = texture_load_from_bmp(&textures_temp[i], file);
+	status_t status = texture_load_from_bmp(&textures_temp[i], file);
 	if (STATUS_OK != status)
 	{
-		log_error("Failed to texture_load_from_bmp in resources_load_texture because of %s.\n", Status_to_str(status));
+		log_error("Failed to texture_load_from_bmp in resources_load_texture because of %s.\n", status_to_str(status));
 		return status;
 	}
 
@@ -56,35 +56,35 @@ inline Status resources_load_texture(Resources* resources, const char* file)
 #else
 typedef struct
 {
-	Canvas* textures;
+	canvas_t* textures;
 	int textures_count;
 
-} Resources;
+} resources_t;
 
-inline void resources_init(Resources* resources)
+inline void resources_init(resources_t* resources)
 {
-	memset(resources, 0, sizeof(Resources));
+	memset(resources, 0, sizeof(resources_t));
 }
 
-inline Status resources_load_texture(Resources* resources, const char* file)
+inline status_t resources_load_texture(resources_t* resources, const char* file)
 {
 	// Get the texture's index.
 	int i = resources->textures_count;
 
 	// Make room for the new texture.
-	Canvas* textures_temp = realloc(resources->textures, (size_t)(resources->textures_count + 1) * sizeof(Canvas));
+	canvas_t* textures_temp = realloc(resources->textures, (size_t)(resources->textures_count + 1) * sizeof(canvas_t));
 	if (!textures_temp)
 	{
-		log_error("Failed to grow textures array in resources_load_texture because of %s.\n", Status_to_str(STATUS_ALLOC_FAILURE));
+		log_error("Failed to grow textures array in resources_load_texture because of %s.\n", status_to_str(STATUS_ALLOC_FAILURE));
 		return STATUS_ALLOC_FAILURE;
 	}
 	resources->textures = textures_temp;
 
 	// Try load the texture.
-	Status status = Canvas_init_from_bitmap(&textures_temp[i], file);
+	status_t status = canvas_init_from_bitmap(&textures_temp[i], file);
 	if (STATUS_OK != status)
 	{
-		log_error("Failed to Canvas_init_from_bitmap in resources_load_texture because of %s.\n", Status_to_str(status));
+		log_error("Failed to canvas_init_from_bitmap in resources_load_texture because of %s.\n", status_to_str(status));
 		return status;
 	}
 

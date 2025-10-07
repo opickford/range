@@ -9,15 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-Status Canvas_init(Canvas* canvas, int width, int height)
+status_t canvas_init(canvas_t* canvas, int width, int height)
 {
-	memset(canvas, 0, sizeof(Canvas));
+	memset(canvas, 0, sizeof(canvas_t));
 
 	canvas->width = width;
 	canvas->height = height;
 
     const size_t length = (size_t)width * height * 4;
-    Vector_reserve(canvas->pixels, length);
+    chds_vec_reserve(canvas->pixels, length);
 	
 	if (!canvas->pixels)
 	{
@@ -31,13 +31,13 @@ Status Canvas_init(Canvas* canvas, int width, int height)
 	return STATUS_OK;
 }
 
-Status Canvas_init_from_bitmap(Canvas* canvas, const char* file)
+status_t canvas_init_from_bitmap(canvas_t* canvas, const char* file)
 {
     // TODO: Do we need to use Windows.h here? If we're only loading
     //       bitmaps, the image loading code should be quite simple.
 
     // Initialise the texture.
-    memset(canvas, 0, sizeof(Canvas));
+    memset(canvas, 0, sizeof(canvas_t));
         
     // Try load the bitmap.
     HBITMAP h_bitmap = (HBITMAP)LoadImageA(
@@ -78,7 +78,7 @@ Status Canvas_init_from_bitmap(Canvas* canvas, const char* file)
     bmi.bmiHeader.biCompression = BI_RGB; // Uncompressed RGB.
 
     // Allocate memory for pixels
-    Vector_reserve(canvas->pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
+    chds_vec_reserve(canvas->pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
     if (!canvas->pixels)
     {
         return STATUS_ALLOC_FAILURE;
@@ -107,7 +107,7 @@ Status Canvas_init_from_bitmap(Canvas* canvas, const char* file)
     return STATUS_OK;
 }
 
-Status Canvas_write_to_bmp(const Canvas* canvas, const char* file)
+status_t canvas_write_to_bmp(const canvas_t* canvas, const char* file)
 {
     // TODO: TEMP: Copied from: https://stackoverflow.com/a/55504419
 
@@ -187,7 +187,7 @@ Status Canvas_write_to_bmp(const Canvas* canvas, const char* file)
     return STATUS_OK;
 }
 
-Status canvas_resize(Canvas* canvas, int width, int height)
+status_t canvas_resize(canvas_t* canvas, int width, int height)
 {
 	// Check the size has changed.
 	if (canvas->width == width && canvas->height == height)
@@ -198,7 +198,7 @@ Status canvas_resize(Canvas* canvas, int width, int height)
 	// Allocate memory for the new array.
 	// TODO: Use my memory allocating helpers for this.
     size_t length = width * height;
-    Vector_reserve(canvas->pixels, length);
+    chds_vec_reserve(canvas->pixels, length);
 
 	// Check the allocation worked.
 	if (!canvas->pixels)
@@ -214,7 +214,7 @@ Status canvas_resize(Canvas* canvas, int width, int height)
 	return STATUS_OK;
 }
 
-void canvas_fill(Canvas* canvas, const unsigned int colour)
+void canvas_fill(canvas_t* canvas, const unsigned int colour)
 {
 	// TODO: Look for some sort of blit or fill function 
 	const int length = canvas->width * canvas->height;	
@@ -230,7 +230,7 @@ void canvas_fill(Canvas* canvas, const unsigned int colour)
 	}
 }
 
-void canvas_draw(const Canvas* source, Canvas* target, int x_offset, int y_offset)
+void canvas_draw(const canvas_t* source, canvas_t* target, int x_offset, int y_offset)
 {
     int* source_data = source->pixels;
     int* target_data = target->pixels;
@@ -244,9 +244,9 @@ void canvas_draw(const Canvas* source, Canvas* target, int x_offset, int y_offse
     }
 }
 
-void canvas_destroy(Canvas* canvas)
+void canvas_destroy(canvas_t* canvas)
 {
-    Vector_destroy(canvas->pixels);
+    chds_vec_destroy(canvas->pixels);
 
 	free(canvas);
 	canvas = 0; // TODO: Do we want to do this?

@@ -5,7 +5,7 @@
 
 #include <cecs/archetype.h>
 
-#include <chds/vector.h>
+#include <chds/vec.h>
 
 #include <string.h>
 
@@ -16,34 +16,34 @@
 
 typedef struct
 {
-    //MeshInstance* mi0;
-    //Collider* c0;
-    //PhysicsData* pd0;
+    //mesh_instance_t* mi0;
+    //collider_t* c0;
+    //physics_data_t* pd0;
 
 
-    // Collider collides with a target.
-    ArchetypeID collider_aid;
+    // collider_t collides with a target.
+    cecs_archetype_id_t collider_aid;
     int collider_offset;
 
-    ArchetypeID target_aid;
+    cecs_archetype_id_t target_aid;
     int target_offset;
 
-} PotentialCollision;
+} potential_collision_t;
 
 typedef struct
 {
-    Vector(PotentialCollision) broad_phase_collisions;
+    chds_vec(potential_collision_t) broad_phase_collisions;
 
-} PhysicsFrame;
+} physics_frame_t;
 
-inline void PhysicsFrame_init(PhysicsFrame* pf)
+inline void physics_frame_init(physics_frame_t* pf)
 {
-    memset(pf, 0, sizeof(PhysicsFrame));
+    memset(pf, 0, sizeof(physics_frame_t));
 }
 
-inline void PhysicsFrame_destroy(PhysicsFrame* pf)
+inline void physics_frame_destroy(physics_frame_t* pf)
 {
-    Vector_destroy(pf->broad_phase_collisions);
+    chds_vec_destroy(pf->broad_phase_collisions);
 }
 
 #endif

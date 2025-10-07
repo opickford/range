@@ -3,7 +3,7 @@
 #include "maths/matrix4.h"
 #include "maths/vector3.h"
 
-void calculate_view_matrix(const Camera* camera, M4 out)
+void calculate_view_matrix(const camera_t* camera, m4_t out)
 {
 	// The view matrix transforms world space positions to view space. 
 	// Rather than rotating and translating the camera around the 

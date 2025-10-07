@@ -31,109 +31,109 @@
 // TODO: Refactor and comments etc.
 
 void debug_draw_point_lights(
-    Canvas* canvas,
-    const ECS* ecs,
-    const ViewID lighting_view,
-    const FrameData* frame_data,
-    const RenderSettings* settings
+    canvas_t* canvas,
+    const cecs_t* ecs,
+    const cecs_view_id_t lighting_view,
+    const frame_data_t* frame_data,
+    const render_settings_t* settings
 );
 
-void debug_draw_view_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, int colour);
-void debug_draw_normals(Canvas* canvas, const FrameData* frame_data, const RenderSettings* settings, const Scene* scene);
-/*void debug_draw_point_lights(Canvas* canvas, const RenderSettings* settings, PointLights* point_lights);
-void debug_draw_bounding_spheres(Canvas* canvas, const RenderSettings* settings, const Models* models, const M4 view_matrix);
-void debug_draw_world_space_point(Canvas* canvas, const RenderSettings* settings, V3 point, const M4 view_matrix, int colour);
-void debug_draw_world_space_line(Canvas* canvas, const RenderSettings* settings, const M4 view_matrix, V3 v0, V3 v1, V3 colour);
+void debug_draw_view_space_point(canvas_t* canvas, const render_settings_t* settings, v3_t point, int colour);
+void debug_draw_normals(canvas_t* canvas, const frame_data_t* frame_data, const render_settings_t* settings, const scene_t* scene);
+/*void debug_draw_point_lights(canvas_t* canvas, const render_settings_t* settings, PointLights* point_lights);
+void debug_draw_bounding_spheres(canvas_t* canvas, const render_settings_t* settings, const Models* models, const m4_t view_matrix);
+void debug_draw_world_space_point(canvas_t* canvas, const render_settings_t* settings, v3_t point, const m4_t view_matrix, int colour);
+void debug_draw_world_space_line(canvas_t* canvas, const render_settings_t* settings, const m4_t view_matrix, v3_t v0, v3_t v1, v3_t colour);
 */
 
 
 // TODO: Split these functions into sections.
 
 // TODO: Not sure where to put this?
-float calculate_diffuse_factor(V3 v, V3 n, V3 light_pos, float a, float b);
+float calculate_diffuse_factor(v3_t v, v3_t n, v3_t light_pos, float a, float b);
 
 // SECTION: Triangle rasterisation.
-void draw_scanline(RenderTarget* rt, 
+void draw_scanline(render_target_t* rt, 
 	int x0, int x1, 
 	int y, 
 	float z0, float z1, 
 	float w0, float w1, 
-	V3 ac0, V3 ac1);
+	v3_t ac0, v3_t ac1);
 
-void draw_flat_bottom_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2);
-void draw_flat_top_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2);
-void draw_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2);
+void draw_flat_bottom_triangle(render_target_t* rt, float* vc0, float* vc1, float* vc2);
+void draw_flat_top_triangle(render_target_t* rt, float* vc0, float* vc1, float* vc2);
+void draw_triangle(render_target_t* rt, float* vc0, float* vc1, float* vc2);
 
 // TODO: Rename?
-void draw_textured_scanline(RenderTarget* rt, int x0, int x1, int y, float z0, float z1, float w0, float w1, V3 c0, V3 c1, const V2 uv0, const V2 uv1, const Texture* texture);
-void draw_textured_flat_bottom_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2, const Texture* texture);
-void draw_textured_flat_top_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2, const Texture* texture);
-void draw_textured_triangle(RenderTarget* rt, float* vc0, float* vc1, float* vc2, const Texture* texture);
+void draw_textured_scanline(render_target_t* rt, int x0, int x1, int y, float z0, float z1, float w0, float w1, v3_t c0, v3_t c1, const v2_t uv0, const v2_t uv1, const texture_t* texture);
+void draw_textured_flat_bottom_triangle(render_target_t* rt, float* vc0, float* vc1, float* vc2, const texture_t* texture);
+void draw_textured_flat_top_triangle(render_target_t* rt, float* vc0, float* vc1, float* vc2, const texture_t* texture);
+void draw_textured_triangle(render_target_t* rt, float* vc0, float* vc1, float* vc2, const texture_t* texture);
 
 // TODO: Comments etc.
-void draw_depth_scanline(DepthBuffer* db, int x0, int x1, int y, float z0, float z1);
-void draw_depth_flat_bottom_triangle(DepthBuffer* db, V4 v0, V4 v1, V4 v2);
-void draw_depth_flat_top_triangle(DepthBuffer* db, V4 v0, V4 v1, V4 v2);
-void draw_depth_triangle(DepthBuffer* db, V4 v0, V4 v1, V4 v2);
+void draw_depth_scanline(depth_buffer_t* db, int x0, int x1, int y, float z0, float z1);
+void draw_depth_flat_bottom_triangle(depth_buffer_t* db, v4_t v0, v4_t v1, v4_t v2);
+void draw_depth_flat_top_triangle(depth_buffer_t* db, v4_t v0, v4_t v1, v4_t v2);
+void draw_depth_triangle(depth_buffer_t* db, v4_t v0, v4_t v1, v4_t v2);
 
 // SECTION: Rendering Pipeline.
-void project(const Canvas* canvas, const M4 projection_matrix, V4 v, V4* out);
+void project(const canvas_t* canvas, const m4_t projection_matrix, v4_t v, v4_t* out);
 
 
 
 
 // REFACTORED PIPELINE
 
-void model_to_view_space(ECS* ecs, ViewID render_view, FrameData* frame_data, Scene* scene, const M4 view_matrix);
-void lights_world_to_view_space(ECS* ecs, ViewID lighting_view, FrameData* frame_data, const Scene* scene, const M4 view_matrix);
-void broad_phase_frustum_culling(ECS* ecs, ViewID render_view, FrameData* frame_data, Scene* scene, const ViewFrustum* view_frustum);
-void cull_backfaces(ECS* ecs, ViewID render_view, FrameData* frame_data, Scene* scene);
+void model_to_view_space(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* frame_data, scene_t* scene, const m4_t view_matrix);
+void lights_world_to_view_space(cecs_t* ecs, cecs_view_id_t lighting_view, frame_data_t* frame_data, const scene_t* scene, const m4_t view_matrix);
+void broad_phase_frustum_culling(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* frame_data, scene_t* scene, const view_frustum_t* view_frustum);
+void cull_backfaces(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* frame_data, scene_t* scene);
 
 void light_front_faces(
-    ECS* ecs, 
-    ViewID render_view, 
-    ViewID lighting_view, 
-    FrameData* frame_data, 
-    Scene* scene, 
-    const V3 ambient
+    cecs_t* ecs, 
+    cecs_view_id_t render_view, 
+    cecs_view_id_t lighting_view, 
+    frame_data_t* frame_data, 
+    scene_t* scene, 
+    const v3_t ambient
 );
 
-void prepare_for_clipping(ECS* ecs, ViewID render_view, FrameData* frame_data, Scene* scene);
+void prepare_for_clipping(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* frame_data, scene_t* scene);
 void clip_project_and_draw(
-    ViewID render_view,
-	Renderer* renderer,
-	RenderTarget* rt,
-	FrameData* frame_data,
-	Scene* scene,
-    const Resources* resources);
+    cecs_view_id_t render_view,
+	renderer_t* renderer,
+	render_target_t* rt,
+	frame_data_t* frame_data,
+	scene_t* scene,
+    const resources_t* resources);
 
 // TODO: Hate this name.
 void project_and_draw_clipped(
-    Renderer* renderer,
-    RenderTarget* rt,
-    FrameData* frame_data,
-    const MeshInstance* mi);
+    renderer_t* renderer,
+    render_target_t* rt,
+    frame_data_t* frame_data,
+    const mesh_instance_t* mi);
 
 void project_and_draw_clipped_textured(
-    Renderer* renderer,
-    RenderTarget* rt,
-    FrameData* frame_data,
-    const MeshInstance* mi,
-    const Texture* texture);
+    renderer_t* renderer,
+    render_target_t* rt,
+    frame_data_t* frame_data,
+    const mesh_instance_t* mi,
+    const texture_t* texture);
 
 void render(
-    ECS* ecs,
-    ViewID render_view,
-    ViewID lighting_view,
-    Renderer* renderer,
-    Scene* scene,
-    const Resources* resources,
-    const M4 view_matrix);
+    cecs_t* ecs,
+    cecs_view_id_t render_view,
+    cecs_view_id_t lighting_view,
+    renderer_t* renderer,
+    scene_t* scene,
+    const resources_t* resources,
+    const m4_t view_matrix);
 
 // TEMP
 
 
-void update_depth_maps(Renderer* renderer, const Scene* scene);
+void update_depth_maps(renderer_t* renderer, const scene_t* scene);
 
 
 #endif

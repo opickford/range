@@ -14,14 +14,14 @@
 
 // TODO: Top of file comments.
 
-// Window message handling.
+// window_t message handling.
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 int window_process_messages();
 
 typedef struct
 {
-	Canvas* canvas;
+	canvas_t* canvas;
 	
 	HWND hwnd;
 	HDC hdc;
@@ -31,7 +31,7 @@ typedef struct
 	int height;
 
 	// Event callbacks
-	void* ctx; // Set to Engine* so we can use it in the callbacks.
+	void* ctx; // Set to engine_t* so we can use it in the callbacks.
 	void (*on_resize)(void*);
 	void (*on_keyup)(void*, WPARAM);
 	void (*on_lmbdown)(void*);
@@ -39,13 +39,13 @@ typedef struct
 	// Relative mouse movement from raw input.
 	int mouse_dx, mouse_dy;
 	
-} Window;
+} window_t;
 
-Status window_init(Window* window, Canvas* canvas, void* ctx, int width, int height);
+status_t window_init(window_t* window, canvas_t* canvas, void* ctx, int width, int height);
 
-void window_display(Window* window);
+void window_display(window_t* window);
 
-void window_destroy(Window* window);
+void window_destroy(window_t* window);
 
 
 #endif

@@ -5,13 +5,13 @@
 
 #include <Windows.h>
 
-Status texture_load_from_bmp(Texture* texture, const char* file)
+status_t texture_load_from_bmp(texture_t* texture, const char* file)
 {
     // TODO: Do we need to use Windows.h here? If we're only loading
     //       bitmaps, the image loading code could be quite simple.
 
     // Initialise the texture.
-    memset(texture, 0, sizeof(Texture));
+    memset(texture, 0, sizeof(texture_t));
 
     // Try load the bitmap.
     HBITMAP h_bitmap = (HBITMAP)LoadImageA(
@@ -52,10 +52,10 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
     bmi.bmiHeader.biCompression = BI_RGB; // Uncompressed RGB.
 
     // Read the image as an array of ints
-    Vector(int) temp_pixels = { 0 };
+    chds_vec(int) temp_pixels = { 0 };
 
-    Vector_resize(temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
-    if (Vector_capacity(temp_pixels) != bitmap.bmWidthBytes * bitmap.bmHeight)
+    chds_vec_resize(temp_pixels, bitmap.bmWidthBytes * bitmap.bmHeight);
+    if (chds_vec_capacity(temp_pixels) != bitmap.bmWidthBytes * bitmap.bmHeight)
     {
         return STATUS_ALLOC_FAILURE;
     }
@@ -81,7 +81,7 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
     }
 
     
-    Vector_resize(texture->pixels, texture->width * texture->height * 3);
+    chds_vec_resize(texture->pixels, texture->width * texture->height * 3);
     
     // TODO: Gotta test the texture a few ways, do we want r,g,b uint8? 3 floats? what.
     for (int i = 0; i < texture->width * texture->height; ++i)
@@ -102,14 +102,14 @@ Status texture_load_from_bmp(Texture* texture, const char* file)
         unpack_int_rgb_to_floats(colour, &texture->pixels[index], &texture->pixels[index + 1], &texture->pixels[index + 2]);
     }
 
-    Vector_destroy(temp_pixels);
+    chds_vec_destroy(temp_pixels);
 
     return STATUS_OK;
 }
 
-void texture_destroy(Texture* texture)
+void texture_destroy(texture_t* texture)
 {
-    Vector_destroy(texture->pixels);
+    chds_vec_destroy(texture->pixels);
 
     free(texture);
     texture = 0; // TODO: Do we want to do this?

@@ -5,9 +5,9 @@
 
 typedef struct 
 {
-    V3 centre;
+    v3_t centre;
     float radius;
 
-} BoundingSphere;
+} bounding_sphere_t;
 
 #endif

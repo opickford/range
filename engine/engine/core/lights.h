@@ -19,36 +19,36 @@ a red colour.
 
 */
 
-typedef int PointLightID;
-typedef int ShadowCastingPointLightID;
+typedef int point_light_id_t;
+typedef int shadow_casting_point_light_id_t;
 
-// TODO: This having a position is a bit of an issue if we want to connect it to physics, do we want Transform here?
+// TODO: This having a position is a bit of an issue if we want to connect it to physics, do we want transform_t here?
 typedef struct
 {
-	V3 position;
-	V3 colour;
+	v3_t position;
+	v3_t colour;
 	float strength;
 
-} PointLight;
+} point_light_t;
 
 
 typedef struct
 {
-	V3 position;
-	V3 colour;
+	v3_t position;
+	v3_t colour;
 	float strength;
 
-	DepthBuffer* depth_maps;
+	depth_buffer_t* depth_maps;
 
-} ShadowCastingPointLight;
+} shadow_casting_point_light_t;
 
 
 // I think in terms of API for example, when creating shadow casting lights,
 // we just want the user to call this, and this can create the shadow map?
-//Status point_lights_add(PointLights* point_lights, PointLight point_light);
-//Status point_lights_add_shadow_casting(PointLights* point_lights, ShadowCastingPointLight point_light);
+//status_t point_lights_add(PointLights* point_lights, point_light_t point_light);
+//status_t point_lights_add_shadow_casting(PointLights* point_lights, shadow_casting_point_light_t point_light);
 
-Status point_light_init(PointLight* light);
+status_t point_light_init(point_light_t* light);
 
 
 #endif

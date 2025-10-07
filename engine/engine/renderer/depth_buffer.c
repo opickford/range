@@ -10,9 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-Status depth_buffer_init(DepthBuffer* depth_buffer, int width, int height)
+status_t depth_buffer_init(depth_buffer_t* depth_buffer, int width, int height)
 {
-	memset(depth_buffer, 0, sizeof(DepthBuffer));
+	memset(depth_buffer, 0, sizeof(depth_buffer_t));
 
 	depth_buffer->width = width;
 	depth_buffer->height = height;
@@ -27,7 +27,7 @@ Status depth_buffer_init(DepthBuffer* depth_buffer, int width, int height)
 	return STATUS_OK;
 }
 
-Status depth_buffer_resize(DepthBuffer* depth_buffer, int width, int height)
+status_t depth_buffer_resize(depth_buffer_t* depth_buffer, int width, int height)
 {
 	// Check the size has changed.
 	if (depth_buffer->width == width && depth_buffer->height == height)
@@ -54,7 +54,7 @@ Status depth_buffer_resize(DepthBuffer* depth_buffer, int width, int height)
 	return STATUS_OK;
 }
 
-void depth_buffer_fill(DepthBuffer* depth_buffer, float depth)
+void depth_buffer_fill(depth_buffer_t* depth_buffer, float depth)
 {
 	// TODO: Look for some sort of blit or fill function 
 	const int length = depth_buffer->width * depth_buffer->height;
@@ -70,7 +70,7 @@ void depth_buffer_fill(DepthBuffer* depth_buffer, float depth)
 	}
 }
 
-void depth_buffer_draw(const DepthBuffer* source, Canvas* target, int x_offset, int y_offset)
+void depth_buffer_draw(const depth_buffer_t* source, canvas_t* target, int x_offset, int y_offset)
 {
     // TODO: What is this function????
     int* data = target->pixels;
@@ -87,7 +87,7 @@ void depth_buffer_draw(const DepthBuffer* source, Canvas* target, int x_offset, 
 	}
 }
 
-void depth_buffer_destroy(DepthBuffer* depth_buffer)
+void depth_buffer_destroy(depth_buffer_t* depth_buffer)
 {
 	free(depth_buffer->data);
 	depth_buffer->data = 0;
