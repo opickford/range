@@ -34,7 +34,7 @@ typedef struct
 } physics_t;
 
 // TODO: Move to separate file?
-typedef struct
+typedef struct physics_data
 {
     v3_t force;
     v3_t velocity;
@@ -78,7 +78,7 @@ typedef struct
 
 } collision_shape_t;
 
-typedef struct
+typedef struct collider
 {
     // TODO: In the future this could contain some callback etc.
     collision_shape_t shape;

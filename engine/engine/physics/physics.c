@@ -225,7 +225,7 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
 
     chds_vec_clear(physics->frame.broad_phase_collisions);
 
-    // TODO: Would be nicer to get the number of entities in a view (VIEW) or something instead?
+    // TODO: How can we get the number of entities in a nicer way?
 
     int num_entities = 0;
     {
@@ -239,6 +239,7 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
     // TODO: Idk what the calc is.
     chds_vec_reserve(physics->frame.broad_phase_collisions, num_entities * num_entities);
 
+    // TODO: COmment properly.
     /*
     TODO: A static mesh may not have physics data, therefore, the inner loop shouldn't use the
             collision view as it requires the physics data component.
@@ -329,13 +330,15 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
                     {
                         printf("potentially collidign WITH MOVING!\n");
                         // TODO:
-
+                        
                         // TODO: Write out potential collision, doesn't have to be perfect for now.
                         potential_collision_t pc = {
-                            .collider_aid = it.aid,
-                            .collider_offset = i,
-                            .target_aid = it_from_it0.aid,
-                            .target_offset = j
+                            .c0 = collider,
+                            .mi0 = mi,
+                            .pd0 = physics_data,
+                            .c1 = collider1,
+                            .mi1 = mi1,
+                            .pd1 = physics_data1,
                         };
 
                         chds_vec_push_back(physics->frame.broad_phase_collisions, pc);
@@ -385,6 +388,20 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
                         //    .target_offset = j
                         //};
                         //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
+
+                        
+                        potential_collision_t pc = {
+                            .c0 = collider,
+                            .mi0 = mi,
+                            .pd0 = physics_data,
+                            .c1 = collider1,
+                            .mi1 = mi1,
+                            .pd1 = 0, // static
+                        };
+
+                        chds_vec_push_back(physics->frame.broad_phase_collisions, pc);
+
+                        
                     }
                 }
             }
@@ -398,25 +415,27 @@ static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
     for (int i = 0; i < num_potential_collisions; ++i)
     {
         potential_collision_t pc = physics->frame.broad_phase_collisions[i];
+        
+        // TODO: how to map collision inter
 
-        /*
-        Archetype* ca = &ecs->its[pc.collider_aid];
-
-        collider_t* collider = &(((collider_t*)(cecs_get_column(ca, COMPONENT_COLLIDER)))[pc.collider_offset]);
-        transform_t* collider_transform = &(((transform_t*)(cecs_get_column(ca, COMPONENT_TRANSFORM)))[pc.collider_offset]);
-        physics_data_t* collider_pd = &(((physics_data_t*)(cecs_get_column(ca, COMPONENT_PHYSICS_DATA)))[pc.collider_offset]);
-
-        collider_pd->velocity = v3_uniform(0);
-
-        Archetype* ta = &ecs->its[pc.target_aid];
-        collider_t* target_collider = &(((collider_t*)(cecs_get_column(ta, COMPONENT_COLLIDER)))[pc.target_offset]);
-        transform_t* target_transform = &(((transform_t*)(cecs_get_column(ta, COMPONENT_TRANSFORM)))[pc.target_offset]);
-        physics_data_t* target_pd = &(((physics_data_t*)(cecs_get_column(ta, COMPONENT_PHYSICS_DATA)))[pc.target_offset]);
-        */
-        //printf("%s\n", v3_to_str(target_pd->velocity));
-        //v3_mul_eq_f(&target_pd->velocity, -1);
-        //printf("%s\n\n", v3_to_str(target_pd->velocity));
-
+        switch (pc.c0->shape.type)
+        {
+        case COLLISION_SHAPE_MESH:
+        {
+            // TODO: Func?
+            break;
+        }
+        case COLLISION_SHAPE_ELLIPSOID:
+        {
+            // TODO: Func?
+            break;
+        }
+        default:
+        {
+            log_error("Collision interaction not defined!!");
+            break;
+        }
+        }
     }
     /*
     for pair in collision pairs
