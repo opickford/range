@@ -566,7 +566,11 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     // TODO: We will have to deal with both velocities after getting it working one way first at least.
 
-    // TODO: Slap this in a function?
+    float nearest_t = 1.f;
+    v3_t nearest_collision_point = { 0 };
+    uint8_t actually_found_collision = 0;
+
+    // TODO: Slap this in a function that returns the collision?
     for (int i = 0; i < mb->num_faces * 3; i += 3)
     {
         // TODO: These are just wrong???
@@ -588,9 +592,6 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         {
             continue;
         }
-
-        
-        // TODO: Convert velocity to ellipsoid space?
 
         float d = signed_distance(&plane, start_pos);
         float dot_normal_velocity = dot(plane.normal, vel);
@@ -638,9 +639,10 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
         // At this point we know the sphere intersects the plane sometime between 
         // t0 and t1. Calculate the actual time.
-        v3_t collision_point = { 0 };
         uint8_t found_collision = 0;
+        v3_t collision_point = { 0 };
         float t = 1.0f;
+
 
         // Check if the collision is inside the triangle. This must occur at t0 as this is when the
         // sphere rests on the front side of the triangle plane. Can only happen if not embedded.
@@ -648,16 +650,9 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
         if (!embedded_in_plane)
         {
-            /*
-            
-            once in ellipsoid space we are dealing with a unit sphere (r = 1).
-
-            so to get the point on the outside of the sphere we do: start_pos - plane.normal
-
-            then we add vel * t0 (point of collision) to get the coliions point
-
-            */
-
+            // As we are in ellipsoid space, we are working with a unit sphere (r = 1), 
+            // so calculate the point on the sphere that would collide with the triangle,
+            // then add velocity * t0 to get intersection.
             v3_t plane_intersection_p = v3_add_v3(v3_sub_v3(start_pos, plane.normal), v3_mul_f(vel, t0));
             
             if (point_in_triangle(plane_intersection_p, p0, p1, p2))
@@ -688,15 +683,30 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
             test_edge_with_ellipsoid(p2, p1, start_pos, vel, vel_size_sqrd, &t, &found_collision, &collision_point);
         }
 
+        // TODO: Figure out nearest face.
         if (found_collision)
         {
-            printf("%f - %s\n ", g_elapsed, v3_to_str(v3_mul_v3(collision_point, ellipsoid)));
-            ellipsoid_pd->velocity = (v3_t){ 0 };
+            actually_found_collision = 1;
+            if (t < nearest_t)
+            {
+                nearest_t = t;
+                nearest_collision_point = collision_point;
+            }
         }
-        else
-        {
+    }
 
-        }
+    
+
+    if (actually_found_collision)
+    {
+        v3_mul_eq_v3(&nearest_collision_point, ellipsoid);
+        v3_t p = v3_sub_v3(nearest_collision_point, v3_mul_v3(dir, ellipsoid));
+
+        ellipsoid_transform->position = p;
+
+
+        //printf("%f - %s\n ", g_elapsed, v3_to_str(v3_mul_v3(collision_point, ellipsoid)));
+        ellipsoid_pd->velocity = (v3_t){ 0 };
     }
 }
 
