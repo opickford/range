@@ -549,6 +549,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     // Scale velocity by dt to calculate how much the entity will move this frame.
     // TODO: When we update the velocity should we take into account the remaining or not...
     v3_t vel = v3_mul_f(ellipsoid_pd->velocity, dt);
+    float vel_size = v3_size(vel);
     v3_t dir = normalised(vel);
 
     v3_mul_eq_v3(&vel, inv_ellipsoid);
@@ -566,9 +567,11 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     // TODO: We will have to deal with both velocities after getting it working one way first at least.
 
-    float nearest_t = 1.f;
+    //float nearest_t = 1.f;
+    float nearest_dist = 0.f;
     v3_t nearest_collision_point = { 0 };
-    uint8_t actually_found_collision = 0;
+    uint8_t found_collision = 0;
+    v3_t collision_face_normal = { 0 };
 
     // TODO: Slap this in a function that returns the collision?
     for (int i = 0; i < mb->num_faces * 3; i += 3)
@@ -639,7 +642,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
         // At this point we know the sphere intersects the plane sometime between 
         // t0 and t1. Calculate the actual time.
-        uint8_t found_collision = 0;
+        uint8_t found_new_collision = 0;
         v3_t collision_point = { 0 };
         float t = 1.0f;
 
@@ -657,14 +660,14 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
             
             if (point_in_triangle(plane_intersection_p, p0, p1, p2))
             {
-                found_collision = 1;
+                found_new_collision = 1;
                 t = t0;
                 collision_point = plane_intersection_p;
             }
         }
         
         // Haven't found collision so sweep sphere against points and edges of triangle.
-        if (!found_collision)
+        if (!found_new_collision)
         {
             float vel_size_sqrd = v3_size_sqrd(vel);
 
@@ -684,29 +687,56 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         }
 
         // TODO: Figure out nearest face.
-        if (found_collision)
+        if (found_new_collision)
         {
-            actually_found_collision = 1;
-            if (t < nearest_t)
+            float dist = vel_size * t;
+
+            if (!found_collision || dist < nearest_dist)
             {
-                nearest_t = t;
+                nearest_dist = dist;
                 nearest_collision_point = collision_point;
+                collision_face_normal = plane.normal;
+                found_collision = 1;
             }
         }
     }
 
-    
-
-    if (actually_found_collision)
+    if (found_collision)
     {
+        // TODO: Collision response, should set position and update velocity?
+        //       how do we know when to slide vs bounce or whatever? that must depend on wall property or mass or something??
+        
+        v3_t actually_velocity = v3_mul_v3(vel, ellipsoid);
+
+        float unit_scale = 1.f / 100.0f;
+        float very_close_dist = 0.005f * unit_scale;
+
+        v3_t V = v3_mul_f(normalised(actually_velocity), nearest_dist - very_close_dist);
+        ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, V);
+
+        /*
         v3_mul_eq_v3(&nearest_collision_point, ellipsoid);
         v3_t p = v3_sub_v3(nearest_collision_point, v3_mul_v3(dir, ellipsoid));
-
         ellipsoid_transform->position = p;
+        */
+
+        /*
+        float unit_scale = 1.f / 100.0f;
+        float very_close_dist = 0.005f * unit_scale;
+        v3_t V = v3_mul_f(normalised(vel), nearest_dist - very_close_dist);
+        ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, v3_mul_v3(V, ellipsoid));
+        printf("%s\n", v3_to_str(ellipsoid_transform->position));
+        */
+
+        v3_t normal = v3_mul_v3(collision_face_normal, ellipsoid);
+        normalise(&normal);
+
+        ellipsoid_pd->velocity = v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
+
 
 
         //printf("%f - %s\n ", g_elapsed, v3_to_str(v3_mul_v3(collision_point, ellipsoid)));
-        ellipsoid_pd->velocity = (v3_t){ 0 };
+        //ellipsoid_pd->velocity = (v3_t){ 0 };
     }
 }
 
