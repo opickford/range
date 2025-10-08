@@ -112,7 +112,7 @@ static void apply_forces(physics_t* physics, float dt)
     // TODO: Define in physics world.
     //static v3_t acceleration = { 0, 0, 0 };
     static v3_t acceleration = { 0, -9.8f, 0 };
-    v3_t continuous_force = { 0 };
+    
 
 
     cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->physics_view);
@@ -124,6 +124,8 @@ static void apply_forces(physics_t* physics, float dt)
 
         for (int i = 0; i < it.num_entities; ++i)
         {
+            v3_t continuous_force = { 0 };
+
             physics_data_t* physics_data = &physics_datas[i];
             transform_t* transform = &transforms[i];
 
@@ -710,6 +712,8 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         }
     }
 
+    // TODO: Should collisions be resolved elsewhere? idk, for now just stay like this 
+    //       but this may change as we introduce more interactions.
     if (found_collision)
     {
         // TODO: Collision response, should set position and update velocity?
@@ -754,6 +758,8 @@ static void narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, po
     // NOTE: Currently this means they must already collide as the broad phase is 
     //       sphere vs sphere.
 
+    log_error("narrow_ellipsoid_vs_ellipsoid not implemented!!\n");
+    assert(0);
      
 }
 
@@ -857,7 +863,7 @@ void physics_data_init(physics_data_t* data)
 
     // TODO: What unit is this?
     //data->mass = 1.f; 
-    data->mass = 1000; 
+    data->mass = 1.f; 
 }
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)
