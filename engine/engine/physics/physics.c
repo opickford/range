@@ -529,6 +529,8 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     // TODO: Assert in broad phase to ensure this doesn't happen?
 
     // TODO: TEMP: TESTING ONLY VS STATIC
+    // Seems to be working for moving as well, but have no repsonse for that one, also not taking their motion
+    // into account with the velocity. TODO: Should do rel velocity.
     assert(pc.pd1 == 0);
 
     // c0 is ellipsoid collider !

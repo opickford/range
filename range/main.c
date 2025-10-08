@@ -184,8 +184,8 @@ void engine_on_lmbdown(engine_t* engine)
     // Create an entity
     cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
 
-    //mesh_base_t* mb = &scene->mesh_bases.bases[cube_base];
-    mesh_base_t* mb = &scene->mesh_bases.bases[sphere_base];
+    mesh_base_t* mb = &scene->mesh_bases.bases[cube_base];
+    //mesh_base_t* mb = &scene->mesh_bases.bases[sphere_base];
 
     // Add a mesh_instance_t component.
     cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
@@ -213,7 +213,7 @@ void engine_on_lmbdown(engine_t* engine)
     physics_data_init(physics_data);
 
     // TODO: Dt?
-    float speed = 2;
+    float speed = 20;
     physics_data->force = v3_mul_f(engine->renderer.camera.direction, speed);
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
