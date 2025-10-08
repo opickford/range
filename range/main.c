@@ -13,6 +13,7 @@ float* directions;
 
 mesh_base_id_t sphere_base;
 mesh_base_id_t cube_base;
+mesh_base_id_t map_base;
 
 void create_map(engine_t* engine)
 {
@@ -32,12 +33,15 @@ void create_map(engine_t* engine)
     cube_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[cube_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
 
+    map_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[map_base], "C:/Users/olive/source/repos/range/res/models/physics_test_map.obj");
+
     // Create an entity
     cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
 
     // Add a mesh_instance_t component.
     mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
-    mesh_instance_init(mi, &scene->mesh_bases.bases[cube_base]);
+    mesh_instance_init(mi, &scene->mesh_bases.bases[map_base]);
 
     mi->texture_id = 0;
 
@@ -214,7 +218,7 @@ void engine_on_lmbdown(engine_t* engine)
 
     // TODO: Dt?
     float speed = 20;
-    physics_data->force = v3_mul_f(engine->renderer.camera.direction, speed);
+    v3_add_eq_v3(&physics_data->impulses, v3_mul_f(engine->renderer.camera.direction, speed));
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
 

@@ -129,6 +129,7 @@ void engine_run(engine_t* engine)
     char display_str[64] = "";
     char update_str[64] = "";
     char vertices_str[64] = "";
+    char physics_str[64] = "";
     
 
     // TODO: This can be a ui add text function
@@ -147,6 +148,7 @@ void engine_run(engine_t* engine)
     engine->ui.text[engine->ui.text_count++] = text_create(display_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
     engine->ui.text[engine->ui.text_count++] = text_create(update_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
     engine->ui.text[engine->ui.text_count++] = text_create(vertices_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
+    engine->ui.text[engine->ui.text_count++] = text_create(physics_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
 
     engine->running = 1;
     while (engine->running)
@@ -166,7 +168,9 @@ void engine_run(engine_t* engine)
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
 
         // Apply physics
+        timer_restart(&t);
         physics_tick(&engine->physics, &engine->scene, dt);
+        snprintf(physics_str, sizeof(physics_str), "Physics: %d", timer_get_elapsed(&t));
 
         // Clear the canvas.
         timer_restart(&t);

@@ -36,7 +36,7 @@ typedef struct
 // TODO: Move to separate file?
 typedef struct physics_data
 {
-    v3_t force;
+    v3_t impulses; // Forces applied instantaneously.
     v3_t velocity;
 
     float mass;

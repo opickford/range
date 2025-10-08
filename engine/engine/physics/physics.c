@@ -101,13 +101,19 @@ status_t physics_init(physics_t* physics, cecs_t* ecs)
     return STATUS_OK;
 }
 
-static void apply_forces(physics_t* physics)
+static void apply_forces(physics_t* physics, float dt)
 {
+
+
+
     // TODO: Air resistance
 
     // Disable gravity for now.
-    static v3_t acceleration = { 0, 0, 0 };
-    //static v3_t acceleration = { 0, -9.8f, 0 };
+    // TODO: Define in physics world.
+    //static v3_t acceleration = { 0, 0, 0 };
+    static v3_t acceleration = { 0, -9.8f, 0 };
+    v3_t continuous_force = { 0 };
+
 
     cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->physics_view);
 
@@ -121,14 +127,17 @@ static void apply_forces(physics_t* physics)
             physics_data_t* physics_data = &physics_datas[i];
             transform_t* transform = &transforms[i];
 
-            // F = MA
-            v3_add_eq_v3(&physics_data->force, v3_mul_f(acceleration, physics_data->mass));
+            // Calculate continuous forces, F = MA
+            v3_add_eq_v3(&continuous_force, v3_mul_f(acceleration, physics_data->mass));
 
-            // Apply force.
-            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(physics_data->force, 1.f / physics_data->mass));
+            // Apply continuous forces, over time, note, dt!
+            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(continuous_force, dt / physics_data->mass));
 
-            // TODO: Function for zeroing/filling?
-            physics_data->force = (v3_t){ 0.f, 0.f, 0.f };
+            // Apply impulses.
+            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(physics_data->impulses, 1.f / physics_data->mass));
+
+            // Clear impulses/instantaneous forces.
+            physics_data->impulses = (v3_t){ 0.f, 0.f, 0.f };
         }
     }
 }
@@ -845,12 +854,15 @@ void physics_data_init(physics_data_t* data)
     memset(data, 0, sizeof(physics_data_t));
 
     // Mass of 0 will cause divide by zero error.
-    data->mass = 1.f;
+
+    // TODO: What unit is this?
+    //data->mass = 1.f; 
+    data->mass = 1000; 
 }
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)
 {
-    apply_forces(physics);
+    apply_forces(physics, dt);
 
     handle_collisions(physics, scene, dt);
 
