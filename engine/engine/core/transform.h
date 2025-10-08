@@ -5,7 +5,7 @@
 
 // TODO: Should this just go into components?
 
-typedef struct
+typedef struct transform
 {
     v3_t position;
     v3_t scale;

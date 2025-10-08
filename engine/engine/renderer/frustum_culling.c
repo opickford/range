@@ -61,7 +61,7 @@ void view_frustum_init(view_frustum_t* view_frustum, float near_dist, float far_
 
 	// Define the left/right planes, opposite x direction.
 
-	// TODO: Function for calculating the plane normal.
+    // TODO: Functoin for calculating plane from 3 points.
 	plane_t right = { 
 		.point = near_top_right, 
 		.normal = normalised(cross(v3_sub_v3(near_top_right, near_bottom_right), v3_sub_v3(far_top_right, near_bottom_right)))

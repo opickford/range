@@ -10,5 +10,6 @@
 int g_draw_normals;
 int g_debug_shadows;
 
+float g_elapsed;
 
 #endif

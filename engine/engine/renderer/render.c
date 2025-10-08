@@ -1035,7 +1035,7 @@ float calculate_diffuse_factor(const v3_t v, const v3_t n, const v3_t light_pos,
 	v3_t light_dir = v3_sub_v3(light_pos, v);
 
 
-	float light_distance = size(light_dir);
+	float light_distance = v3_size(light_dir);
 
 	v3_mul_eq_f(&light_dir, 1.f / light_distance);
 	
@@ -1226,7 +1226,7 @@ void model_to_view_space(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* 
                     v3_t v = vsps[j];
                     v3_t between = v3_sub_v3(v, view_space_centre);
 
-                    radius_squared = max(size_squared(between), radius_squared);
+                    radius_squared = max(v3_size_sqrd(between), radius_squared);
                 }
 
                 // Save the radius (4th component of bounding sphere).
@@ -1366,6 +1366,7 @@ void cull_backfaces(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* frame
 			const int p1_index = position_indices[face_index + 1];
 			const int p2_index = position_indices[face_index + 2];
 			
+            // TODO: Draw face normals to visualise this. and check it's correct.
 			if (is_front_face(vsps[p0_index], vsps[p1_index], vsps[p2_index]))
 			{
 				// Store the index of the face for culling later.

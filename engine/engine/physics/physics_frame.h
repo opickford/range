@@ -12,6 +12,7 @@
 typedef struct collider collider_t;
 typedef struct physics_data physics_data_t;
 typedef struct mesh_instance mesh_instance_t;
+typedef struct transform transform_t;
 
 // TODO: Should this just store the necessary for each entity, i think so? Would make it easier to unpack right and less computations....
 // TODO: An issue with pointers would be if a collision called a 
@@ -20,16 +21,18 @@ typedef struct mesh_instance mesh_instance_t;
 //       we would want to wait for all collisions to be resolved
 //       before firing callbacks anyways.
 
+// TODO: Should this be elsewhere?
 typedef struct
 {
     mesh_instance_t* mi0;
     collider_t* c0;
     physics_data_t* pd0;
+    transform_t* t0;
 
     mesh_instance_t* mi1;
     collider_t* c1;
     physics_data_t* pd1;
-
+    transform_t* t1;
     
 
 
@@ -48,6 +51,8 @@ typedef struct
 typedef struct
 {
     chds_vec(potential_collision_t) broad_phase_collisions;
+    // float dt;
+    // TODO: Should this have dt? Simplifies passing args but not needed in some places.
 
 } physics_frame_t;
 

@@ -20,6 +20,6 @@ typedef struct
 } renderer_t;
 
 status_t renderer_init(renderer_t* renderer, int width, int height);
-status_t renderer_resize(renderer_t* renderer, int width, int height);
+status_t renderer_rev3_size(renderer_t* renderer, int width, int height);
 
 #endif

@@ -32,12 +32,12 @@ inline v3_t cross(v3_t v0, v3_t v1)
 }
 
 // TODO: Rename v3_size etc?
-inline float size(v3_t v)
+inline float v3_size(v3_t v)
 {
 	return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-inline float size_squared(v3_t v)
+inline float v3_size_sqrd(v3_t v)
 {
 	return v.x * v.x + v.y * v.y + v.z * v.z;
 }
@@ -50,9 +50,10 @@ inline void normalise(v3_t* v)
 	v->z *= inv_size;
 }
 
+// TODO: v3_ prefix?
 inline v3_t normalised(v3_t v)
 {
-	const float inv_size = 1.f / size(v);
+	const float inv_size = 1.f / v3_size(v);
 
 	return (v3_t) { v.x * inv_size, v.y * inv_size, v.z * inv_size, };
 }
@@ -150,11 +151,20 @@ inline char* v3_to_str(v3_t v)
 	return format_str("%f %f %f", v.x, v.y, v.z);
 }
 
-// TODO: This shouldn't be in v3_t?
+// TODO: This shouldn't be in vector3.h?
 inline int is_front_face(v3_t v0, v3_t v1, v3_t v2)
 {
-	// Calculate the direction of face.
-	// TODO: Comments.
+    // Camera is at origin as coordinates are given in view space, so 
+    // view vector from tri to cam is V = v0 - P or just -v0
+    // 
+    // dot(A,B) = |A||B|cos(theta), we only care about the sign, so
+    // just becomes dot(A,B) = cos(theta).
+    // 
+    // Dot product of face normal and V gives cos(theta) between
+    // vectors, cos(90) = 0, cos(<90) -> positive. Therefore, 
+    // Front facing IF dot(-v0, normal) > 0
+    // To avoid the extra inversion of v0, convert to:
+    // Front facing IF dot(v0, normal) <= 0
 	return dot(v0, cross(v3_sub_v3(v1, v0), v3_sub_v3(v2, v0))) <= 0;
 }
 

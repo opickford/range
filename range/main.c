@@ -43,9 +43,11 @@ void create_map(engine_t* engine)
 
     transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
     transform_init(transform);
+    transform->scale = v3_uniform(2);
 
-    physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
-    physics_data_init(physics_data);
+    // TODO: currently testing with static.
+    //physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+    //physics_data_init(physics_data);
     //physics_data->force = (v3_t){ 0,0,1 };
 
     collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
@@ -161,6 +163,17 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
 
         break;
     }
+    case VK_F5:
+    {
+        engine->renderer.camera.position = (v3_t){ -5, 0, 2 };
+        engine->renderer.camera.direction = (v3_t){ 1,0,0 };
+
+        // TODO: Function for this.
+        engine->renderer.camera.pitch = asinf(engine->renderer.camera.direction.y);
+        engine->renderer.camera.yaw = atan2f(engine->renderer.camera.direction.x, engine->renderer.camera.direction.z);
+
+        break;
+    }
     }
 }
 
@@ -171,7 +184,8 @@ void engine_on_lmbdown(engine_t* engine)
     // Create an entity
     cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
 
-    mesh_base_t* mb = &scene->mesh_bases.bases[cube_base];
+    //mesh_base_t* mb = &scene->mesh_bases.bases[cube_base];
+    mesh_base_t* mb = &scene->mesh_bases.bases[sphere_base];
 
     // Add a mesh_instance_t component.
     cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
@@ -199,7 +213,7 @@ void engine_on_lmbdown(engine_t* engine)
     physics_data_init(physics_data);
 
     // TODO: Dt?
-    float speed = 20;
+    float speed = 2;
     physics_data->force = v3_mul_f(engine->renderer.camera.direction, speed);
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!

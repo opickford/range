@@ -96,6 +96,9 @@ status_t engine_init(engine_t* engine, int window_width, int window_height)
 
 void engine_run(engine_t* engine)
 {
+    // TEMP:
+    g_elapsed = 0.f;
+
     // TEMP
     LARGE_INTEGER frequency = { 0 };
     QueryPerformanceFrequency(&frequency);
@@ -248,6 +251,9 @@ void engine_run(engine_t* engine)
         }
 
         snprintf(vertices_str, sizeof(vertices_str), "VERTICES: %d", total_faces * 3);
+
+        // TODO: TEMP?
+        g_elapsed += dt;
     }
 }
 
@@ -366,7 +372,7 @@ static void engine_on_resize(void* ctx)
 {
     engine_t* engine = (engine_t*)ctx;
 
-    status_t status = renderer_resize(&engine->renderer, 
+    status_t status = renderer_rev3_size(&engine->renderer, 
         (int)(engine->window.width / engine->upscaling_factor), 
         (int)(engine->window.height / engine->upscaling_factor));
 

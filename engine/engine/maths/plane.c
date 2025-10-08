@@ -4,9 +4,10 @@
 
 #include <stdio.h>
 
+// TODO: Doesn't need to be passed by pointer but i think old code using it 
+//       has ptrs already.
 float signed_distance(const plane_t* plane, const v3_t point)
 {
-	// TODO: Store this in the plane struct somewhere?
 	float d = -dot(plane->normal, plane->point);
 	return dot(point, plane->normal) + d;
 }
@@ -38,4 +39,12 @@ float line_intersect_plane(const v3_t v0, const v3_t v1, const plane_t* plane, v
 	v3_add_eq_v3(out, v0);
 
 	return t;
+}
+
+plane_t plane_from_points(const v3_t v0, const v3_t v1, const v3_t v2)
+{
+    return (plane_t) {
+        .normal = normalised(cross(v3_sub_v3(v1, v0), v3_sub_v3(v2, v0))),
+        .point = v1
+    };
 }
