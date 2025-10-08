@@ -106,15 +106,13 @@ static void apply_forces(physics_t* physics, float dt)
 
 
 
-    // TODO: Air resistance
+    // TODO: Air resistance applied as continuous force? note even when touching surface
+    //       as still have to push through air duh.
 
     // Disable gravity for now.
     // TODO: Define in physics world.
-    //static v3_t acceleration = { 0, 0, 0 };
-    static v3_t acceleration = { 0, -9.8f, 0 };
+    static v3_t gravity = { 0, -9.8f, 0 };
     
-
-
     cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->physics_view);
 
     while (cecs_view_iter_next(&it))
@@ -124,16 +122,40 @@ static void apply_forces(physics_t* physics, float dt)
 
         for (int i = 0; i < it.num_entities; ++i)
         {
-            v3_t continuous_force = { 0 };
-
             physics_data_t* physics_data = &physics_datas[i];
             transform_t* transform = &transforms[i];
 
-            // Calculate continuous forces, F = MA
-            v3_add_eq_v3(&continuous_force, v3_mul_f(acceleration, physics_data->mass));
+            // Sum continuous acceleration.
+            v3_t total_acceleration = { 0 };
+            v3_add_eq_v3(&total_acceleration, gravity);
+
+            // TODO: Apply friction
+            if (v3_size(physics_data->velocity) > 0.f)
+            {
+                // TODO: Get some data from surfaces colliding with?
+            }
+
+            // TODO: Apply air resistance, we're essentially in a vaccum rn.
+            if (v3_size(physics_data->velocity) > 0.f)
+            {
+                float drag_coeff = 0.5f; // TODO: This could be adjusted in physics data, a plane facing
+                                         // the direction it's moving might be 1.3 ish.
+
+
+                // Drag acts in opposite direction to velocity.
+                v3_t drag_dir = normalised(v3_mul_f(physics_data->velocity, -1.f));
+
+                // The faster the object, the more drag.
+                float drag_size = drag_coeff * v3_size_sqrd(physics_data->velocity);
+
+                v3_add_eq_v3(&total_acceleration, v3_mul_f(drag_dir, drag_size / physics_data->mass));
+            }
+
+            // Integrate continuous acceleration over dt.
+            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(total_acceleration, dt));
 
             // Apply continuous forces, over time, note, dt!
-            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(continuous_force, dt / physics_data->mass));
+            //v3_add_eq_v3(&physics_data->velocity, v3_mul_f(continuous_force, dt / physics_data->mass));
 
             // Apply impulses.
             v3_add_eq_v3(&physics_data->velocity, v3_mul_f(physics_data->impulses, 1.f / physics_data->mass));
@@ -863,7 +885,7 @@ void physics_data_init(physics_data_t* data)
 
     // TODO: What unit is this?
     //data->mass = 1.f; 
-    data->mass = 1.f; 
+    data->mass = 100.f; 
 }
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)
