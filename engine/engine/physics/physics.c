@@ -144,34 +144,43 @@ static void apply_forces(physics_t* physics, float dt)
 
 
             // TODO: Apply friction
-            if (v3_size(physics_data->velocity) > 0.f)
+            // TODO: Cache .
+            float speed = v3_size(physics_data->velocity);
+            if (speed > 0.f)
             {
                 // TODO: Get some data from surfaces colliding with?
                 // TODO: Because i dont have friction, objects slide more when laggy,
                 //       friction should fix this.
             }
 
+            // TODO: essentially i need to figure out what will work best for them game. maybe just remove this for now
+            //       honestly. i don't know whether we should use a physically force based drag formula that will take in mass,
+            //       and other parameters (requires more tuning per mi but might feel better), or just a dampening factor on the 
+            //       velocity which would require configuring the damping factor, but that's it.
 
-
-            // Air resistance/drag - TODO: This seems to be weird, max speed of 1kg is like -5m/s??????
-            // Velocity dampening to apply some sort of air resistance/drag.
-            if (v3_size(physics_data->velocity) > 0.f)
+            // Air resistance/drag, simple mass sensitive 
+            if (speed > 0.f)
             {
-
-                float drag_coeff = 0.5f; // TODO: This could be adjusted in physics data, a plane facing
-                // the direction it's moving might be 1.3 ish.
-
-                // Drag acts in opposite direction to velocity.
-                v3_t drag_dir = normalised(v3_mul_f(physics_data->velocity, -1.f));
-
-                // The faster the object, the more drag.
-                float drag_size = drag_coeff * v3_size_sqrd(physics_data->velocity);
-
-                v3_add_eq_v3(&total_acceleration, v3_mul_f(drag_dir, drag_size / physics_data->mass));
-
-
-
+                /*
+                // TODO: TESTING
                 // Doesn't take into account mass because it's just affecting the velocity.
+                float drag_rate = 1.5f;
+                float damping = expf(-drag_rate * dt);
+                v3_mul_eq_f(&physics_data->velocity, damping);
+                */
+
+                float drag_k = 0.35; // TODO: Parameter would need to be tuned. e.g. for a 1kg, 0.01m sphere, 0.35 is way too high.
+                                     //       probs just in physics_data_t? or we could just dampen velocity, but then everytihng would
+                                     //       drop at the same speed.
+
+                float drag_mag = drag_k * speed * speed / physics_data->mass;
+                
+                // drag_accel = normalised(v) * -drag_mag
+                // delta_velocity_drag = drag_accel * dt
+                v3_t dv_drag = v3_mul_f(v3_mul_f(physics_data->velocity, 1.f / speed), -drag_mag * dt);
+
+                v3_add_eq_v3(&physics_data->velocity, dv_drag);
+                
             }
 
             if (elapsed > 12)
@@ -907,7 +916,7 @@ void physics_data_init(physics_data_t* data)
 
     // TODO: What unit is this?
     //data->mass = 1.f; 
-    data->mass = 1.f; 
+    data->mass = 100.f; 
 }
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)
