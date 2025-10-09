@@ -17,7 +17,7 @@ mesh_base_id_t map_base;
 
 void create_map(engine_t* engine)
 {
-    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/landscape.bmp");
     
     // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     
@@ -70,6 +70,7 @@ void create_map(engine_t* engine)
     printf("%f\n", radius);
     */
     scene->ambient_light = v3_uniform(1.f);
+    //scene->ambient_light = v3_uniform(0.1f);
     
     scene->bg_colour = 0x11111111;
     
@@ -217,7 +218,7 @@ void engine_on_lmbdown(engine_t* engine)
     physics_data_init(physics_data);
 
     // TODO: Dt?
-    float speed = 20;
+    float speed = 2;
     v3_add_eq_v3(&physics_data->impulses, v3_mul_f(engine->renderer.camera.direction, speed));
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
@@ -225,6 +226,7 @@ void engine_on_lmbdown(engine_t* engine)
     collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
     collider_init(collider);
     collider->shape.ellipsoid = transform->scale;
+
 }
 
 int main()

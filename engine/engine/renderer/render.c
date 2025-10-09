@@ -1544,6 +1544,11 @@ void light_front_faces(
 				light.y = min(1.f, light.y);
 				light.z = min(1.f, light.z);
 
+                if (light.x < 0 || light.y < 0 || light.z < 0)
+                {
+                    printf("what");
+                }
+
 
 				vertex_lighting[out_index].x = light.x;
 				vertex_lighting[out_index].y = light.y;

@@ -57,7 +57,6 @@ static uint8_t lowest_root(float a, float b, float c, float max_r, float* r)
     return 0;
 }
 
-
 static void physics_setup_views(physics_t* physics)
 {
     physics->physics_view = cecs_view(physics->ecs,
@@ -103,7 +102,7 @@ status_t physics_init(physics_t* physics, cecs_t* ecs)
 
 static void apply_forces(physics_t* physics, float dt)
 {
-
+    static float elapsed = 0.0f;
 
 
     // TODO: Air resistance applied as continuous force? note even when touching surface
@@ -129,27 +128,7 @@ static void apply_forces(physics_t* physics, float dt)
             v3_t total_acceleration = { 0 };
             v3_add_eq_v3(&total_acceleration, gravity);
 
-            // TODO: Apply friction
-            if (v3_size(physics_data->velocity) > 0.f)
-            {
-                // TODO: Get some data from surfaces colliding with?
-            }
-
-            // TODO: Apply air resistance, we're essentially in a vaccum rn.
-            if (v3_size(physics_data->velocity) > 0.f)
-            {
-                float drag_coeff = 0.5f; // TODO: This could be adjusted in physics data, a plane facing
-                                         // the direction it's moving might be 1.3 ish.
-
-
-                // Drag acts in opposite direction to velocity.
-                v3_t drag_dir = normalised(v3_mul_f(physics_data->velocity, -1.f));
-
-                // The faster the object, the more drag.
-                float drag_size = drag_coeff * v3_size_sqrd(physics_data->velocity);
-
-                v3_add_eq_v3(&total_acceleration, v3_mul_f(drag_dir, drag_size / physics_data->mass));
-            }
+            
 
             // Integrate continuous acceleration over dt.
             v3_add_eq_v3(&physics_data->velocity, v3_mul_f(total_acceleration, dt));
@@ -159,6 +138,48 @@ static void apply_forces(physics_t* physics, float dt)
 
             // Apply impulses.
             v3_add_eq_v3(&physics_data->velocity, v3_mul_f(physics_data->impulses, 1.f / physics_data->mass));
+
+            elapsed += dt;
+
+
+
+            // TODO: Apply friction
+            if (v3_size(physics_data->velocity) > 0.f)
+            {
+                // TODO: Get some data from surfaces colliding with?
+                // TODO: Because i dont have friction, objects slide more when laggy,
+                //       friction should fix this.
+            }
+
+
+
+            // Air resistance/drag - TODO: This seems to be weird, max speed of 1kg is like -5m/s??????
+            // Velocity dampening to apply some sort of air resistance/drag.
+            if (v3_size(physics_data->velocity) > 0.f)
+            {
+
+                float drag_coeff = 0.5f; // TODO: This could be adjusted in physics data, a plane facing
+                // the direction it's moving might be 1.3 ish.
+
+                // Drag acts in opposite direction to velocity.
+                v3_t drag_dir = normalised(v3_mul_f(physics_data->velocity, -1.f));
+
+                // The faster the object, the more drag.
+                float drag_size = drag_coeff * v3_size_sqrd(physics_data->velocity);
+
+                v3_add_eq_v3(&total_acceleration, v3_mul_f(drag_dir, drag_size / physics_data->mass));
+
+
+
+                // Doesn't take into account mass because it's just affecting the velocity.
+            }
+
+            if (elapsed > 12)
+            {
+                printf("%f - ", elapsed);
+                printf("%s\n", v3_to_str(physics_data->velocity));
+            }
+
 
             // Clear impulses/instantaneous forces.
             physics_data->impulses = (v3_t){ 0.f, 0.f, 0.f };
@@ -736,6 +757,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     // TODO: Should collisions be resolved elsewhere? idk, for now just stay like this 
     //       but this may change as we introduce more interactions.
+
     if (found_collision)
     {
         // TODO: Collision response, should set position and update velocity?
@@ -780,8 +802,8 @@ static void narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, po
     // NOTE: Currently this means they must already collide as the broad phase is 
     //       sphere vs sphere.
 
-    log_error("narrow_ellipsoid_vs_ellipsoid not implemented!!\n");
-    assert(0);
+    //log_error("narrow_ellipsoid_vs_ellipsoid not implemented!!\n");
+    //assert(0);
      
 }
 
@@ -885,7 +907,7 @@ void physics_data_init(physics_data_t* data)
 
     // TODO: What unit is this?
     //data->mass = 1.f; 
-    data->mass = 100.f; 
+    data->mass = 1.f; 
 }
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)
