@@ -775,28 +775,72 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     if (found_collision)
     {
-        // TODO: Collision response, should set position and update velocity?
-        //       how do we know when to slide vs bounce or whatever? that must depend on wall property or mass or something??
-        
         float unit_scale = 1.f / 100.0f;
         float very_close_dist = 0.005f * unit_scale;
 
-        v3_t V = v3_mul_f(v3_normalised(vel), nearest_dist - very_close_dist);
-        ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, V);
+        // TODO: Collision response, should set position and update velocity?
+        //       how do we know when to slide vs bounce or whatever? that must depend on wall property or mass or something??
+        
+
+        
+        float collision_time = earliest_t;
+        v3_t collision_normal = v3_mul_v3(collision_face_normal, ellipsoid);
+        v3_normalise(&collision_normal);
+        
 
 
-        v3_t normal = v3_mul_v3(collision_face_normal, ellipsoid);
-        v3_normalise(&normal);
-        printf("%s\n", v3_to_str(collision_face_normal));
+        v3_t movement_to_collision = v3_mul_f(v3_normalised(vel), nearest_dist - very_close_dist);
+        ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, movement_to_collision);
 
+        // Velocity along normal (project onto normal?)
+        v3_t v_n = v3_mul_f(collision_normal, dot(vel, collision_normal));
+
+        // Velocity along tangent to surface
+        v3_t v_t = v3_sub_v3(vel, v_n);
+
+        // Account for restitution (measure of bounciness in a collision)
+        // 0 -> perfectly inelastic (object sticks)
+        // 1 -> perfectly elastic (object bounces)
+        float restitution = 0.f;
+
+        v3_t v_n_ = v3_mul_f(v_n, -restitution);
+
+        // TODO: Apply friction to tanget?
+        float friction = 0.f;
+        v3_t v_t_ = v3_mul_f(v_t, 1.f - friction);
+
+        v3_t v = v3_add_v3(v_n_, v_t_);
+        ellipsoid_pd->velocity = v;
+
+
+        /*
         v3_t applied_vel = v3_mul_f(vel, earliest_t);
+        float resulting_speed = v3_size(applied_vel);
+
+        //ellipsoid_pd->velocity = v3_mul_f(normal, resulting_speed);// v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
+
+        float remaining_time = dt - earliest_t;
+        if (remaining_time <= 0.f) return;
+
+        v3_t leftover_velocity = v3_mul_f(vel, remaining_time);*/
+
+
+
+
 
         // ellipsoid_pd->velocity = v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
-        ellipsoid_pd->velocity = v3_mul_f(normal, v3_size(applied_vel));// v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
+
+        // TODO: currently just going in collision normal dir, fix this.
+
+
         
-        //printf("%s\n", v3_to_str(ellipsoid_pd->velocity));
+        
         //printf("%f - %s\n ", g_elapsed, v3_to_str(v3_mul_v3(collision_point, ellipsoid)));
         //ellipsoid_pd->velocity = (v3_t){ 0 };
+
+        //printf("%s\n", v3_to_str(ellipsoid_pd->velocity));
+
+        // TODO: if vel gets too low should zero it?
     }
 }
 
@@ -886,8 +930,27 @@ static void handle_collisions(physics_t* physics, scene_t* scene, float dt)
     //       just use discrete 1/60 e.g?  Roblox and unity use this apparently.
     /*
     We should just do physics at 60fps essentially. If something is really fast
-    we will miss it but who cares.
+    we will miss it but who cares. although apparently the speed is only 30m/s 
+    that would cause tunnelling. if :
+
+    min_collider_thickness = 0.5f
+    physics_dt = 1.f / 60.f;
+    vel_max = min_collider_thickness / physics_dt;
+            = 30.f
+
+    some things might need continuous detection. maybe we should only support 
+    continuous for ellipsoid vs mi?? so player and fast moving spheres?
+
+    continuous detection means we resolve each earliest collision found for the
+    whole time step (dt).
+
+    discrete means we detect and resolve at a fix interval, where we gather all
+    collisions at that point and solve them
+
+    TODO: We could use continuous if the object is moving a certain speed >30?
     
+    maybe for now for continuos we just solve one collision essentially.
+
     */
 
     update_colliders(physics, scene);
@@ -905,7 +968,7 @@ void physics_data_init(physics_data_t* data)
 
     // TODO: What unit is this?
     //data->mass = 1.f; 
-    data->mass = 100.f; 
+    data->mass = 1.f; 
 }
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)

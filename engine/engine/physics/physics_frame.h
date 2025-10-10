@@ -48,11 +48,19 @@ typedef struct
 
 } potential_collision_t;
 
+//typedef struct
+//{
+//    int temp;
+//} collision_t;
+
 typedef struct
 {
     chds_vec(potential_collision_t) broad_phase_collisions;
     // float dt;
     // TODO: Should this have dt? Simplifies passing args but not needed in some places.
+
+    // TODO: Store collisions for discrete collision resolution.
+    //chds_vec(collision_t) collisions;
 
 } physics_frame_t;
 
