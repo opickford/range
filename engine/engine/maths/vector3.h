@@ -42,7 +42,7 @@ inline float v3_size_sqrd(v3_t v)
 	return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 
-inline void normalise(v3_t* v)
+inline void v3_normalise(v3_t* v)
 {	
 	const float inv_size = 1.f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
 	v->x *= inv_size;
@@ -51,7 +51,7 @@ inline void normalise(v3_t* v)
 }
 
 // TODO: v3_ prefix?
-inline v3_t normalised(v3_t v)
+inline v3_t v3_normalised(v3_t v)
 {
 	const float inv_size = 1.f / v3_size(v);
 

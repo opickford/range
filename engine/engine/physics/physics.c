@@ -110,7 +110,7 @@ static void apply_forces(physics_t* physics, float dt)
 
     // Disable gravity for now.
     // TODO: Define in physics world.
-    static v3_t gravity = { 0, -9.8f, 0 };
+    static const v3_t gravity = { 0, -9.8f, 0 };
     
     cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->physics_view);
 
@@ -128,20 +128,9 @@ static void apply_forces(physics_t* physics, float dt)
             v3_t total_acceleration = { 0 };
             v3_add_eq_v3(&total_acceleration, gravity);
 
-            
-
-            // Integrate continuous acceleration over dt.
-            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(total_acceleration, dt));
-
-            // Apply continuous forces, over time, note, dt!
-            //v3_add_eq_v3(&physics_data->velocity, v3_mul_f(continuous_force, dt / physics_data->mass));
-
-            // Apply impulses.
-            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(physics_data->impulses, 1.f / physics_data->mass));
-
-            elapsed += dt;
-
-
+            // TODO: FRICTION SHOULD ACTUALLY BE APPLIED AT COLLISION RESPONSE, THEN
+            //       THE SURFACE CAN DECIDE HOW STICKY IT IS!!!!!!!!!!!!!!!!!!!!!!!!    
+            //       define in collider? 
 
             // TODO: Apply friction
             // TODO: Cache .
@@ -170,24 +159,33 @@ static void apply_forces(physics_t* physics, float dt)
                 */
 
                 float drag_k = 0.35; // TODO: Parameter would need to be tuned. e.g. for a 1kg, 0.01m sphere, 0.35 is way too high.
-                                     //       probs just in physics_data_t? or we could just dampen velocity, but then everytihng would
-                                     //       drop at the same speed.
+                //       probs just in physics_data_t? or we could just dampen velocity, but then everytihng would
+                //       drop at the same speed.
 
                 float drag_mag = drag_k * speed * speed / physics_data->mass;
-                
-                // drag_accel = normalised(v) * -drag_mag
-                // delta_velocity_drag = drag_accel * dt
-                v3_t dv_drag = v3_mul_f(v3_mul_f(physics_data->velocity, 1.f / speed), -drag_mag * dt);
 
-                v3_add_eq_v3(&physics_data->velocity, dv_drag);
-                
+                // drag_accel = v3_normalised(v) * -drag_mag
+                v3_t drag_accel = v3_mul_f(v3_mul_f(physics_data->velocity, 1.f / speed), -drag_mag);
+
+                v3_add_eq_v3(&total_acceleration, drag_accel);
+
             }
 
-            if (elapsed > 12)
-            {
-                printf("%f - ", elapsed);
-                printf("%s\n", v3_to_str(physics_data->velocity));
-            }
+            // Integrate continuous acceleration over dt.
+            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(total_acceleration, dt));
+
+            // Apply continuous forces, over time, note, dt!
+            //v3_add_eq_v3(&physics_data->velocity, v3_mul_f(continuous_force, dt / physics_data->mass));
+
+            // Apply impulses.
+            v3_add_eq_v3(&physics_data->velocity, v3_mul_f(physics_data->impulses, 1.f / physics_data->mass));
+
+            elapsed += dt;
+
+
+
+            
+            
 
 
             // Clear impulses/instantaneous forces.
@@ -583,6 +581,10 @@ static void test_edge_with_ellipsoid(v3_t p0, v3_t p1, v3_t start, v3_t vel, flo
 #include <float.h>
 static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
+
+    // TODO: Note this is continuous detection, do we realy need this??? it feels kinda free here with this
+    //       method? 
+
     // https://www.peroxide.dk/papers/collision/collision.pdf
 
     // TODO: We need to comment/enforce how an mi cannot be the thing that is colliding into something?
@@ -600,7 +602,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     collider_t* ellipsoid_collider = pc.c0;
     physics_data_t* ellipsoid_pd = pc.pd0;
     transform_t* ellipsoid_transform = pc.t0;
-    v3_t ellipsoid_pos = ellipsoid_transform->position;
+    v3_t e_pos = ellipsoid_transform->position;
 
     v3_t ellipsoid = ellipsoid_collider->shape.ellipsoid;
     v3_t inv_ellipsoid = (v3_t){
@@ -611,15 +613,17 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     // Scale velocity by dt to calculate how much the entity will move this frame.
     // TODO: When we update the velocity should we take into account the remaining or not...
-    v3_t vel = v3_mul_f(ellipsoid_pd->velocity, dt);
-    float vel_size = v3_size(vel);
-    v3_t dir = normalised(vel);
+    v3_t vel = ellipsoid_pd->velocity;
+    v3_t dir = v3_normalised(vel);
+    v3_t e_vel = v3_mul_f(vel, dt);
+    float vel_size = v3_size(e_vel);
+    v3_t e_dir = v3_normalised(e_vel);
 
-    v3_mul_eq_v3(&vel, inv_ellipsoid);
+    v3_mul_eq_v3(&e_vel, inv_ellipsoid);
 
     //v3_t vel = pc.pd0->velocity;
-    v3_t start_pos = ellipsoid_pos;
-    v3_mul_eq_v3(&start_pos, inv_ellipsoid);
+    v3_t e_start_pos = e_pos;
+    v3_mul_eq_v3(&e_start_pos, inv_ellipsoid);
     
     collider_t* mi_collider = pc.c1;
     //physics_data_t* mi_pd = pc.pd1;
@@ -630,7 +634,8 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     // TODO: We will have to deal with both velocities after getting it working one way first at least.
 
-    //float nearest_t = 1.f;
+    // TODO: Rneame stuff.
+    float earliest_t = 1.f;
     float nearest_dist = 0.f;
     v3_t nearest_collision_point = { 0 };
     uint8_t found_collision = 0;
@@ -654,13 +659,13 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         // Backface culling, velocity and normal should face towards each other!
         // dot(A,B) = |A||B|cos(theta), note, we only care about sign.
         // If angle is > 90, they are facing each other so use: cos(>90) < 0
-        if (dot(plane.normal, dir) >= 0)
+        if (dot(plane.normal, e_dir) >= 0)
         {
             continue;
         }
 
-        float d = signed_distance(&plane, start_pos);
-        float dot_normal_velocity = dot(plane.normal, vel);
+        float d = signed_distance(&plane, e_start_pos);
+        float dot_normal_velocity = dot(plane.normal, e_vel);
 
         // Determine what time the sphere collides with the plane (if it does).
         uint8_t embedded_in_plane = 0;
@@ -719,7 +724,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
             // As we are in ellipsoid space, we are working with a unit sphere (r = 1), 
             // so calculate the point on the sphere that would collide with the triangle,
             // then add velocity * t0 to get intersection.
-            v3_t plane_intersection_p = v3_add_v3(v3_sub_v3(start_pos, plane.normal), v3_mul_f(vel, t0));
+            v3_t plane_intersection_p = v3_add_v3(v3_sub_v3(e_start_pos, plane.normal), v3_mul_f(e_vel, t0));
             
             if (point_in_triangle(plane_intersection_p, p0, p1, p2))
             {
@@ -732,21 +737,21 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         // Haven't found collision so sweep sphere against points and edges of triangle.
         if (!found_new_collision)
         {
-            float vel_size_sqrd = v3_size_sqrd(vel);
+            float vel_size_sqrd = v3_size_sqrd(e_vel);
 
             // For each vertex or edge a quadratic equation must be solved, parameterise
             // equation to: a * t^2 + b * t + c = 0
 
             // Check against points
             float a = vel_size_sqrd;
-            test_point_with_ellipsoid(p0, start_pos, vel, a, &t, &found_collision, &collision_point);
-            test_point_with_ellipsoid(p1, start_pos, vel, a, &t, &found_collision, &collision_point);
-            test_point_with_ellipsoid(p2, start_pos, vel, a, &t, &found_collision, &collision_point);
+            test_point_with_ellipsoid(p0, e_start_pos, e_vel, a, &t, &found_new_collision, &collision_point);
+            test_point_with_ellipsoid(p1, e_start_pos, e_vel, a, &t, &found_new_collision, &collision_point);
+            test_point_with_ellipsoid(p2, e_start_pos, e_vel, a, &t, &found_new_collision, &collision_point);
             
             // p1p0
-            test_edge_with_ellipsoid(p0, p1, start_pos, vel, vel_size_sqrd, &t, &found_collision, &collision_point);
-            test_edge_with_ellipsoid(p0, p2, start_pos, vel, vel_size_sqrd, &t, &found_collision, &collision_point);
-            test_edge_with_ellipsoid(p2, p1, start_pos, vel, vel_size_sqrd, &t, &found_collision, &collision_point);
+            test_edge_with_ellipsoid(p0, p1, e_start_pos, e_vel, vel_size_sqrd, &t, &found_new_collision, &collision_point);
+            test_edge_with_ellipsoid(p0, p2, e_start_pos, e_vel, vel_size_sqrd, &t, &found_new_collision, &collision_point);
+            test_edge_with_ellipsoid(p2, p1, e_start_pos, e_vel, vel_size_sqrd, &t, &found_new_collision, &collision_point);
         }
 
         // TODO: Figure out nearest face.
@@ -756,6 +761,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
             if (!found_collision || dist < nearest_dist)
             {
+                earliest_t = t;
                 nearest_dist = dist;
                 nearest_collision_point = collision_point;
                 collision_face_normal = plane.normal;
@@ -772,35 +778,23 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         // TODO: Collision response, should set position and update velocity?
         //       how do we know when to slide vs bounce or whatever? that must depend on wall property or mass or something??
         
-        v3_t actually_velocity = v3_mul_v3(vel, ellipsoid);
-
         float unit_scale = 1.f / 100.0f;
         float very_close_dist = 0.005f * unit_scale;
 
-        v3_t V = v3_mul_f(normalised(actually_velocity), nearest_dist - very_close_dist);
+        v3_t V = v3_mul_f(v3_normalised(vel), nearest_dist - very_close_dist);
         ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, V);
 
-        /*
-        v3_mul_eq_v3(&nearest_collision_point, ellipsoid);
-        v3_t p = v3_sub_v3(nearest_collision_point, v3_mul_v3(dir, ellipsoid));
-        ellipsoid_transform->position = p;
-        */
-
-        /*
-        float unit_scale = 1.f / 100.0f;
-        float very_close_dist = 0.005f * unit_scale;
-        v3_t V = v3_mul_f(normalised(vel), nearest_dist - very_close_dist);
-        ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, v3_mul_v3(V, ellipsoid));
-        printf("%s\n", v3_to_str(ellipsoid_transform->position));
-        */
 
         v3_t normal = v3_mul_v3(collision_face_normal, ellipsoid);
-        normalise(&normal);
+        v3_normalise(&normal);
+        printf("%s\n", v3_to_str(collision_face_normal));
 
-        ellipsoid_pd->velocity = v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
+        v3_t applied_vel = v3_mul_f(vel, earliest_t);
 
-
-
+        // ellipsoid_pd->velocity = v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
+        ellipsoid_pd->velocity = v3_mul_f(normal, v3_size(applied_vel));// v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
+        
+        //printf("%s\n", v3_to_str(ellipsoid_pd->velocity));
         //printf("%f - %s\n ", g_elapsed, v3_to_str(v3_mul_v3(collision_point, ellipsoid)));
         //ellipsoid_pd->velocity = (v3_t){ 0 };
     }
@@ -888,24 +882,19 @@ static void handle_collisions(physics_t* physics, scene_t* scene, float dt)
 
     */
 
+    // TODO: Do we actually want to be running continuous detection? Should I not 
+    //       just use discrete 1/60 e.g?  Roblox and unity use this apparently.
+    /*
+    We should just do physics at 60fps essentially. If something is really fast
+    we will miss it but who cares.
+    
+    */
+
     update_colliders(physics, scene);
 
     broad_phase(physics, scene, dt);
 
     narrow_phase(physics, scene, dt);
-
-
-
-    /* TODO: What do I actually want to handle collisions for? Surely we're just thinking
-             of players (potentially enemies) realistically for now. In the future it
-             would be cool to simulate more, but that's outside the scope of what I need now.
-
-             At some point we would want to handle collisions from some bounding area to
-             faces or potentially bounding area to bounding area. This will depend on whatever
-             the entity sets. - TODO: This could be a nice thing to setup now ahead of time.
-    */
-
-    // TODO: The broad phase should calculate pairs of collisions for the entire 
 }
 
 void physics_data_init(physics_data_t* data)

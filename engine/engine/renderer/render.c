@@ -27,7 +27,6 @@
 
 
 // TODO: Consider global render target.
-// TODO: Think about my DOD. Should use structs rather than float* because will compile to the same thing.
 // TODO: Something important would be to make the buffer accesses easier.
 
 void debug_draw_point_lights(
@@ -289,7 +288,6 @@ void debug_draw_world_space_line(canvas_t* canvas, const render_settings_t* sett
 
 	draw_line(canvas, (int)ss_v0.x, (int)ss_v0.y, (int)ss_v1.x, (int)ss_v1.y, colour_int);
 }
-
 
 void draw_scanline(render_target_t* rt,
 	int x0, int x1,
@@ -1187,7 +1185,7 @@ void model_to_view_space(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* 
                 v4_t vsn;
                 m4_mul_v4(view_normal_matrix, osn, &vsn);
 
-                v3_t normal = normalised(v4_xyz(vsn));
+                v3_t normal = v3_normalised(v4_xyz(vsn));
 
                 vsns[vsns_offset].x = normal.x;
                 vsns[vsns_offset].y = normal.y;
@@ -2326,7 +2324,7 @@ void update_depth_maps(renderer_t* renderer, const scene_t* scene)
 				v3_t vsp1_v3 = v4_xyz(vsp1);
 				v3_t vsp2_v3 = v4_xyz(vsp2);
 
-				v3_t face_normal = normalised(cross(v3_sub_v3(vsp1_v3, vsp0_v3), v3_sub_v3(vsp2_v3, vsp0_v3)));
+				v3_t face_normal = v3_normalised(cross(v3_sub_v3(vsp1_v3, vsp0_v3), v3_sub_v3(vsp2_v3, vsp0_v3)));
 
 				// Only fill depth map from back faces, need the normal so doing this manually.
 				if (dot(vsp0_v3, face_normal) <= 0)

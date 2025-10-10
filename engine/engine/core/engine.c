@@ -211,6 +211,33 @@ void engine_run(engine_t* engine)
         snprintf(ui_draw_str, sizeof(render_str), "DrawUI: %d", draw_ui_ms);
         draw_ui_ms = timer_get_elapsed(&t); // Must be done a frame late.
 
+        // TODO: TEMP: Debugging rendering the velocities.
+        {
+            cecs_view_id_t v = cecs_view(engine->ecs, CECS_COMPONENT_ID_TO_BITSET(COMPONENT_TRANSFORM) | CECS_COMPONENT_ID_TO_BITSET(COMPONENT_PHYSICS_DATA), 0);
+            cecs_view_iter_t it = cecs_view_iter(engine->ecs, v);
+
+            while (cecs_view_iter_next(&it))
+            {
+                transform_t* ts = cecs_get_column(it, COMPONENT_TRANSFORM);
+                physics_data_t* pds = cecs_get_column(it, COMPONENT_PHYSICS_DATA);
+
+                for (int i = 0; i < it.num_entities; ++i)
+                {
+                    v3_t vel = pds[i].velocity;
+                    float speed = v3_size(vel);
+                    if (speed == 0.f) continue;
+
+                    //v3_t dir = v3_mul_f(vel, 1.f / speed);
+                    v3_t dir = vel;
+                    v3_t start = ts[i].position;
+                    v3_t end = v3_add_v3(start, v3_mul_f(dir, 1.f));
+                    debug_draw_world_space_line(&engine->renderer.target.canvas, &engine->renderer.settings, view_matrix, start, end, (v3_t) { 1, 0,0 });
+
+                }
+            }
+
+        }
+
         // Update the display.
         timer_restart(&t);
         window_display(&engine->window);
@@ -235,29 +262,32 @@ void engine_run(engine_t* engine)
         snprintf(dir_str, sizeof(dir_str), "DIR: %.2f %.2f %.2f", engine->renderer.camera.direction.x, engine->renderer.camera.direction.y, engine->renderer.camera.direction.z);
         snprintf(pos_str, sizeof(pos_str), "POS: %.2f %.2f %.2f", engine->renderer.camera.position.x, engine->renderer.camera.position.y, engine->renderer.camera.position.z);
         
-        int total_faces = 0;
-        int mis_count = 0;
-        const cecs_t* ecs = engine->ecs;
-        cecs_view_iter_t it = cecs_view_iter(ecs, engine->render_view_id);
-        while (cecs_view_iter_next(&it))
         {
-            mesh_instance_t* mis = cecs_get_column(it, COMPONENT_MESH_INSTANCE);
-
-            for (int i = 0; i < it.num_entities; ++i)
+            int total_faces = 0;
+            int mis_count = 0;
+            const cecs_t* ecs = engine->ecs;
+            cecs_view_iter_t it = cecs_view_iter(ecs, engine->render_view_id);
+            while (cecs_view_iter_next(&it))
             {
-                mesh_instance_t* mi = &mis[i];
+                mesh_instance_t* mis = cecs_get_column(it, COMPONENT_MESH_INSTANCE);
 
-                const scene_t* scene = &engine->scene;
-                const mesh_base_t* mb = &scene->mesh_bases.bases[mi->mb_id];
-                total_faces += mb->num_faces;
-                ++mis_count;
+                for (int i = 0; i < it.num_entities; ++i)
+                {
+                    mesh_instance_t* mi = &mis[i];
+
+                    const scene_t* scene = &engine->scene;
+                    const mesh_base_t* mb = &scene->mesh_bases.bases[mi->mb_id];
+                    total_faces += mb->num_faces;
+                    ++mis_count;
+                }
             }
+            snprintf(vertices_str, sizeof(vertices_str), "VERTICES: %d", total_faces * 3);
         }
+        
 
-        snprintf(vertices_str, sizeof(vertices_str), "VERTICES: %d", total_faces * 3);
 
         // TODO: TEMP?
-        g_elapsed += dt;
+        g_elapsed += dt;        
     }
 }
 
@@ -320,7 +350,7 @@ void engine_handle_input(engine_t* engine, float dt)
     camera->direction.x = sinf(camera->yaw) * cosPitch;
     camera->direction.y = sinf(camera->pitch);
     camera->direction.z = cosf(camera->yaw) * cosPitch;
-    normalise(&camera->direction);
+    v3_normalise(&camera->direction);
 
     // TODO: How do I make the engine actually m/s?
 
@@ -350,14 +380,14 @@ void engine_handle_input(engine_t* engine, float dt)
     if (keys['A'] & KeyDown)
     {
         v3_t up = { 0, 1, 0 };
-        v3_t right = normalised(cross(camera->direction, up));
+        v3_t right = v3_normalised(cross(camera->direction, up));
 
         v3_sub_eq_v3(&camera->position, v3_mul_f(right, meters_per_second));
     }
     if (keys['D'] & KeyDown)
     {
         v3_t up = { 0, 1, 0 };
-        v3_t right = normalised(cross(camera->direction, up));
+        v3_t right = v3_normalised(cross(camera->direction, up));
 
         v3_add_eq_v3(&camera->position, v3_mul_f(right, meters_per_second));
     }

@@ -147,7 +147,7 @@ void look_at(v3_t position, v3_t direction, m4_t out)
 	else
 	{
 		// Calculate the other axis by using the z axis as the direction.
-		x_axis = normalised(cross(world_up, direction));
+		x_axis = v3_normalised(cross(world_up, direction));
 	}
 
 	v3_t y_axis = cross(direction, x_axis);

@@ -64,7 +64,7 @@ void view_frustum_init(view_frustum_t* view_frustum, float near_dist, float far_
     // TODO: Functoin for calculating plane from 3 points.
 	plane_t right = { 
 		.point = near_top_right, 
-		.normal = normalised(cross(v3_sub_v3(near_top_right, near_bottom_right), v3_sub_v3(far_top_right, near_bottom_right)))
+		.normal = v3_normalised(cross(v3_sub_v3(near_top_right, near_bottom_right), v3_sub_v3(far_top_right, near_bottom_right)))
 	};
 	
 	// Define the left plane.
@@ -77,7 +77,7 @@ void view_frustum_init(view_frustum_t* view_frustum, float near_dist, float far_
 	// Define the top/bottom planes, opposite y direction.
 	plane_t top = {
 		.point = near_top_left,
-		.normal = normalised(cross(v3_sub_v3(far_top_right, far_top_left), v3_sub_v3(near_top_left, far_top_left)))
+		.normal = v3_normalised(cross(v3_sub_v3(far_top_right, far_top_left), v3_sub_v3(near_top_left, far_top_left)))
 	};
 
 	plane_t bottom = {

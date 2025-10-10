@@ -40,11 +40,13 @@ void debug_draw_point_lights(
 
 void debug_draw_view_space_point(canvas_t* canvas, const render_settings_t* settings, v3_t point, int colour);
 void debug_draw_normals(canvas_t* canvas, const frame_data_t* frame_data, const render_settings_t* settings, const scene_t* scene);
+
 /*void debug_draw_point_lights(canvas_t* canvas, const render_settings_t* settings, PointLights* point_lights);
 void debug_draw_bounding_spheres(canvas_t* canvas, const render_settings_t* settings, const Models* models, const m4_t view_matrix);
+*/
 void debug_draw_world_space_point(canvas_t* canvas, const render_settings_t* settings, v3_t point, const m4_t view_matrix, int colour);
 void debug_draw_world_space_line(canvas_t* canvas, const render_settings_t* settings, const m4_t view_matrix, v3_t v0, v3_t v1, v3_t colour);
-*/
+
 
 
 // TODO: Split these functions into sections.

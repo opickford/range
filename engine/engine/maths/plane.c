@@ -44,7 +44,7 @@ float line_intersect_plane(const v3_t v0, const v3_t v1, const plane_t* plane, v
 plane_t plane_from_points(const v3_t v0, const v3_t v1, const v3_t v2)
 {
     return (plane_t) {
-        .normal = normalised(cross(v3_sub_v3(v1, v0), v3_sub_v3(v2, v0))),
+        .normal = v3_normalised(cross(v3_sub_v3(v1, v0), v3_sub_v3(v2, v0))),
         .point = v1
     };
 }
