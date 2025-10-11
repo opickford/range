@@ -4,7 +4,7 @@
 
 #include <Windows.h>
 
-static int get_char_index(const Font* font, char c)
+static int get_char_index(const font_t* font, char c)
 {
     // TODO: Switch to a map of precalculated offsets possibly?
     int defined = 0;
@@ -28,7 +28,7 @@ static int get_char_index(const Font* font, char c)
     return char_index;
 }
 
-static int get_initial_atlas_char_offset(const Font* font, 
+static int get_initial_atlas_char_offset(const font_t* font, 
     const int initial_atlas_width, char c)
 {
     // Returns the offset to the char in the given font atlas, therefore,
@@ -50,13 +50,13 @@ static int get_initial_atlas_char_offset(const Font* font,
     return rowOffset + colOffset;
 }
 
-Status Font_init(Font* font)
+status_t font_init(font_t* font)
 {
     // TODO: There are strict rules about the input axis, should write these
     //       out properly!!! pixel gap between rows/cols etc
     
     // Initialise the font struct.
-	memset(font, 0, sizeof(Font));
+	memset(font, 0, sizeof(font_t));
 
 	// Initialise the character data.
     // TODO: Allow this to be set?
@@ -66,17 +66,17 @@ Status Font_init(Font* font)
 	font->char_height = 9;
 
     // Read the given font atlas.
-    Canvas src;
+    canvas_t src;
     // TODO: Stop hardcoding this path.
-    Status status = Canvas_init_from_bitmap(&src, "C:/Users/olive/source/repos/range/res/fonts/minogram_6x10_font.bmp");
+    status_t status = canvas_init_from_bitmap(&src, "C:/Users/olive/source/repos/range/res/fonts/minogram_6x10_font.bmp");
     if (STATUS_OK != status)
     {
-        log_error("Failed to load font atlas bitmap, status: %s", Status_to_str(status));
+        log_error("Failed to load font atlas bitmap, status: %s", status_to_str(status));
         return status;
     }
 
     // The atlas will be transformed to a flat array with no padding.
-    status = Canvas_init(&font->atlas, 
+    status = canvas_init(&font->atlas, 
         (size_t)(font->char_width * font->char_height) * strlen(font->defined_chars),
         1);
 
@@ -84,7 +84,7 @@ Status Font_init(Font* font)
     //       Or potentially some define like RETURN_IF_FAILED(msg, status, ...)?
     if (STATUS_OK != status)
     {
-        log_error("Failed to init font atlas canvas, status: %s", Status_to_str(status));
+        log_error("Failed to init font atlas canvas, status: %s", status_to_str(status));
         return status;
     }
 
@@ -100,7 +100,7 @@ Status Font_init(Font* font)
         {
             for (int k = 0; k < font->char_width; ++k)
             {
-                font->atlas.pixels.data[out++] = src.pixels.data[src_row + k];
+                font->atlas.pixels[out++] = src.pixels[src_row + k];
             }
 
             // Increment row
@@ -111,7 +111,7 @@ Status Font_init(Font* font)
 	return STATUS_OK;
 }
 
-int Font_get_char_offset(Font* font, char c)
+int font_get_char_offset(font_t* font, char c)
 {
     // TODO: Switch to a map of precalculated offsets possibly?
     int char_index = get_char_index(font, c);

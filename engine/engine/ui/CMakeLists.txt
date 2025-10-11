@@ -22,4 +22,4 @@ target_include_directories(ui
 target_include_directories(ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 
-set_target_properties(ui PROPERTIES FOLDER "Engine")
+set_target_properties(ui PROPERTIES FOLDER "engine_t")

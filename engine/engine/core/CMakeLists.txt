@@ -30,7 +30,7 @@ add_library (core STATIC
 
 target_link_libraries(core 
     PUBLIC
-        cecs::cecs common maths utils
+        cecs::cecs chds::chds common maths utils
 )
 
 target_include_directories(core 
@@ -40,7 +40,7 @@ target_include_directories(core
         $<INSTALL_INTERFACE:include>
 )
 
-set_target_properties(core PROPERTIES FOLDER "Engine")
+set_target_properties(core PROPERTIES FOLDER "engine_t")
 
 # TODO: Add tests and install targets if needed.
 

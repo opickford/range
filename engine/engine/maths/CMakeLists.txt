@@ -22,4 +22,4 @@ target_link_libraries(maths
     PUBLIC 
         utils)
 
-set_target_properties(maths PROPERTIES FOLDER "Engine")
+set_target_properties(maths PROPERTIES FOLDER "engine_t")

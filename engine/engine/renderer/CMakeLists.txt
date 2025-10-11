@@ -21,8 +21,8 @@ add_library(renderer STATIC
 )
 
 target_link_libraries(renderer 
-    PUBLIC
-        cecs::cecs core maths utils)
+    PRIVATE
+        cecs::cecs chds::chds core maths utils)
 
 target_include_directories(renderer 
     PUBLIC
@@ -31,4 +31,4 @@ target_include_directories(renderer
         $<INSTALL_INTERFACE:include>
 )
 
-set_target_properties(renderer PROPERTIES FOLDER "Engine")
+set_target_properties(renderer PROPERTIES FOLDER "engine_t")

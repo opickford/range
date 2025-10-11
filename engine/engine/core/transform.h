@@ -5,18 +5,18 @@
 
 // TODO: Should this just go into components?
 
-typedef struct
+typedef struct transform
 {
-    V3 position;
-    V3 scale;
-    V3 rotation;
-} Transform;
+    v3_t position;
+    v3_t scale;
+    v3_t rotation;
+} transform_t;
 
-inline void Transform_init(Transform* t)
+inline void transform_init(transform_t* t)
 {
-    t->position = (V3){ 0.f, 0.f, 0.f };
-    t->scale = (V3){ 1.f,1.f,1.f };
-    t->rotation = (V3){ 0.f, 0.f, 0.f };
+    t->position = (v3_t){ 0.f, 0.f, 0.f };
+    t->scale = (v3_t){ 1.f,1.f,1.f };
+    t->rotation = (v3_t){ 0.f, 0.f, 0.f };
 }
 
 #endif

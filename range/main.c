@@ -9,20 +9,28 @@
 #include <engine/maths/vector3.h>
 #include <engine/common/status.h>
 
+#include <engine/core/globals.h>
 
 float* directions;
 
-MeshBaseID sphere_base;
-MeshBaseID cube_base;
+mesh_base_id_t sphere_base;
+mesh_base_id_t cube_base;
+mesh_base_id_t map_base;
+mesh_base_id_t monkey_base;
 
-void create_map(Engine* engine)
+cecs_entity_id_t map_entity;
+cecs_entity_id_t monkey_entity;
+
+void create_map(engine_t* engine)
 {
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/fortnite_peter.bmp");
+    
     // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     
     // TODO: Also for models, the scene could be global? I think MBs should be 
     //       global?
-    Scene* scene = &engine->scene;
-    Status status = scene_init(scene);
+    scene_t* scene = &engine->scene;
+    status_t status = scene_init(scene);
     
     // Load some mesh bases.
     sphere_base = mesh_bases_add(&scene->mesh_bases);
@@ -31,128 +39,138 @@ void create_map(Engine* engine)
     cube_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[cube_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
 
+    map_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[map_base], "C:/Users/olive/source/repos/range/res/models/physics_test_map.obj");
+
+    monkey_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[monkey_base], "C:/Users/olive/source/repos/range/res/models/suzanne.obj");
+
+    
     // Create an entity
-    EntityID cube_entity = ECS_create_entity(&engine->ecs);
+    {
+        cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
+        map_entity = cube_entity;
 
-    // Add a MeshInstance component.
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-    MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, 
-        COMPONENT_MeshInstance);
-    MeshInstance_init(mi, &scene->mesh_bases.bases[cube_base]);
+        // Add a mesh_instance_t component.
+        mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[map_base]);
 
-    mi->texture_id = 0;
+        mi->texture_id = 0;
 
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-    Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-    Transform_init(transform);
+        transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+        transform_init(transform);
+        transform->scale = v3_uniform(2);
 
-    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/rickreal.bmp");
+        // TODO: currently testing with static.
+        //physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        //physics_data_init(physics_data);
+        //physics_data->force = (v3_t){ 0,0,1 };
+
+        collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
+        collider_init(collider);
+
+        collider->shape.type = COLLISION_SHAPE_MESH;
+
+        physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        physics_data_init(pd);
+        pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
+        pd->floating = 1;
+        
+
+    }
+    
+    
+    // MONKEY
+    /*
+    {
+        cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
+        monkey_entity = cube_entity;
+
+        // Add a mesh_instance_t component.
+        mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[monkey_base]);
+
+        mi->texture_id = 0;
+
+        transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+        transform_init(transform);
+        transform->scale = v3_uniform(1);
+
+        // TODO: currently testing with static.
+        //physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        //physics_data_init(physics_data);
+        //physics_data->force = (v3_t){ 0,0,1 };
+
+        collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
+        collider_init(collider);
+
+        collider->shape.type = COLLISION_SHAPE_MESH;
+        //collider->shape.ellipsoid = v3_uniform(1.f);
+
+        physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        physics_data_init(pd);
+    }*/
+  
 
     /*
-    mb_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/res/models/cube.obj");
-    mi_create(&scene->models, &engine->renderer.buffers, 0, 1);
-    mi_set_transform(&scene->models, 0, (V3) { 0, 0, -5 }, (V3) { 0, 0, 0 }, (V3) { 5, 5, 5 });
+    // TODO: TEMP: Currently setting the spawned cube to have an ellipsoid collider, but this is just for the 
+    //             broad phase which is using the sphere.
+    // Normally to calculate bounding sphere of square we would half the scale, however,
+    // the input .obj goes from -1 to 1, so the length is 2.
+    v3_t half_sqrd = v3_mul_v3(transform->scale, transform->scale);
+    float radius = sqrtf(half_sqrd.x + half_sqrd.y + half_sqrd.z);
+    collider->shape.ellipsoid = v3_uniform(radius);
+    printf("%f\n", radius);
     */
-    //scene->models.mis_texture_ids[0] = 0;
-
-    scene->ambient_light = (V3){ 0.1f,0.1f,0.1f };
+    scene->ambient_light = v3_uniform(1.f);
+    //scene->ambient_light = v3_uniform(0.1f);
+    
     scene->bg_colour = 0x11111111;
     
     // TODO: Should the camera be part of the scene??
-    engine->renderer.camera.position = (V3) { 0, 0, 10.f };
+    engine->renderer.camera.position = (v3_t) { 0, 0, 10.f };
 }
 
-void engine_on_init(Engine* engine)
+void engine_on_init(engine_t* engine)
 {
+    // TODO: Should really be init by the engine!!!
     g_draw_normals = 0;
     g_debug_shadows = 0;
+    g_debug_velocities = 0;
 
     create_map(engine);
-
-    /*
-    // Create a scene
-    Scene* scene = &engine->scenes[0];
-    Status status = scene_init(scene);
-
-    scene->ambient_light.x = 0.1f;
-    scene->ambient_light.y = 0.1f;
-    scene->ambient_light.z = 0.1f;
-
-    if (STATUS_OK != status)
-    {
-        log_error("Failed to scene_init because of %s", status_to_str(status));
-        return;
-    }
-
-    engine->current_scene_id = 0;
-    ++engine->scenes_count;
-    
-    // Setup scene for shadow testing.
-    // TODO: Could be nice to have a wrapper so I dont need to include the buffers param?
-    load_model_base_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/range/res/models/cube.obj");
-    load_model_base_from_obj(&scene->models, &engine->renderer.buffers, "C:/Users/olive/source/repos/range/range/res/models/suzanne.obj");
-    
-    V3 eulers = { 0, 0, 0 };
-
-    create_model_instances(&scene->models, &engine->renderer.buffers, 0, 1);
-    V3 plane_pos = { 0, 0, -4 };
-    V3 plane_scale = { 5.f, 0.1f, 10.f };
-    mi_set_transform(&scene->models, 0, plane_pos, eulers, plane_scale);
-
-    if (0)
-    {
-
-        create_model_instances(&scene->models, &engine->renderer.buffers, 0, 2);
-        V3 pos0 = { -1, 1, 3 };
-        V3 pos1 = { 1, 1, 3 };
-        
-        V3 scale = { 0.5, 1, 0.5 };
-        mi_set_transform(&scene->models, 1, pos0, eulers, scale);
-        mi_set_transform(&scene->models, 2, pos1, eulers, scale);
-    }
-    else
-    {
-        
-        create_model_instances(&scene->models, &engine->renderer.buffers, 1, 1);
-        V3 pos = { 0, 1, 0 };
-
-        V3 scale = { 1, 1, 1 };
-        mi_set_transform(&scene->models, 1, pos, eulers, scale);  
-        
-    }
-
-    V3 pl_pos0 = { 0, 2, 14 };
-    V3 pl_col0 = { 1, 1, 1 };
-    point_lights_create(&scene->point_lights, &engine->renderer.buffers, pl_pos0, pl_col0, 50.f);
-
-    engine->renderer.camera.position.z = 20;
-
-    // TODO: Maybe this is something that should be called after making changes to the models and lights?
-    // TODO: But either way, we need to find a better way of doing this automatically because otherwise
-    //       it will definitely cause some mistakes.
-    render_buffers_resize(&engine->renderer.buffers);*/
 }
 
-void engine_on_update(Engine* engine, float dt)
+void engine_on_update(engine_t* engine, float dt)
 {
+    {
+        physics_data_t* pd = cecs_get_component(engine->ecs, map_entity, COMPONENT_PHYSICS_DATA);
+        //pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
+    }
+
+    {
+        physics_data_t* pd = cecs_get_component(engine->ecs, monkey_entity, COMPONENT_PHYSICS_DATA);
+        //pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
+
+    }
+    
     return;
 }
 
-void engine_on_keyup(Engine* engine, WPARAM wParam)
+void engine_on_keyup(engine_t* engine, WPARAM wParam)
 {
 
     switch (wParam)
     {
     case VK_F1:
     {
-        MeshBaseID mb_ids[2] = { cube_base, sphere_base };
+        mesh_base_id_t mb_ids[2] = { cube_base, sphere_base };
 
-        MeshBaseID mb_id = mb_ids[(int)(random_float() + 0.5f)];
+        mesh_base_id_t mb_id = mb_ids[(int)(random_float() + 0.5f)];
 
+        scene_t* scene = &engine->scene;
 
-        Scene* scene = &engine->scene;
-
-        V3 colour =
+        v3_t colour =
         {
             random_float(),
             random_float(),
@@ -160,48 +178,31 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         };
 
         
-        const Camera* camera = &engine->renderer.camera;
+        const camera_t* camera = &engine->renderer.camera;
 
-        const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
+        const v3_t pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
-        EntityID cube_entity = ECS_create_entity(&engine->ecs);
-        ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-        MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-        MeshInstance_init(mi, &scene->mesh_bases.bases[sphere_base]);
-        MeshInstance_set_albedo(mi, &scene->mesh_bases.bases[sphere_base], colour);
+        cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
+        mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[sphere_base]);
+        mesh_instance_set_albedo(mi, &scene->mesh_bases.bases[sphere_base], colour);
 
-        ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-        Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-        Transform_init(transform);
+        transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+        transform_init(transform);
         transform->position = pos;
 
-        /*
-        MeshInstanceID inst = mesh_instances_add(&scene->mesh_instances);
-        scene_MeshInstance_set_base(scene, inst, mb_id);
-        scene_MeshInstance_set_albedo(scene, inst, colour);
-        mesh_instances_get(&scene->mesh_instances, inst)->position = pos;
-
-        */
-        
         break;
     }
     case VK_F2:
     {
         //g_draw_normals = !g_draw_normals;
-
-        Scene* scene = &engine->scene;
+        scene_t* scene = &engine->scene;
         
-        
-        /*
-        if (scene->mesh_instances.count > 0)
-            mesh_instances_remove(&scene->mesh_instances,
-                scene->mesh_instances.id_to_index[scene->mesh_instances.count - 1]);*/
-
         break;
     }
     case VK_F3:
     {
-        V3 colour =
+        v3_t colour =
         {
             random_float(),
             random_float(),
@@ -210,13 +211,12 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
         
         // TODO: Should camera be an entity component or entity or leave it? Not sure.
         //       Fine for now.
-        Camera* camera = &engine->renderer.camera;
+        camera_t* camera = &engine->renderer.camera;
         
-        const V3 pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
+        const v3_t pos = v3_add_v3(camera->position, v3_mul_f(camera->direction, 10.f * (random_float() + 1)));
 
-        EntityID e = ECS_create_entity(&engine->ecs);
-        ECS_add_component(&engine->ecs, e, COMPONENT_PointLight);
-        PointLight* pl = ECS_get_component(&engine->ecs, e, COMPONENT_PointLight);
+        cecs_entity_id_t e = cecs_create_entity(engine->ecs);
+        point_light_t* pl = cecs_add_component(engine->ecs, e, COMPONENT_POINT_LIGHT);
         pl->position = pos;
         pl->colour = colour;
         pl->strength = 1.f;
@@ -225,58 +225,85 @@ void engine_on_keyup(Engine* engine, WPARAM wParam)
     }
     case VK_F4:
     {
-        MeshInstance* mi = ECS_get_component(&engine->ecs, 0, COMPONENT_MeshInstance);
-        MeshInstance_destroy(mi);
-        ECS_remove_component(&engine->ecs, 0, COMPONENT_MeshInstance);
+        mesh_instance_t* mi = cecs_get_component(engine->ecs, 0, COMPONENT_MESH_INSTANCE);
+        mesh_instance_destroy(mi);
+        cecs_remove_component(engine->ecs, 0, COMPONENT_MESH_INSTANCE);
 
-        ECS_destroy_entity(&engine->ecs, 0);
+        cecs_destroy_entity(engine->ecs, 0);
 
-
-        /*
-        Scene* scene = &engine->scenes[engine->current_scene_id];
-        if (scene->lights.point_lights.count > 0)
-            PointLights_remove(&scene->lights.point_lights, scene->lights.point_lights.index_to_id[0]);
-            */
         break;
     }
     case VK_F5:
     {
-        ECS_add_component(&engine->ecs, 0, COMPONENT_MeshInstance);
-        MeshInstance* mi = ECS_get_component(&engine->ecs, 0, COMPONENT_MeshInstance);
-        MeshInstance_init(mi, &engine->scene.mesh_bases.bases[0]);
-        MeshInstance_set_albedo(mi, &engine->scene.mesh_bases.bases[0], (V3) { 1, 0, 0 });
+        engine->renderer.camera.position = (v3_t){ -5, 0, 2 };
+        engine->renderer.camera.direction = (v3_t){ 1,0,0 };
 
-        /*
-        Scene* scene = &engine->scenes[engine->current_scene_id];
-        if (scene->lights.point_lights.count > 0)
-            PointLights_remove(&scene->lights.point_lights, scene->lights.point_lights.index_to_id[0]);
-            */
+        // TODO: Function for this.
+        engine->renderer.camera.pitch = asinf(engine->renderer.camera.direction.y);
+        engine->renderer.camera.yaw = atan2f(engine->renderer.camera.direction.x, engine->renderer.camera.direction.z);
+
+        break;
+    }
+    case VK_F6:
+    {
+        g_debug_velocities = !g_debug_velocities;
         break;
     }
     }
 }
 
-void engine_on_lmbdown(Engine* engine)
+void engine_on_lmbdown(engine_t* engine)
 {
-    Scene* scene = &engine->scene;
+    scene_t* scene = &engine->scene;
 
     // Create an entity
-    EntityID cube_entity = ECS_create_entity(&engine->ecs);
+    cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
 
-    // Add a MeshInstance component.
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_MeshInstance);
-    MeshInstance* mi = ECS_get_component(&engine->ecs, cube_entity,
-        COMPONENT_MeshInstance);
-    MeshInstance_init(mi, &scene->mesh_bases.bases[cube_base]);
+    //mesh_base_t* mb = &scene->mesh_bases.bases[cube_base];
+    mesh_base_t* mb = &scene->mesh_bases.bases[sphere_base];
 
-    ECS_add_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-    Transform* transform = ECS_get_component(&engine->ecs, cube_entity, COMPONENT_Transform);
-    Transform_init(transform);
+    // Add a mesh_instance_t component.
+    cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+    mesh_instance_t* mi = cecs_get_component(engine->ecs, cube_entity,
+        COMPONENT_MESH_INSTANCE);
+    mesh_instance_init(mi, mb);
+
+
+    v3_t colour =
+    {
+        random_float(),
+        random_float(),
+        random_float()
+    };
+    mesh_instance_set_albedo(mi, mb, colour);
+
+    cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+    transform_t* transform = cecs_get_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+    transform_init(transform);
+    transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
+
+    transform->scale = v3_uniform(0.1f);
+    //transform->scale = (v3_t){ 0.5f,2,1 };
+
+    physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+    physics_data_init(physics_data);
+
+    physics_data->mass = 1.f;
+
+    // TODO: Dt?
+    float speed = physics_data->mass * 20.f;
+    v3_add_eq_v3(&physics_data->impulses, v3_mul_f(engine->renderer.camera.direction, speed));
+
+    // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
+
+    collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
+    collider_init(collider);
+    collider->shape.ellipsoid = transform->scale;
 }
 
 int main()
 {
-	Engine engine;
+	engine_t engine;
 	if (STATUS_OK == engine_init(&engine, 800, 600))
 	{
 		engine_run(&engine);

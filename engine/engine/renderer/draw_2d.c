@@ -2,7 +2,7 @@
 
 #include <math.h>
 
-void draw_line(Canvas* canvas, int x0, int y0, int x1, int y1, int colour)
+void draw_line(canvas_t* canvas, int x0, int y0, int x1, int y1, int colour)
 {
 	int dx = abs(x1 - x0);
 	int sx = x0 < x1 ? 1 : -1;
@@ -10,7 +10,7 @@ void draw_line(Canvas* canvas, int x0, int y0, int x1, int y1, int colour)
 	int sy = y0 < y1 ? 1 : -1;
 	int error = dx + dy;
 
-    int* pixels = canvas->pixels.data;
+    int* pixels = canvas->pixels;
 
 	while (1)
 	{
@@ -37,7 +37,7 @@ void draw_line(Canvas* canvas, int x0, int y0, int x1, int y1, int colour)
 	}
 }
 
-void draw_circle(Canvas* canvas, int cx, int cy, int r, int colour)
+void draw_circle(canvas_t* canvas, int cx, int cy, int r, int colour)
 {
 
 	// (x-a)^2 + (y-b)^2
@@ -45,7 +45,7 @@ void draw_circle(Canvas* canvas, int cx, int cy, int r, int colour)
 	// All this could be better, doesn't work great.
 	int rr = r * r;
 
-    int* pixels = canvas->pixels.data;
+    int* pixels = canvas->pixels;
 
 	for (int y = -r; y < r; ++y)
 	{
@@ -72,9 +72,9 @@ void draw_circle(Canvas* canvas, int cx, int cy, int r, int colour)
 	}
 }
 
-void draw_rect(Canvas* canvas, int x0, int y0, int x1, int y1, int colour)
+void draw_rect(canvas_t* canvas, int x0, int y0, int x1, int y1, int colour)
 {
-    int* pixels = canvas->pixels.data;
+    int* pixels = canvas->pixels;
 
 	// TODO: Can optimise.
 	for (int y = y0; y < y1; ++y)

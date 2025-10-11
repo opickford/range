@@ -1,28 +1,33 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
+#include "transform.h"
+#include "mesh_instance.h"
+#include "lights.h"
+
+#include "physics/physics.h"
+
 #include <cecs/ecs.h>
 
-#include "transform.h"
+#define CORE_COMPONENTS_LIST          \
+    X(MESH_INSTANCE, mesh_instance_t) \
+    X(POINT_LIGHT, point_light_t)     \
+    X(TRANSFORM, transform_t)         \
+    X(PHYSICS_DATA, physics_data_t)   \
+    X(COLLIDER, collider_t)
 
-// TODO: Is XMacro pattern necessary here?
-
-
-#define CORE_COMPONENTS_LIST \
-    X(MeshInstance) \
-    X(PointLight) \
-    X(Transform)
-
-// TODO: Should this be like COMPONENT_ID_...?
-#define X(T) ComponentID COMPONENT_##T;
+#define X(name, T) cecs_component_id_t COMPONENT_##name;
     CORE_COMPONENTS_LIST
 #undef X
 
-inline void CoreComponents_init(ECS* ecs)
-{       
+inline void core_components_init(cecs_t* ecs)
+{
     // Register all core engine components.
-#define X(T) COMPONENT_##T = ECS_register_component(ecs, sizeof(T)); printf("Registered Component: " #T "id: %d\n", COMPONENT_##T);
-    CORE_COMPONENTS_LIST            
+#define X(name, T) \
+    COMPONENT_##name = cecs_register_component(ecs, sizeof(T)); \
+    printf("Registered Component: " #name " id: %d\n", COMPONENT_##name);
+
+        CORE_COMPONENTS_LIST
 #undef X
 }
 

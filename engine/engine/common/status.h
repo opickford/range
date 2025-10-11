@@ -1,8 +1,6 @@
 #ifndef STATUS_H
 #define STATUS_H
 
-
-
 // TODO: In the future it would be nice to have some prefix for engine/game code to differentiate it 
 //       from Windows code for example there are lots of STATUS_ from <Windows.h>.
 
@@ -17,9 +15,9 @@ typedef enum
 	STATUS_ALLOC_FAILURE,
     STATUS_FILE_FAILURE
 
-} Status;
+} status_t;
 
-inline const char* Status_to_str(Status status)
+inline const char* status_to_str(status_t status)
 {
     switch (status) 
     {
@@ -29,7 +27,7 @@ inline const char* Status_to_str(Status status)
         case STATUS_WIN32_FAILURE:      return "Win32 Failure";
         case STATUS_ALLOC_FAILURE:      return "Alloc Failure";
         case STATUS_FILE_FAILURE:       return "File Failure";
-        default:                        return "Unknown Status";
+        default:                        return "Unknown status_t";
     }
 }
 
@@ -37,9 +35,9 @@ inline const char* Status_to_str(Status status)
 /*
 #ifndef NDEBUG
 #include <assert.h>
-#DEFINE Assert(Status status) { assert(status == STATUS_OK); };
+#DEFINE Assert(status_t status) { assert(status == STATUS_OK); };
 #else
-inline void Assert(Status status) {};
+inline void Assert(status_t status) {};
 #endif
 */
 

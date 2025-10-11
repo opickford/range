@@ -4,10 +4,10 @@
 
 #include <string.h>
 
-void view_frustum_init(ViewFrustum* view_frustum, float near_dist, float far_dist, float fov, float aspect_ratio)
+void view_frustum_init(view_frustum_t* view_frustum, float near_dist, float far_dist, float fov, float aspect_ratio)
 {
 	// Reset the struct.
-	memset(view_frustum, 0, sizeof(ViewFrustum));
+	memset(view_frustum, 0, sizeof(view_frustum_t));
 
 	// Calculate the dimensions of the near and far planes.
 	float double_tanf_half_fov = 2.f * tanf(radians(fov) / 2.f);
@@ -22,65 +22,65 @@ void view_frustum_init(ViewFrustum* view_frustum, float near_dist, float far_dis
 	// TODO: Should these be defined globally somewhere? or at least in a function? like v3_world_up?
 	// TODO: Also these are really world up as well. Not specific to view space. 
 	// TODO: Should be defined in some engine_globals.h maybe.
-	V3 view_forward = { 0, 0, -1.f };
-	V3 view_up = { 0, 1.f, 0 };
-	V3 view_right = { 1.f, 0, 0 };
+	v3_t view_forward = { 0, 0, -1.f };
+	v3_t view_up = { 0, 1.f, 0 };
+	v3_t view_right = { 1.f, 0, 0 };
 
 	// Define offsets for the near and far planes.
-	V3 near_centre = v3_mul_f(view_forward, near_dist);
-	V3 near_top_offset = v3_mul_f(view_up, near_height * 0.5f);
-	V3 near_right_offset = v3_mul_f(view_right, near_width * 0.5f);
+	v3_t near_centre = v3_mul_f(view_forward, near_dist);
+	v3_t near_top_offset = v3_mul_f(view_up, near_height * 0.5f);
+	v3_t near_right_offset = v3_mul_f(view_right, near_width * 0.5f);
 
-	V3 far_centre = v3_mul_f(view_forward, far_dist);
-	V3 far_top_offset = v3_mul_f(view_up, far_height * 0.5f);
-	V3 far_right_offset = v3_mul_f(view_right, far_width * 0.5f);
+	v3_t far_centre = v3_mul_f(view_forward, far_dist);
+	v3_t far_top_offset = v3_mul_f(view_up, far_height * 0.5f);
+	v3_t far_right_offset = v3_mul_f(view_right, far_width * 0.5f);
 
 	// To calculate each plane normal, we can define 3 points on each plane
 	// and use the cross product of the edges. So define the four corners
 	// of each plane.
-	V3 near_top_left = v3_sub_v3(v3_add_v3(near_centre, near_top_offset), near_right_offset);
-	V3 near_top_right = v3_add_v3(v3_add_v3(near_centre, near_top_offset), near_right_offset);
-	V3 near_bottom_left = v3_sub_v3(v3_sub_v3(near_centre, near_top_offset), near_right_offset);
-	V3 near_bottom_right = v3_add_v3(v3_sub_v3(near_centre, near_top_offset), near_right_offset);
+	v3_t near_top_left = v3_sub_v3(v3_add_v3(near_centre, near_top_offset), near_right_offset);
+	v3_t near_top_right = v3_add_v3(v3_add_v3(near_centre, near_top_offset), near_right_offset);
+	v3_t near_bottom_left = v3_sub_v3(v3_sub_v3(near_centre, near_top_offset), near_right_offset);
+	v3_t near_bottom_right = v3_add_v3(v3_sub_v3(near_centre, near_top_offset), near_right_offset);
 
-	V3 far_top_left = v3_sub_v3(v3_add_v3(far_centre, far_top_offset), far_right_offset);
-	V3 far_top_right = v3_add_v3(v3_add_v3(far_centre, far_top_offset), far_right_offset);
-	//V3 far_bottom_left = v3_sub_v3(v3_sub_v3(far_centre, far_top_offset), far_right_offset);
-	//V3 far_bottom_right = v3_add_v3(v3_sub_v3(far_centre, far_top_offset), far_right_offset);
+	v3_t far_top_left = v3_sub_v3(v3_add_v3(far_centre, far_top_offset), far_right_offset);
+	v3_t far_top_right = v3_add_v3(v3_add_v3(far_centre, far_top_offset), far_right_offset);
+	//v3_t far_bottom_left = v3_sub_v3(v3_sub_v3(far_centre, far_top_offset), far_right_offset);
+	//v3_t far_bottom_right = v3_add_v3(v3_sub_v3(far_centre, far_top_offset), far_right_offset);
 
 	// Near and far are trivial to define.
-	Plane near = {
+	plane_t near = {
 		.point = near_centre,
 		.normal = { 0, 0, -1.f}
 	};
 
-	Plane far = {
+	plane_t far = {
 		.point = far_centre,
 		.normal = { 0, 0, 1.f}
 	};
 
 	// Define the left/right planes, opposite x direction.
 
-	// TODO: Function for calculating the plane normal.
-	Plane right = { 
+    // TODO: Functoin for calculating plane from 3 points.
+	plane_t right = { 
 		.point = near_top_right, 
-		.normal = normalised(cross(v3_sub_v3(near_top_right, near_bottom_right), v3_sub_v3(far_top_right, near_bottom_right)))
+		.normal = v3_normalised(cross(v3_sub_v3(near_top_right, near_bottom_right), v3_sub_v3(far_top_right, near_bottom_right)))
 	};
 	
 	// Define the left plane.
-	Plane left = { 
+	plane_t left = { 
 		.point = near_top_left,
 		.normal = right.normal
 	};
 	left.normal.x *= -1;
 
 	// Define the top/bottom planes, opposite y direction.
-	Plane top = {
+	plane_t top = {
 		.point = near_top_left,
-		.normal = normalised(cross(v3_sub_v3(far_top_right, far_top_left), v3_sub_v3(near_top_left, far_top_left)))
+		.normal = v3_normalised(cross(v3_sub_v3(far_top_right, far_top_left), v3_sub_v3(near_top_left, far_top_left)))
 	};
 
-	Plane bottom = {
+	plane_t bottom = {
 		.point = near_bottom_left,
 		.normal = top.normal
 	};

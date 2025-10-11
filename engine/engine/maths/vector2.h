@@ -5,26 +5,26 @@ typedef struct
 {
 	float x, y;
 
-} V2;
+} v2_t;
 
-inline V2 v2_add_v2(V2 v0, V2 v1)
+inline v2_t v2_add_v2(v2_t v0, v2_t v1)
 {
-    return (V2) { v0.x + v1.x, v0.y + v1.y };
+    return (v2_t) { v0.x + v1.x, v0.y + v1.y };
 }
 
-inline V2 v2_sub_v2(V2 v0, V2 v1)
+inline v2_t v2_sub_v2(v2_t v0, v2_t v1)
 {
-    return (V2) { v0.x - v1.x, v0.y - v1.y };
+    return (v2_t) { v0.x - v1.x, v0.y - v1.y };
 }
 
-inline V2 v2_mul_f(V2 v, float f)
+inline v2_t v2_mul_f(v2_t v, float f)
 {
-    return (V2) { v.x * f, v.y * f };
+    return (v2_t) { v.x * f, v.y * f };
 }
 
-inline V2 v2_read(const float* in)
+inline v2_t v2_read(const float* in)
 {
-	return (V2) { in[0], in[1] };
+	return (v2_t) { in[0], in[1] };
 }
 
 #endif

@@ -14,7 +14,7 @@ difference, most likely because they compile to the same thing.
 Also, we pass these by value which should result in better performance for a small struct,
 see: https://austinmorlan.com/posts/pass_by_value_vs_pointer/#:~:text=When%20I%20was%20in%20college,of%20that%20on%20the%20stack
 
-Returning the V3 seems to have no performance impact and makes the code much more readable.
+Returning the v3_t seems to have no performance impact and makes the code much more readable.
 
 No need to overcomplicate this stuff, I can always do it differently in a per-pixel loop if
 profiling shows this is an issue.
@@ -24,25 +24,25 @@ typedef struct
 {
 	float x, y, z;
 
-} V3;
+} v3_t;
 
-inline V3 cross(V3 v0, V3 v1)
+inline v3_t cross(v3_t v0, v3_t v1)
 {
-	return (V3) { v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x };
+	return (v3_t) { v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x };
 }
 
 // TODO: Rename v3_size etc?
-inline float size(V3 v)
+inline float v3_size(v3_t v)
 {
 	return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-inline float size_squared(V3 v)
+inline float v3_size_sqrd(v3_t v)
 {
 	return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 
-inline void normalise(V3* v)
+inline void v3_normalise(v3_t* v)
 {	
 	const float inv_size = 1.f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
 	v->x *= inv_size;
@@ -50,82 +50,93 @@ inline void normalise(V3* v)
 	v->z *= inv_size;
 }
 
-inline V3 normalised(V3 v)
+// TODO: v3_ prefix?
+inline v3_t v3_normalised(v3_t v)
 {
-	const float inv_size = 1.f / size(v);
+	const float inv_size = 1.f / v3_size(v);
 
-	return (V3) { v.x * inv_size, v.y * inv_size, v.z * inv_size, };
+	return (v3_t) { v.x * inv_size, v.y * inv_size, v.z * inv_size, };
 }
 
-inline float dot(V3 v0, V3 v1)
+inline float dot(v3_t v0, v3_t v1)
 {
 	return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z;
 }
 
-inline void v3_mul_eq_v3(V3* v0, V3 v1)
+inline void v3_mul_eq_v3(v3_t* v0, v3_t v1)
 {
 	v0->x *= v1.x;
 	v0->y *= v1.y;
 	v0->z *= v1.z;
 }
 
-inline V3 v3_mul_v3(V3 v0, V3 v1)
+inline v3_t v3_mul_v3(v3_t v0, v3_t v1)
 {
-	return (V3) { v0.x * v1.x, v0.y * v1.y, v0.z * v1.z };
+	return (v3_t) { v0.x * v1.x, v0.y * v1.y, v0.z * v1.z };
 }
 
-inline void v3_mul_eq_f(V3* v, float f)
+inline void v3_mul_eq_f(v3_t* v, float f)
 {
 	v->x *= f;
 	v->y *= f;
 	v->z *= f;
 }
 
-inline V3 v3_mul_f(V3 v, float f)
+inline v3_t v3_mul_f(v3_t v, float f)
 {
-	return (V3) { v.x * f, v.y * f, v.z * f };
+	return (v3_t) { v.x * f, v.y * f, v.z * f };
 }
 
-inline void v3_add_eq_f(V3* v, float f)
+inline void v3_add_eq_f(v3_t* v, float f)
 {
 	v->x += f;
 	v->y += f;
 	v->z += f;
 }
 
-inline void v3_add_eq_v3(V3* v0, V3 v1)
+inline void v3_add_eq_v3(v3_t* v0, v3_t v1)
 {
 	v0->x += v1.x;
 	v0->y += v1.y;
 	v0->z += v1.z;
 }
 
-inline V3 v3_add_v3(V3 v0, V3 v1)
+inline v3_t v3_add_v3(v3_t v0, v3_t v1)
 {
-	return (V3) { v0.x + v1.x, v0.y + v1.y, v0.z + v1.z };
+	return (v3_t) { v0.x + v1.x, v0.y + v1.y, v0.z + v1.z };
 }
 
-inline void v3_sub_eq_f(V3* v, float f)
+inline void v3_sub_eq_f(v3_t* v, float f)
 {
 	v->x -= f;
 	v->y -= f;
 	v->z -= f;
 }
 
-inline void v3_sub_eq_v3(V3* v0, V3 v1)
+inline void v3_sub_eq_v3(v3_t* v0, v3_t v1)
 {
 	v0->x -= v1.x;
 	v0->y -= v1.y;
 	v0->z -= v1.z;
 }
 
-inline V3 v3_sub_v3(V3 v0, V3 v1)
+inline v3_t v3_sub_v3(v3_t v0, v3_t v1)
 {
-	return (V3) { v0.x - v1.x, v0.y - v1.y, v0.z - v1.z };
+	return (v3_t) { v0.x - v1.x, v0.y - v1.y, v0.z - v1.z };
+}
+
+inline v3_t v3_uniform(float n)
+{
+    return (v3_t) { n, n, n };
+}
+
+inline v3_t v3_inv(v3_t v)
+{
+    return (v3_t) { 1.f / v.x, 1.f / v.y, 1.f / v.z };
 }
 
 /*
-inline void v3_write(float* out, V3 v)
+inline void v3_write(float* out, v3_t v)
 {
 	out[0] = v.x;
 	out[1] = v.y;
@@ -133,23 +144,32 @@ inline void v3_write(float* out, V3 v)
 }
 */
 
-inline V3 v3_read(const float* in)
+inline v3_t v3_read(const float* in)
 {
-	return (V3) {in[0], in[1], in[2] };
+	return (v3_t) {in[0], in[1], in[2] };
 }
 
 // TODO: v3_lerp?
 
-inline char* v3_to_str(V3 v)
+inline char* v3_to_str(v3_t v)
 {
 	return format_str("%f %f %f", v.x, v.y, v.z);
 }
 
-// TODO: This shouldn't be in V3?
-inline int is_front_face(V3 v0, V3 v1, V3 v2)
+// TODO: This shouldn't be in vector3.h?
+inline int is_front_face(v3_t v0, v3_t v1, v3_t v2)
 {
-	// Calculate the direction of face.
-	// TODO: Comments.
+    // Camera is at origin as coordinates are given in view space, so 
+    // view vector from tri to cam is V = v0 - P or just -v0
+    // 
+    // dot(A,B) = |A||B|cos(theta), we only care about the sign, so
+    // just becomes dot(A,B) = cos(theta).
+    // 
+    // Dot product of face normal and V gives cos(theta) between
+    // vectors, cos(90) = 0, cos(<90) -> positive. Therefore, 
+    // Front facing IF dot(-v0, normal) > 0
+    // To avoid the extra inversion of v0, convert to:
+    // Front facing IF dot(v0, normal) <= 0
 	return dot(v0, cross(v3_sub_v3(v1, v0), v3_sub_v3(v2, v0))) <= 0;
 }
 

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+// TODO: Could this be improved
+
 inline void log_info(const char* format, ...)
 {
     va_list args;

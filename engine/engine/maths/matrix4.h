@@ -25,31 +25,31 @@ in the first matrix much match the rows in the second.
 		 Not sure it even matters. Can be a refactor in future if necessary.
 
 */
-typedef float M4[16];
+typedef float m4_t[16];
 
 // TODO: Rename _out?
-void m4_mul_m4(const M4 m0, const M4 m1, M4 out);
+void m4_mul_m4(const m4_t m0, const m4_t m1, m4_t out);
 
-void m4_mul_v4(const M4 m, V4 v, V4* out);
+void m4_mul_v4(const m4_t m, v4_t v, v4_t* out);
 
-void m4_identity(M4 out);
+void m4_identity(m4_t out);
 
-void m4_translation(V3 position, M4 out);
+void m4_translation(v3_t position, m4_t out);
 
-void m4_rotation(float pitch, float yaw, float roll, M4 out);
+void m4_rotation(float pitch, float yaw, float roll, m4_t out);
 
-void look_at(V3 position, V3 direction, M4 out);
+void look_at(v3_t position, v3_t direction, m4_t out);
 
-void m4_model_matrix(V3 position, V3 eulers, V3 scale, M4 out);
+void m4_model_matrix(v3_t position, v3_t eulers, v3_t scale, m4_t out);
 
-void m4_normal_matrix(V3 eulers, V3 scale, M4 out);
+void m4_normal_matrix(v3_t eulers, v3_t scale, m4_t out);
 
-void m4_transposed(const M4 in, M4 out);
+void m4_transposed(const m4_t in, m4_t out);
 
-void m4_copy_m3(const M4 in, M4 out);
+void m4_copy_m3(const m4_t in, m4_t out);
 
-void m4_projection(float fov, float aspect_ratio, float near_plane, float far_plane, M4 out);
+void m4_projection(float fov, float aspect_ratio, float near_plane, float far_plane, m4_t out);
 
-char* m4_to_str(const M4 m);
+char* m4_to_str(const m4_t m);
 
 #endif

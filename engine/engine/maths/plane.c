@@ -4,17 +4,18 @@
 
 #include <stdio.h>
 
-float signed_distance(const Plane* plane, const V3 point)
+// TODO: Doesn't need to be passed by pointer but i think old code using it 
+//       has ptrs already.
+float signed_distance(const plane_t* plane, const v3_t point)
 {
-	// TODO: Store this in the plane struct somewhere?
 	float d = -dot(plane->normal, plane->point);
 	return dot(point, plane->normal) + d;
 }
 
-float line_intersect_plane(const V3 v0, const V3 v1, const Plane* plane, V3* out)
+float line_intersect_plane(const v3_t v0, const v3_t v1, const plane_t* plane, v3_t* out)
 {
 	// This uses the fact that a plane can be expressed as the set of points p for which Dot((p - p0), n) = 0
-	V3 ray = v3_sub_v3(v1, v0);
+	v3_t ray = v3_sub_v3(v1, v0);
 
 	float normalDotRay = dot(plane->normal, ray);
 
@@ -28,7 +29,7 @@ float line_intersect_plane(const V3 v0, const V3 v1, const Plane* plane, V3* out
 		return 0;
 	}
 
-	V3 v0_to_plane_point = v3_sub_v3(v0, plane->point);
+	v3_t v0_to_plane_point = v3_sub_v3(v0, plane->point);
 
 	// Calculate the time of intersection.
 	float t = -(dot(plane->normal, v0_to_plane_point)) / normalDotRay;
@@ -38,4 +39,12 @@ float line_intersect_plane(const V3 v0, const V3 v1, const Plane* plane, V3* out
 	v3_add_eq_v3(out, v0);
 
 	return t;
+}
+
+plane_t plane_from_points(const v3_t v0, const v3_t v1, const v3_t v2)
+{
+    return (plane_t) {
+        .normal = v3_normalised(cross(v3_sub_v3(v1, v0), v3_sub_v3(v2, v0))),
+        .point = v1
+    };
 }

@@ -1,16 +1,16 @@
 #include "renderer.h"
 
-Status renderer_init(Renderer* renderer, int width, int height)
+status_t renderer_init(renderer_t* renderer, int width, int height)
 {
 	// Initialise the render target.
-	Status status = render_target_init(&renderer->target, width, height);
+	status_t status = render_target_init(&renderer->target, width, height);
 	if (STATUS_OK != status)
 	{
 		return status;
 	}
 
 	// Initialise the render settings.
-	memset(&renderer->settings, 0, sizeof(RenderSettings));
+	memset(&renderer->settings, 0, sizeof(render_settings_t));
 
 	renderer->settings.fov = 90.f;
 	renderer->settings.near_plane = 1.f;
@@ -19,7 +19,7 @@ Status renderer_init(Renderer* renderer, int width, int height)
 	update_projection_m4(&renderer->settings, width / (float)height);
 
 	// Create a camera.
-	memset(&renderer->camera, 0, sizeof(Camera));
+	memset(&renderer->camera, 0, sizeof(camera_t));
 	renderer->camera.direction.x = 0;
 	renderer->camera.direction.y = 0;
 	renderer->camera.direction.z = -1.f;
@@ -37,10 +37,10 @@ Status renderer_init(Renderer* renderer, int width, int height)
 	return STATUS_OK;
 }
 
-Status renderer_resize(Renderer* renderer, int width, int height)
+status_t renderer_rev3_size(renderer_t* renderer, int width, int height)
 {
 	// Resize the render target.
-	Status status = render_target_resize(&renderer->target, width, height);
+	status_t status = render_target_rev3_size(&renderer->target, width, height);
 	if (STATUS_OK != status)
 	{
 		return status;

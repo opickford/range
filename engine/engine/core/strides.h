@@ -67,7 +67,7 @@ to the buffer to clip.
 
 #define STRIDE_VISIBLE_VERTEX 14
 
-// Front faces need a pos (V3), UV (V2), normal (V3), albedo (V3), diffuse (V3)
+// Front faces need a pos (v3_t), UV (v2_t), normal (v3_t), albedo (v3_t), diffuse (v3_t)
 // as well as the space for light space coordinates.......
 #define STRIDE_BASE_FRONT_VERTEX 14
 #define STRIDE_BASE_FRONT_FACE (STRIDE_BASE_FRONT_VERTEX * STRIDE_FACE_VERTICES)

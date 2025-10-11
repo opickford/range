@@ -8,9 +8,9 @@
 
 #include "common/status.h"
 
-#include "utils/vector.h"
-
 #include <cecs/ecs.h>
+
+#include <chds/vec.h>
 
 #include <stdint.h>
 
@@ -18,20 +18,19 @@
 
 typedef struct
 {
-	// Transform Stage
-	Vector(V3) view_space_positions;
-    Vector(V3) view_space_normals;
-    Vector(BoundingSphere) view_space_bounding_spheres; // Used for broad phase frustum culling.
+	// transform_t Stage
+	chds_vec(v3_t) view_space_positions;
+    chds_vec(v3_t) view_space_normals;
 
-    Vector(V3) point_lights_view_space_positions;
+    chds_vec(v3_t) point_lights_view_space_positions;
 
 	// Broad Phase Frustum Culling
-    Vector(MeshInstance) visible_mis;
+    chds_vec(mesh_instance_t) visible_mis;
 	int num_visible_mis;
-	Vector(uint8_t) intersected_planes;
+	chds_vec(uint8_t) intersected_planes;
 
 	// Backface Culling Output
-	Vector(int) front_face_indices;
+	chds_vec(int) front_face_indices;
 
 	// Lighting
 	// TODO: Where should the vertex light output be written to?
@@ -48,28 +47,28 @@ typedef struct
 
     // TODO: Refactoring this so it's not just float arrays.
 	
-    Vector(V3) vertex_lighting;
+    chds_vec(v3_t) vertex_lighting;
 
 	// Clipping
-    Vector(float) faces_to_clip;  // Input to clip.
-	Vector(float) clipped_faces;  // Clipping output.
+    chds_vec(float) faces_to_clip;  // Input to clip.
+	chds_vec(float) clipped_faces;  // Clipping output.
 	int num_clipped_faces; // Number of faces in the output buffer.
 
     // Intermediate buffers for clipping, alternate between per plane.
-    Vector(float) temp_clipped_faces0; 
-    Vector(float) temp_clipped_faces1;
+    chds_vec(float) temp_clipped_faces0; 
+    chds_vec(float) temp_clipped_faces1;
 
-} FrameData;
+} frame_data_t;
 
-Status frame_data_init(
-    ECS* ecs, 
-    System* render_system, 
-    System* lighting_system, 
-    FrameData* frame_data, 
-    Scene* scene);
+status_t frame_data_init(
+    cecs_t* ecs, 
+    cecs_view_id_t render_view, 
+    cecs_view_id_t lighting_view, 
+    frame_data_t* frame_data, 
+    scene_t* scene);
 
 
-void frame_data_destroy(FrameData* frame_data);
+void frame_data_destroy(frame_data_t* frame_data);
 
 
 #endif

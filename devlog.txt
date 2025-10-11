@@ -1,7 +1,6 @@
 10/9/25
 - Fixed heap corruption bug from CECS causing sporadic crash on startup.
 
-
 14/9/25
 - Refactored some parts of clipping and prepare_for_clipping
 - Reimplemented UVs
@@ -17,6 +16,43 @@
   MeshInstance. Refactored render system to use Transform component, ready
 for starting physics implementation.
 
+18/9/25
+- Begin implementation of basic physics system, basic PhysicsData component and physics system using suvat equations.
+- Refactor CECS ECS_add_component to return void* so we can remove redudant ECS_get_component after.
+
+23/9/25
+- Refactor CECS ECS_find_component_list -> ECS_get_component_list for simplicity.
+
+24/9/25
+- Optimise font rendering by transforming input atlas to be more cache friendly so that a single character is 
+  continuous in memory. Remove padding from atlas to avoid wasting cache.
+
+27/9/25
+- Begin implementation of collision system.
+
+29/9/25
+- Implement Collider component with a CollisionShape tagged union to enable defining different shape interactions, 
+  this essentially automatically allowed for multiple spheres to collide into each other with some temp hacked
+  code in the narrow phase to just stop entities when they collide! Very cool to see and a good step forward.
+
+03/10/25
+- Begin CECS refactor of Systems -> Views
+
+04/10/25
+- Finish CECS refactor, implented lots archetype iterators, hide CHDS dependency, hid private/internal functionality,
+  this can now be version 1.0.0 of the CECS lib. Implement 'exclude' feature for views.
+
+05/10/25
+- Update engine to CECS refactor.
+- Update engine to use CHDS vector.
+- Reimplement broad phase collision detection. Separate moving vs moving and moving vs static entity checks.
+  This enables an optimisation of only checking past the outer loop entity for the moving vs moving. Note, this 
+  required the CECS implementation of 'exclude' for views.
+
+06/10/25
+- Minor refactors and updates (added Vector_clear, Vector_resize) to CHDS to make engine code cleaner.
+
+
 TODOS:
-- Begin basic physics system.
+- Refactor PointLight position to be a Transform component so the physics system can update it?
 - Reimplement shadows.

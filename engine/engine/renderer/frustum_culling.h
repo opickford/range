@@ -11,12 +11,12 @@
 
 typedef struct
 {
-	Plane planes[MAX_FRUSTUM_PLANES];
+	plane_t planes[MAX_FRUSTUM_PLANES];
 	int planes_count;
 
-} ViewFrustum;
+} view_frustum_t;
 
-void view_frustum_init(ViewFrustum* view_frustum, float near_dist, float far_dist, float fov, float aspect_ratio);
+void view_frustum_init(view_frustum_t* view_frustum, float near_dist, float far_dist, float fov, float aspect_ratio);
 
 
 #endif

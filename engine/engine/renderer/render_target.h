@@ -13,23 +13,23 @@
 // Contains the different buffers needed for rendering.
 typedef struct
 {
-	Canvas canvas;
+	canvas_t canvas;
 	float* depth_buffer;
 
-} RenderTarget;
+} render_target_t;
 
 // TODO: .c file?
-inline Status render_target_init(RenderTarget* rt, const int width, const int height)
+inline status_t render_target_init(render_target_t* rt, const int width, const int height)
 {
-    memset(rt, 0, sizeof(RenderTarget));
+    memset(rt, 0, sizeof(render_target_t));
 
-    Status status = Canvas_init(&rt->canvas, width, height);
+    status_t status = canvas_init(&rt->canvas, width, height);
     if (STATUS_OK != status)
     {
         return status;
     }
 
-    // TODO: Refactor to be a DepthBuffer.
+    // TODO: Refactor to be a depth_buffer_t.
     rt->depth_buffer = malloc((size_t)width * height * sizeof(float));
 
     if (!rt->depth_buffer)
@@ -41,9 +41,9 @@ inline Status render_target_init(RenderTarget* rt, const int width, const int he
     return STATUS_OK;
 }
 
-inline Status render_target_resize(RenderTarget* rt, int width, int height)
+inline status_t render_target_rev3_size(render_target_t* rt, int width, int height)
 {
-    Status status = canvas_resize(&rt->canvas, width, height);
+    status_t status = canvas_rev3_size(&rt->canvas, width, height);
 
     if (STATUS_OK != status)
     {
@@ -67,11 +67,11 @@ inline Status render_target_resize(RenderTarget* rt, int width, int height)
     return STATUS_OK;
 }
 
-inline void render_target_clear(RenderTarget* rt, uint32_t bg_colour)
+inline void render_target_clear(render_target_t* rt, uint32_t bg_colour)
 {
     const int length = rt->canvas.width * rt->canvas.height;
 
-    uint32_t* canvas_ptr = rt->canvas.pixels.data;
+    uint32_t* canvas_ptr = rt->canvas.pixels;
     float* depth_buffer_ptr = rt->depth_buffer;
 
     // Splitting these loops is much faster, guessing because of cache.
@@ -89,7 +89,7 @@ inline void render_target_clear(RenderTarget* rt, uint32_t bg_colour)
 }
 
 
-inline void render_target_destroy(RenderTarget* rt)
+inline void render_target_destroy(render_target_t* rt)
 {
     canvas_destroy(&rt->canvas);
 
