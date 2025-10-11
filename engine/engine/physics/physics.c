@@ -122,6 +122,11 @@ static void apply_forces(physics_t* physics, float dt)
         for (int i = 0; i < it.num_entities; ++i)
         {
             physics_data_t* physics_data = &physics_datas[i];
+
+            // TODO: Is this correct? 
+            // Ignore objects that shouldn't be affected by forces.
+            if (physics_data->mass <= 0.f) continue;
+
             transform_t* transform = &transforms[i];
 
             // Sum continuous acceleration.
@@ -596,7 +601,10 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     // TODO: TEMP: TESTING ONLY VS STATIC
     // Seems to be working for moving as well, but have no repsonse for that one, also not taking their motion
     // into account with the velocity. TODO: Should do rel velocity.
-    assert(pc.pd1 == 0);
+    //assert(pc.pd1 == 0);
+
+    physics_data_t* mi_pd = pc.pd1;
+    transform_t* mi_transform = pc.t1;
 
     // c0 is ellipsoid collider !
     collider_t* ellipsoid_collider = pc.c0;
@@ -609,7 +617,14 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     // Scale velocity by dt to calculate how much the entity will move this frame.
     // TODO: When we update the velocity should we take into account the remaining or not...
-    v3_t vel = ellipsoid_pd->velocity;
+
+
+
+    //v3_t vel = ellipsoid_pd->velocity;
+
+    // Calculate relative velocity between objects.
+    // TODO: Should we account for dt here with vel
+    v3_t vel = v3_sub_v3(ellipsoid_pd->velocity, mi_pd->velocity);
     v3_t dir = v3_normalised(vel);
     v3_t e_vel = v3_mul_f(vel, dt);
     float vel_size = v3_size(e_vel);
@@ -766,11 +781,19 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         }
     }
     
+    // TODO: This system doesn't allow allow resolving multiple collisions at once.
+    //       Need iterative for rest of time slice.
+    // 
+    // TODO: not sure on how to combine continuous and discrete
+
     // For now with the continuous collision detection we will just resolve the 
     // first collision but ideally we would resolve collisions until there is no
     // time left.
     if (found_collision)
     {
+        // TODO: Note vel does not have dt.
+
+        /*
         float unit_scale = 1.f / 100.0f;
         float very_close_dist = 0.005f * unit_scale;
 
@@ -805,6 +828,67 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         ellipsoid_pd->velocity = v;
 
         // TODO: if vel gets too low should zero it?
+        */
+
+        
+        /////////////////////////////
+        float unit_scale = 1.f / 100.0f;
+        float very_close_dist = 0.005f * unit_scale;
+
+        v3_t movement_to_collision = v3_mul_f(v3_normalised(vel), nearest_dist - very_close_dist);
+        //ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, movement_to_collision);
+
+        float collision_time = earliest_t;
+
+        v3_t collision_normal = v3_sub_v3(ellipsoid_transform->position, v3_mul_v3(nearest_collision_point, ellipsoid));
+        v3_normalise(&collision_normal);
+
+
+        float vel_along_n = dot(vel, collision_normal);
+        float penetration_depth = max(0.f, vel_along_n * (1.f - collision_time) * dt);
+
+        // Avoid jitter
+        float slop = 0.001f; 
+        penetration_depth = max(penetration_depth - slop, 0.f);
+
+        float inv_ellipsoid_mass = 1.f / ellipsoid_pd->mass;
+
+        float inv_mi_mass = 0.f;
+        if (mi_pd->mass > 0.f)
+        { 
+            inv_mi_mass = 1.f / mi_pd->mass;
+        }
+
+        float inv_total_mass = inv_ellipsoid_mass + inv_mi_mass;
+
+        v3_t correction = v3_mul_f(collision_normal, penetration_depth / inv_total_mass);
+        
+        v3_sub_eq_v3(&ellipsoid_transform->position, v3_mul_f(correction, inv_ellipsoid_mass));
+        v3_add_eq_v3(&mi_transform->position, v3_mul_f(correction, inv_mi_mass));
+
+        
+        
+        // Ignore if separating as the current velocity wouldn't cause them 
+        // to re-collide.
+        if (vel_along_n > 0.f) return;
+
+        // Combined restituion, TODO: Average of both colliders?
+        float e = 0.5f;
+
+        float j = -(1.f + e) * vel_along_n;
+        j /= inv_total_mass;
+
+        v3_t impulse = v3_mul_f(collision_normal, j);
+
+        v3_add_eq_v3(&ellipsoid_pd->velocity, v3_mul_f(impulse, inv_ellipsoid_mass));
+        v3_sub_eq_v3(&mi_pd->velocity, v3_mul_f(impulse, inv_mi_mass));
+
+
+
+
+
+
+
     }
 }
 

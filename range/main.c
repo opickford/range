@@ -9,11 +9,15 @@
 #include <engine/maths/vector3.h>
 #include <engine/common/status.h>
 
+#include <engine/core/globals.h>
+
 float* directions;
 
 mesh_base_id_t sphere_base;
 mesh_base_id_t cube_base;
 mesh_base_id_t map_base;
+
+cecs_entity_id_t map_entity;
 
 void create_map(engine_t* engine)
 {
@@ -38,6 +42,7 @@ void create_map(engine_t* engine)
 
     // Create an entity
     cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
+    map_entity = cube_entity;
 
     // Add a mesh_instance_t component.
     mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
@@ -58,6 +63,12 @@ void create_map(engine_t* engine)
     collider_init(collider);
     
     collider->shape.type = COLLISION_SHAPE_MESH;
+
+
+    physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+    physics_data_init(pd);
+    pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
+
 
     /*
     // TODO: TEMP: Currently setting the spawned cube to have an ellipsoid collider, but this is just for the 
@@ -80,14 +91,19 @@ void create_map(engine_t* engine)
 
 void engine_on_init(engine_t* engine)
 {
+    // TODO: Should really be init by the engine!!!
     g_draw_normals = 0;
     g_debug_shadows = 0;
+    g_debug_velocities = 0;
 
     create_map(engine);
 }
 
 void engine_on_update(engine_t* engine, float dt)
 {
+    physics_data_t* pd = cecs_get_component(engine->ecs, map_entity, COMPONENT_PHYSICS_DATA);
+    pd->velocity = (v3_t){ 0.f, 1.f, -0.f };
+
     return;
 }
 
@@ -177,6 +193,11 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
         engine->renderer.camera.pitch = asinf(engine->renderer.camera.direction.y);
         engine->renderer.camera.yaw = atan2f(engine->renderer.camera.direction.x, engine->renderer.camera.direction.z);
 
+        break;
+    }
+    case VK_F6:
+    {
+        g_debug_velocities = !g_debug_velocities;
         break;
     }
     }

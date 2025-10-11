@@ -212,7 +212,8 @@ void engine_run(engine_t* engine)
         draw_ui_ms = timer_get_elapsed(&t); // Must be done a frame late.
 
         // TODO: TEMP: Debugging rendering the velocities.
-        {
+        if (g_debug_velocities) 
+        {    
             cecs_view_id_t v = cecs_view(engine->ecs, CECS_COMPONENT_ID_TO_BITSET(COMPONENT_TRANSFORM) | CECS_COMPONENT_ID_TO_BITSET(COMPONENT_PHYSICS_DATA), 0);
             cecs_view_iter_t it = cecs_view_iter(engine->ecs, v);
 

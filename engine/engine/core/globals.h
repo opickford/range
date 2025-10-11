@@ -9,6 +9,7 @@
 // In the future, this could be for defining ui values for text etc.
 int g_draw_normals;
 int g_debug_shadows;
+uint8_t g_debug_velocities;
 
 float g_elapsed;
 
