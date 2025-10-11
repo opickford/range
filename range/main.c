@@ -283,20 +283,17 @@ void engine_on_lmbdown(engine_t* engine)
     transform_init(transform);
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
 
-
     transform->scale = v3_uniform(0.1f);
     //transform->scale = (v3_t){ 0.5f,2,1 };
 
     physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
     physics_data_init(physics_data);
 
-    physics_data->mass = 10;
+    physics_data->mass = 1.f;
 
     // TODO: Dt?
-    float speed = 20;
+    float speed = physics_data->mass * 20.f;
     v3_add_eq_v3(&physics_data->impulses, v3_mul_f(engine->renderer.camera.direction, speed));
-
-
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
 

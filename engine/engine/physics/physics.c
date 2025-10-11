@@ -540,9 +540,6 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
     }
 }
 
-// P1
-
-
 static void test_point_with_ellipsoid(v3_t p, v3_t start, v3_t vel, float a, float *t, uint8_t* found_collision, v3_t* collision_point)
 {
     float b = 2.f * dot(vel, v3_sub_v3(start, p));
@@ -590,28 +587,82 @@ static void test_edge_with_ellipsoid(v3_t p0, v3_t p1, v3_t start, v3_t vel, flo
     }
 }
 
-#include "core/globals.h"
-#include <assert.h>
-#include <float.h>
+// NOTE: Only for one at a time
+// TODO: When/if we get to discrete we will want to solve for multiple at once ???
+static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float collision_time, physics_data_t* a_pd, physics_data_t* b_pd, transform_t* a_t, transform_t* b_t, 
+    float e, float mu, float dt)
+{
+    // Resolve a collision between objects A and B.
+    const float slop = 0.001f;
+    const float vel_along_n = dot(rel_vel, collision_normal);
+    
+    // Avoid jitter by moving slightly away from collision point.
+    float penetration_depth = max(0.f, vel_along_n * (1.f - collision_time) * dt);
+    penetration_depth = max(penetration_depth - slop, 0.f);
+
+    // If inv mass = 0, the object will not gain velocity
+    const float a_inv_mass = a_pd->mass > 0.f ? (1.f / a_pd->mass) : 0.f;
+    const float b_inv_mass = b_pd->mass > 0.f ? (1.f / b_pd->mass) : 0.f;
+
+    const float total_inv_mass = a_inv_mass + b_inv_mass;
+    if (total_inv_mass <= 0.f) return;
+
+    // Separate objects.
+    v3_t correction = v3_mul_f(collision_normal, penetration_depth / total_inv_mass);
+
+    v3_sub_eq_v3(&a_t->position, v3_mul_f(correction, a_inv_mass));
+    v3_add_eq_v3(&b_t->position, v3_mul_f(correction, b_inv_mass));
+
+    // Normal impulse, apply restitution.
+
+    // Ignore if separating as the current velocity wouldn't cause them 
+    // to re-collide, therefore, no normal force and friction.
+    // TODO: I don't think we will actually ever have this situatio???
+    if (vel_along_n > 0.f) return;
+
+    float j = -(1.f + e) * vel_along_n;
+    j /= total_inv_mass;
+
+    v3_t normal_impulse = v3_mul_f(collision_normal, j);
+
+    // Tangential impulse, apply Coulomb friction.
+    v3_t tangent = v3_sub_v3(rel_vel, v3_mul_f(collision_normal, dot(collision_normal, rel_vel)));
+    const float size = v3_size(tangent);
+    if (size > 0.f) v3_mul_eq_f(&tangent, 1.f / size);
+
+    // Calculate size of friction force.
+    float jt = -dot(rel_vel, tangent) / total_inv_mass;
+
+    // Clamp friction to realistic maximum directly proportional to the normal force.
+    // Normal impulse pushes objects apart, tangiential impulse slides along
+    // surface but never exceeds coeff of friction * normal impulse. (directly proportional)
+
+    const float max_friction = mu * fabsf(j);
+    if (jt < -max_friction) jt = -max_friction;
+    else if (jt > max_friction) jt = max_friction;
+
+    v3_t friction_impulse = v3_mul_f(tangent, jt);
+
+    // Apply impulses.
+    v3_t total_impulse = v3_add_v3(normal_impulse, friction_impulse);
+
+    v3_add_eq_v3(&a_pd->velocity, v3_mul_f(total_impulse, a_inv_mass));
+    v3_sub_eq_v3(&b_pd->velocity, v3_mul_f(total_impulse, b_inv_mass));
+}
+
 static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
 
     // TODO: Note this is continuous detection, do we realy need this??? it feels kinda free here with this
     //       method? 
 
-    // https://www.peroxide.dk/papers/collision/collision.pdf
+    // Collision detection from: https://www.peroxide.dk/papers/collision/collision.pdf
 
     // TODO: We need to comment/enforce how an mi cannot be the thing that is colliding into something?
     //       we may want to allow this, but internally we will always be testing against the mi.
     //      
     //       Not really sure how to go about that but can solve it when needed? ^^^
     // TODO: Assert in broad phase to ensure this doesn't happen?
-
-    // TODO: TEMP: TESTING ONLY VS STATIC
-    // Seems to be working for moving as well, but have no repsonse for that one, also not taking their motion
-    // into account with the velocity. TODO: Should do rel velocity.
-    //assert(pc.pd1 == 0);
-
     physics_data_t* mi_pd = pc.pd1;
     transform_t* mi_transform = pc.t1;
 
@@ -624,18 +675,17 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     v3_t ellipsoid = ellipsoid_collider->shape.ellipsoid;
     v3_t inv_ellipsoid = v3_inv(ellipsoid);
 
-    // Scale velocity by dt to calculate how much the entity will move this frame.
-    // TODO: When we update the velocity should we take into account the remaining or not...
-
-
-
-    //v3_t vel = ellipsoid_pd->velocity;
+    // TODO: Rename vars and tidy this all up.
 
     // Calculate relative velocity between objects.
-    // TODO: Should we account for dt here with vel
     v3_t vel = v3_sub_v3(ellipsoid_pd->velocity, mi_pd->velocity);
     v3_t dir = v3_normalised(vel);
+    
+    // Scale velocity by dt to calculate how much the entity will move this frame, to check if we actually hit.
     v3_t e_vel = v3_mul_f(vel, dt);
+    
+
+    
     float vel_size = v3_size(e_vel);
     v3_t e_dir = v3_normalised(e_vel);
 
@@ -693,8 +743,8 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         float t1 = 1.0f;
 
         // If sphere moving parallel to the plane, e.g. 90deg between normal and velocity
-        //if (dot_normal_velocity == 0.0f)
-        if (fabsf(dot_normal_velocity) < FLT_EPSILON) 
+        if (dot_normal_velocity == 0.0f)
+        //if (fabsf(dot_normal_velocity) < FLT_EPSILON)  // TODO: Do we need this ??
         {
             if (fabs(d) >= 1.0f) 
             {
@@ -800,84 +850,14 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     // time left.
     if (found_collision)
     {
-        // TODO: This should be generalised to collision response!! not just for mi vs ellipsoid.
-
-
-
-        float collision_time = earliest_t;
-
         v3_t collision_normal = v3_sub_v3(ellipsoid_transform->position, v3_mul_v3(nearest_collision_point, ellipsoid));
         v3_normalise(&collision_normal);
 
-
-        float vel_along_n = dot(vel, collision_normal);
-        float penetration_depth = max(0.f, vel_along_n * (1.f - collision_time) * dt);
-
-        // Avoid jitter by moving slightly away from collision point.
-        float slop = 0.001f; 
-        penetration_depth = max(penetration_depth - slop, 0.f);
-
-        float inv_ellipsoid_mass = 1.f / ellipsoid_pd->mass;
-
-        float inv_mi_mass = 0.f;
-        if (mi_pd->mass > 0.f)
-        { 
-            inv_mi_mass = 1.f / mi_pd->mass;
-        }
-
-        float inv_total_mass = inv_ellipsoid_mass + inv_mi_mass;
-
-        if (inv_total_mass <= 0.f) return;
-
-        v3_t correction = v3_mul_f(collision_normal, penetration_depth / inv_total_mass);
-        
-        v3_sub_eq_v3(&ellipsoid_transform->position, v3_mul_f(correction, inv_ellipsoid_mass));
-        v3_add_eq_v3(&mi_transform->position, v3_mul_f(correction, inv_mi_mass));
-
-        // Normal impulse, apply restitution.
-        v3_t normal_impulse = { 0 };
-        float j = 0.f;
-
-        // Ignore if separating as the current velocity wouldn't cause them 
-        // to re-collide, therefore, no normal force and friction.
-        // TODO: I don't think we will actually ever have this situatio???
-        if (vel_along_n > 0.f)
-        {
-            return;
-        }
-
-        // Combine restitutions by taking average.
+        // Combine coefficients by taking averages.
         float e = max(0.f, (ellipsoid_collider->restiution_coeff + mi_collider->restiution_coeff) / 2.f);
-
-        j = -(1.f + e) * vel_along_n;
-        j /= inv_total_mass;
-
-        normal_impulse = v3_mul_f(collision_normal, j);
-
-        
-        // Tangential impulse, apply Coulomb friction.
-        v3_t tangent = v3_sub_v3(vel, v3_mul_f(collision_normal, dot(collision_normal, vel)));
-        float size = v3_size(tangent);
-        if (size > 0.f) v3_mul_eq_f(&tangent, 1.f / size);
-
-        // Combined friction by taking average.
         float mu = max(0.f, (ellipsoid_collider->friction_coeff + mi_collider->friction_coeff) / 2.f);
-        float jt = -dot(vel, tangent) / inv_total_mass;
 
-        // Clamp friction to realistic maximum directly proportional to the normal force.
-        // Normal impulse pushes objects apart, tangiential impulse slides along
-        // surface but never exceeds coeff of friction * normal impulse. (directly proportional)
-        float max_friction = mu * fabsf(j);
-        if (jt < -max_friction) jt = -max_friction;
-        else if (jt > max_friction) jt = max_friction;
-
-        v3_t friction_impulse = v3_mul_f(tangent, jt);
-        
-        // Apply impulses.
-        v3_t total_impulse = v3_add_v3(normal_impulse, friction_impulse);
-
-        v3_add_eq_v3(&ellipsoid_pd->velocity, v3_mul_f(total_impulse, inv_ellipsoid_mass));
-        v3_sub_eq_v3(&mi_pd->velocity, v3_mul_f(total_impulse, inv_mi_mass));
+        resolve_single_collision(vel, collision_normal, earliest_t, ellipsoid_pd, mi_pd, ellipsoid_transform, mi_transform, e, mu, dt);
     }
 }
 
