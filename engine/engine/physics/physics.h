@@ -86,6 +86,16 @@ typedef struct collider
 {
     // TODO: In the future this could contain some callback etc.
     collision_shape_t shape;
+
+    // Ratio of relative velocity of separation to relative velocity of approach.
+    // Determines collisions elasticity (how much energy loss)
+    // 0 = completely inelastic, 1 = perfectly elastic (no energy loss)
+    float restiution_coeff;
+    
+    // Ratio of frictional force to normal force pushing objects together.
+    // 0 = no friction, 1 is as much friction as the normal force.
+    float friction_coeff;
+
 } collider_t;
 
 void collider_init(collider_t* c);

@@ -800,52 +800,9 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     // time left.
     if (found_collision)
     {
-        // TODO: Note vel does not have dt.
+        // TODO: This should be generalised to collision response!! not just for mi vs ellipsoid.
 
-        /*
-        float unit_scale = 1.f / 100.0f;
-        float very_close_dist = 0.005f * unit_scale;
 
-        v3_t movement_to_collision = v3_mul_f(v3_normalised(vel), nearest_dist - very_close_dist);
-        ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, movement_to_collision);
-                
-        float collision_time = earliest_t;
-
-        v3_t collision_normal = v3_sub_v3(ellipsoid_transform->position, v3_mul_v3(nearest_collision_point, ellipsoid));
-        v3_normalise(&collision_normal);
-
-        // Velocity along normal (project onto normal?)
-        v3_t v_n = v3_mul_f(collision_normal, dot(vel, collision_normal));
-
-        // Velocity along tangent to surface
-        v3_t v_t = v3_sub_v3(vel, v_n);
-        
-        // Account for restitution (measure of bounciness in a collision)
-        // 0 -> perfectly inelastic (object sticks)
-        // 1 -> perfectly elastic (object bounces)
-        float restitution = 0.5f;
-        // TODO: Should be defined in collider?
-
-        v3_t v_n_ = v3_mul_f(v_n, -restitution);
-
-        // TODO: Apply friction to tanget? 
-        // TODO: equation works but should be set from surfaces like restitution?
-        float friction = 0.0f;
-        v3_t v_t_ = v3_mul_f(v_t, 1.f - friction);
-
-        v3_t v = v3_add_v3(v_n_, v_t_);
-        ellipsoid_pd->velocity = v;
-
-        // TODO: if vel gets too low should zero it?
-        */
-
-        
-        /////////////////////////////
-        float unit_scale = 1.f / 100.0f;
-        float very_close_dist = 0.005f * unit_scale;
-
-        v3_t movement_to_collision = v3_mul_f(v3_normalised(vel), nearest_dist - very_close_dist);
-        //ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, movement_to_collision);
 
         float collision_time = earliest_t;
 
@@ -856,7 +813,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         float vel_along_n = dot(vel, collision_normal);
         float penetration_depth = max(0.f, vel_along_n * (1.f - collision_time) * dt);
 
-        // Avoid jitter
+        // Avoid jitter by moving slightly away from collision point.
         float slop = 0.001f; 
         penetration_depth = max(penetration_depth - slop, 0.f);
 
@@ -877,26 +834,25 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         v3_sub_eq_v3(&ellipsoid_transform->position, v3_mul_f(correction, inv_ellipsoid_mass));
         v3_add_eq_v3(&mi_transform->position, v3_mul_f(correction, inv_mi_mass));
 
-        
-        
-
         // Normal impulse, apply restitution.
-        
-        // Ignore if separating as the current velocity wouldn't cause them 
-        // to re-collide. TODO: I don't think we will actually ever have this situatio???
         v3_t normal_impulse = { 0 };
         float j = 0.f;
 
-        if (vel_along_n <= 0.f)
+        // Ignore if separating as the current velocity wouldn't cause them 
+        // to re-collide, therefore, no normal force and friction.
+        // TODO: I don't think we will actually ever have this situatio???
+        if (vel_along_n > 0.f)
         {
-            // Combined restituion, TODO: Average of both colliders?
-            float e = 1.f;
-
-            j = -(1.f + e) * vel_along_n;
-            j /= inv_total_mass;
-
-            normal_impulse = v3_mul_f(collision_normal, j);
+            return;
         }
+
+        // Combine restitutions by taking average.
+        float e = max(0.f, (ellipsoid_collider->restiution_coeff + mi_collider->restiution_coeff) / 2.f);
+
+        j = -(1.f + e) * vel_along_n;
+        j /= inv_total_mass;
+
+        normal_impulse = v3_mul_f(collision_normal, j);
 
         
         // Tangential impulse, apply Coulomb friction.
@@ -904,13 +860,13 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         float size = v3_size(tangent);
         if (size > 0.f) v3_mul_eq_f(&tangent, 1.f / size);
 
-        // Combined friction
-        float mu = 0;
+        // Combined friction by taking average.
+        float mu = max(0.f, (ellipsoid_collider->friction_coeff + mi_collider->friction_coeff) / 2.f);
         float jt = -dot(vel, tangent) / inv_total_mass;
 
-        // Clamp friction to realistic maximum proportional to normal force.
+        // Clamp friction to realistic maximum directly proportional to the normal force.
         // Normal impulse pushes objects apart, tangiential impulse slides along
-        // surface but never exceeds coeff of friction * normal impulse.
+        // surface but never exceeds coeff of friction * normal impulse. (directly proportional)
         float max_friction = mu * fabsf(j);
         if (jt < -max_friction) jt = -max_friction;
         else if (jt > max_friction) jt = max_friction;
@@ -1084,6 +1040,10 @@ void collider_init(collider_t* c)
     memset(c, 0, sizeof(collider_t));
     c->shape.dirty = 1;
     c->shape.scale_dirty = 1;
+
+    // TOOD: Experiment for good defaults.
+    c->friction_coeff = 0.25f;
+    c->restiution_coeff = 0.5f;
 
     // TODO: Should we default to this??? Note we cannot set the ellipsoid
     //       as this would put random values into the other union members.

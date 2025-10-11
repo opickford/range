@@ -80,8 +80,9 @@ void create_map(engine_t* engine)
 
     }
     
-    /*
+    
     // MONKEY
+    /*
     {
         cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
         monkey_entity = cube_entity;
@@ -109,8 +110,6 @@ void create_map(engine_t* engine)
 
         physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
         physics_data_init(pd);
-
-        pd->mass = 5;
     }*/
   
 
@@ -147,7 +146,7 @@ void engine_on_update(engine_t* engine, float dt)
 {
     {
         physics_data_t* pd = cecs_get_component(engine->ecs, map_entity, COMPONENT_PHYSICS_DATA);
-        pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
+        //pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
     }
 
     {
@@ -291,7 +290,7 @@ void engine_on_lmbdown(engine_t* engine)
     physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
     physics_data_init(physics_data);
 
-    physics_data->mass = 1;
+    physics_data->mass = 10;
 
     // TODO: Dt?
     float speed = 20;
