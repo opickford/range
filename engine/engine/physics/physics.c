@@ -857,6 +857,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
         float e = max(0.f, (ellipsoid_collider->restiution_coeff + mi_collider->restiution_coeff) / 2.f);
         float mu = max(0.f, (ellipsoid_collider->friction_coeff + mi_collider->friction_coeff) / 2.f);
 
+        // TODO: This seems to break with high dt!!
         resolve_single_collision(vel, collision_normal, earliest_t, ellipsoid_pd, mi_pd, ellipsoid_transform, mi_transform, e, mu, dt);
     }
 }
