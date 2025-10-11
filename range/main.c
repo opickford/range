@@ -23,7 +23,7 @@ cecs_entity_id_t monkey_entity;
 
 void create_map(engine_t* engine)
 {
-    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/landscape.bmp");
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/fortnite_peter.bmp");
     
     // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     
@@ -71,12 +71,11 @@ void create_map(engine_t* engine)
 
         collider->shape.type = COLLISION_SHAPE_MESH;
 
-
         physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
         physics_data_init(pd);
         pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
         pd->floating = 1;
-
+        
 
     }
     
@@ -300,7 +299,6 @@ void engine_on_lmbdown(engine_t* engine)
     collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
     collider_init(collider);
     collider->shape.ellipsoid = transform->scale;
-
 }
 
 int main()
