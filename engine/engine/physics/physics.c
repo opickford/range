@@ -1001,9 +1001,7 @@ void physics_data_init(physics_data_t* data)
 {
     memset(data, 0, sizeof(physics_data_t));
 
-    // Mass of 0 will cause divide by zero error.
-
-    // TODO: What unit is this?
+    // Mass of 0 means the object cannot be pushed.
     data->mass = 1.f; 
 }
 
