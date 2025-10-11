@@ -123,15 +123,22 @@ static void apply_forces(physics_t* physics, float dt)
         {
             physics_data_t* physics_data = &physics_datas[i];
 
+            if (physics_data->mass == 0.f) continue;
+
             // TODO: Is this correct? 
             // Ignore objects that shouldn't be affected by forces.
-            if (physics_data->mass <= 0.f) continue;
+            // TODO: Instead of this maybe we could do have a floating flag.
+            
 
             transform_t* transform = &transforms[i];
 
             // Sum continuous acceleration.
             v3_t total_acceleration = { 0 };
-            v3_add_eq_v3(&total_acceleration, gravity);
+
+            if (!physics_data->floating)
+            {
+                v3_add_eq_v3(&total_acceleration, gravity);
+            }
 
             // TODO: FRICTION SHOULD ACTUALLY BE APPLIED AT COLLISION RESPONSE, THEN
             //       THE SURFACE CAN DECIDE HOW STICKY IT IS!!!!!!!!!!!!!!!!!!!!!!!!    
@@ -336,6 +343,8 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
 {
     // Broad phase is purely bounding sphere tests
     // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
+    //       but should work this out at some point ^
+
 
     chds_vec_clear(physics->frame.broad_phase_collisions);
 
@@ -861,6 +870,8 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
         float inv_total_mass = inv_ellipsoid_mass + inv_mi_mass;
 
+        if (inv_total_mass <= 0.f) return;
+
         v3_t correction = v3_mul_f(collision_normal, penetration_depth / inv_total_mass);
         
         v3_sub_eq_v3(&ellipsoid_transform->position, v3_mul_f(correction, inv_ellipsoid_mass));
@@ -868,27 +879,49 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
         
         
+
+        // Normal impulse, apply restitution.
+        
         // Ignore if separating as the current velocity wouldn't cause them 
-        // to re-collide.
-        if (vel_along_n > 0.f) return;
+        // to re-collide. TODO: I don't think we will actually ever have this situatio???
+        v3_t normal_impulse = { 0 };
+        float j = 0.f;
 
-        // Combined restituion, TODO: Average of both colliders?
-        float e = 0.5f;
+        if (vel_along_n <= 0.f)
+        {
+            // Combined restituion, TODO: Average of both colliders?
+            float e = 1.f;
 
-        float j = -(1.f + e) * vel_along_n;
-        j /= inv_total_mass;
+            j = -(1.f + e) * vel_along_n;
+            j /= inv_total_mass;
 
-        v3_t impulse = v3_mul_f(collision_normal, j);
+            normal_impulse = v3_mul_f(collision_normal, j);
+        }
 
-        v3_add_eq_v3(&ellipsoid_pd->velocity, v3_mul_f(impulse, inv_ellipsoid_mass));
-        v3_sub_eq_v3(&mi_pd->velocity, v3_mul_f(impulse, inv_mi_mass));
+        
+        // Tangential impulse, apply Coulomb friction.
+        v3_t tangent = v3_sub_v3(vel, v3_mul_f(collision_normal, dot(collision_normal, vel)));
+        float size = v3_size(tangent);
+        if (size > 0.f) v3_mul_eq_f(&tangent, 1.f / size);
 
+        // Combined friction
+        float mu = 0;
+        float jt = -dot(vel, tangent) / inv_total_mass;
 
+        // Clamp friction to realistic maximum proportional to normal force.
+        // Normal impulse pushes objects apart, tangiential impulse slides along
+        // surface but never exceeds coeff of friction * normal impulse.
+        float max_friction = mu * fabsf(j);
+        if (jt < -max_friction) jt = -max_friction;
+        else if (jt > max_friction) jt = max_friction;
 
+        v3_t friction_impulse = v3_mul_f(tangent, jt);
+        
+        // Apply impulses.
+        v3_t total_impulse = v3_add_v3(normal_impulse, friction_impulse);
 
-
-
-
+        v3_add_eq_v3(&ellipsoid_pd->velocity, v3_mul_f(total_impulse, inv_ellipsoid_mass));
+        v3_sub_eq_v3(&mi_pd->velocity, v3_mul_f(total_impulse, inv_mi_mass));
     }
 }
 
@@ -1034,7 +1067,6 @@ void physics_data_init(physics_data_t* data)
     // Mass of 0 will cause divide by zero error.
 
     // TODO: What unit is this?
-    //data->mass = 1.f; 
     data->mass = 1.f; 
 }
 

@@ -40,6 +40,10 @@ typedef struct physics_data
     v3_t velocity;
 
     float mass;
+
+
+    // TODO: TEMP
+    uint8_t floating;
 } physics_data_t;
 
 void physics_data_init(physics_data_t* data);

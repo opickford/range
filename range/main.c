@@ -16,8 +16,10 @@ float* directions;
 mesh_base_id_t sphere_base;
 mesh_base_id_t cube_base;
 mesh_base_id_t map_base;
+mesh_base_id_t monkey_base;
 
 cecs_entity_id_t map_entity;
+cecs_entity_id_t monkey_entity;
 
 void create_map(engine_t* engine)
 {
@@ -40,35 +42,77 @@ void create_map(engine_t* engine)
     map_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[map_base], "C:/Users/olive/source/repos/range/res/models/physics_test_map.obj");
 
-    // Create an entity
-    cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
-    map_entity = cube_entity;
+    monkey_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[monkey_base], "C:/Users/olive/source/repos/range/res/models/suzanne.obj");
 
-    // Add a mesh_instance_t component.
-    mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
-    mesh_instance_init(mi, &scene->mesh_bases.bases[map_base]);
-
-    mi->texture_id = 0;
-
-    transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
-    transform_init(transform);
-    transform->scale = v3_uniform(2);
-
-    // TODO: currently testing with static.
-    //physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
-    //physics_data_init(physics_data);
-    //physics_data->force = (v3_t){ 0,0,1 };
-
-    collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
-    collider_init(collider);
     
-    collider->shape.type = COLLISION_SHAPE_MESH;
+    // Create an entity
+    {
+        cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
+        map_entity = cube_entity;
+
+        // Add a mesh_instance_t component.
+        mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[map_base]);
+
+        mi->texture_id = 0;
+
+        transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+        transform_init(transform);
+        transform->scale = v3_uniform(2);
+
+        // TODO: currently testing with static.
+        //physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        //physics_data_init(physics_data);
+        //physics_data->force = (v3_t){ 0,0,1 };
+
+        collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
+        collider_init(collider);
+
+        collider->shape.type = COLLISION_SHAPE_MESH;
 
 
-    physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
-    physics_data_init(pd);
-    pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
+        physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        physics_data_init(pd);
+        pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
+        pd->floating = 1;
 
+
+    }
+    
+    /*
+    // MONKEY
+    {
+        cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
+        monkey_entity = cube_entity;
+
+        // Add a mesh_instance_t component.
+        mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[monkey_base]);
+
+        mi->texture_id = 0;
+
+        transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+        transform_init(transform);
+        transform->scale = v3_uniform(1);
+
+        // TODO: currently testing with static.
+        //physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        //physics_data_init(physics_data);
+        //physics_data->force = (v3_t){ 0,0,1 };
+
+        collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
+        collider_init(collider);
+
+        collider->shape.type = COLLISION_SHAPE_MESH;
+        //collider->shape.ellipsoid = v3_uniform(1.f);
+
+        physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        physics_data_init(pd);
+
+        pd->mass = 5;
+    }*/
+  
 
     /*
     // TODO: TEMP: Currently setting the spawned cube to have an ellipsoid collider, but this is just for the 
@@ -101,9 +145,17 @@ void engine_on_init(engine_t* engine)
 
 void engine_on_update(engine_t* engine, float dt)
 {
-    physics_data_t* pd = cecs_get_component(engine->ecs, map_entity, COMPONENT_PHYSICS_DATA);
-    pd->velocity = (v3_t){ 0.f, 1.f, -0.f };
+    {
+        physics_data_t* pd = cecs_get_component(engine->ecs, map_entity, COMPONENT_PHYSICS_DATA);
+        pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
+    }
 
+    {
+        physics_data_t* pd = cecs_get_component(engine->ecs, monkey_entity, COMPONENT_PHYSICS_DATA);
+        //pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
+
+    }
+    
     return;
 }
 
@@ -117,7 +169,6 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
         mesh_base_id_t mb_ids[2] = { cube_base, sphere_base };
 
         mesh_base_id_t mb_id = mb_ids[(int)(random_float() + 0.5f)];
-
 
         scene_t* scene = &engine->scene;
 
