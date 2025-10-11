@@ -211,10 +211,10 @@ void engine_on_lmbdown(engine_t* engine)
     transform_t* transform = cecs_get_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
     transform_init(transform);
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
-    transform->rotation = engine->renderer.camera.direction;
 
 
     transform->scale = v3_uniform(0.1f);
+    //transform->scale = (v3_t){ 0.5f,2,1 };
 
     physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
     physics_data_init(physics_data);
@@ -224,6 +224,8 @@ void engine_on_lmbdown(engine_t* engine)
     // TODO: Dt?
     float speed = 20;
     v3_add_eq_v3(&physics_data->impulses, v3_mul_f(engine->renderer.camera.direction, speed));
+
+
 
     // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
 

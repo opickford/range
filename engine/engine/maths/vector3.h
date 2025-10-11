@@ -130,6 +130,11 @@ inline v3_t v3_uniform(float n)
     return (v3_t) { n, n, n };
 }
 
+inline v3_t v3_inv(v3_t v)
+{
+    return (v3_t) { 1.f / v.x, 1.f / v.y, 1.f / v.z };
+}
+
 /*
 inline void v3_write(float* out, v3_t v)
 {

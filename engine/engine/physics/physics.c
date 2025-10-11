@@ -605,11 +605,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     v3_t e_pos = ellipsoid_transform->position;
 
     v3_t ellipsoid = ellipsoid_collider->shape.ellipsoid;
-    v3_t inv_ellipsoid = (v3_t){
-        1.f / ellipsoid.x, 
-        1.f / ellipsoid.y,
-        1.f / ellipsoid.z
-    };
+    v3_t inv_ellipsoid = v3_inv(ellipsoid);
 
     // Scale velocity by dt to calculate how much the entity will move this frame.
     // TODO: When we update the velocity should we take into account the remaining or not...
@@ -769,76 +765,44 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
             }
         }
     }
-
-    // TODO: Should collisions be resolved elsewhere? idk, for now just stay like this 
-    //       but this may change as we introduce more interactions.
-
+    
+    // For now with the continuous collision detection we will just resolve the 
+    // first collision but ideally we would resolve collisions until there is no
+    // time left.
     if (found_collision)
     {
         float unit_scale = 1.f / 100.0f;
         float very_close_dist = 0.005f * unit_scale;
 
-        // TODO: Collision response, should set position and update velocity?
-        //       how do we know when to slide vs bounce or whatever? that must depend on wall property or mass or something??
-        
-
-        
-        float collision_time = earliest_t;
-        v3_t collision_normal = v3_mul_v3(collision_face_normal, ellipsoid);
-        v3_normalise(&collision_normal);
-        
-
-
         v3_t movement_to_collision = v3_mul_f(v3_normalised(vel), nearest_dist - very_close_dist);
         ellipsoid_transform->position = v3_add_v3(ellipsoid_transform->position, movement_to_collision);
+                
+        float collision_time = earliest_t;
+
+        v3_t collision_normal = v3_sub_v3(ellipsoid_transform->position, v3_mul_v3(nearest_collision_point, ellipsoid));
+        v3_normalise(&collision_normal);
 
         // Velocity along normal (project onto normal?)
         v3_t v_n = v3_mul_f(collision_normal, dot(vel, collision_normal));
 
         // Velocity along tangent to surface
         v3_t v_t = v3_sub_v3(vel, v_n);
-
+        
         // Account for restitution (measure of bounciness in a collision)
         // 0 -> perfectly inelastic (object sticks)
         // 1 -> perfectly elastic (object bounces)
-        float restitution = 0.f;
+        float restitution = 0.5f;
+        // TODO: Should be defined in collider?
 
         v3_t v_n_ = v3_mul_f(v_n, -restitution);
 
-        // TODO: Apply friction to tanget?
-        float friction = 0.f;
+        // TODO: Apply friction to tanget? 
+        // TODO: equation works but should be set from surfaces like restitution?
+        float friction = 0.0f;
         v3_t v_t_ = v3_mul_f(v_t, 1.f - friction);
 
         v3_t v = v3_add_v3(v_n_, v_t_);
         ellipsoid_pd->velocity = v;
-
-
-        /*
-        v3_t applied_vel = v3_mul_f(vel, earliest_t);
-        float resulting_speed = v3_size(applied_vel);
-
-        //ellipsoid_pd->velocity = v3_mul_f(normal, resulting_speed);// v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
-
-        float remaining_time = dt - earliest_t;
-        if (remaining_time <= 0.f) return;
-
-        v3_t leftover_velocity = v3_mul_f(vel, remaining_time);*/
-
-
-
-
-
-        // ellipsoid_pd->velocity = v3_sub_v3(vel, v3_mul_f(normal, dot(vel, normal)));
-
-        // TODO: currently just going in collision normal dir, fix this.
-
-
-        
-        
-        //printf("%f - %s\n ", g_elapsed, v3_to_str(v3_mul_v3(collision_point, ellipsoid)));
-        //ellipsoid_pd->velocity = (v3_t){ 0 };
-
-        //printf("%s\n", v3_to_str(ellipsoid_pd->velocity));
 
         // TODO: if vel gets too low should zero it?
     }
@@ -856,6 +820,25 @@ static void narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, po
 
 static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
 {    
+    /*
+    TODO:
+
+    If we plan on combining discrete and continuous it might get a bit weird.
+    With continuous we want to find the first object A collides with and resolve
+    that but currently we just check if each object collides with A and if it does
+    resolve it, but this could actually result in out of order collisions.
+
+    ideally we would go for each mesh A, find it's first collision, but because
+    we're mixing continuous and discrete this isn't going to quite work...
+    
+    this is because we can't really just say continuous for some interaction
+    it doesn't make so much sense. because the interactions will be different 
+    but could still be first. 
+    
+    
+    */
+
+
     const int num_potential_collisions = chds_vec_size(physics->frame.broad_phase_collisions);
     for (int i = 0; i < num_potential_collisions; ++i)
     {
