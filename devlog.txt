@@ -52,6 +52,12 @@ for starting physics implementation.
 06/10/25
 - Minor refactors and updates (added Vector_clear, Vector_resize) to CHDS to make engine code cleaner.
 
+# 6-11th kept forgetting to update this devlog.
+
+11/10/25
+- Implement ellipsoid to mi collision detection from: https://www.peroxide.dk/papers/collision/collision.pdf.
+- Implement collision response with Coulomb friction and restitution impulses.
+- Handle relative velocities for collision detection and resolution.
 
 TODOS:
 - Refactor PointLight position to be a Transform component so the physics system can update it?
