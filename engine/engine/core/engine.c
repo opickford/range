@@ -130,6 +130,7 @@ void engine_run(engine_t* engine)
     char update_str[64] = "";
     char vertices_str[64] = "";
     char physics_str[64] = "";
+    char entities_str[64] = "";
     
 
     // TODO: This can be a ui add text function
@@ -149,6 +150,7 @@ void engine_run(engine_t* engine)
     engine->ui.text[engine->ui.text_count++] = text_create(update_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
     engine->ui.text[engine->ui.text_count++] = text_create(vertices_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
     engine->ui.text[engine->ui.text_count++] = text_create(physics_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
+    engine->ui.text[engine->ui.text_count++] = text_create(entities_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
 
     engine->running = 1;
     while (engine->running)
@@ -283,6 +285,21 @@ void engine_run(engine_t* engine)
                 }
             }
             snprintf(vertices_str, sizeof(vertices_str), "VERTICES: %d", total_faces * 3);
+        }
+
+        {
+            int total_entities = 0;
+            
+            const cecs_t* ecs = engine->ecs;
+
+            const cecs_view_id_t vid = cecs_view(ecs, 0, 0);
+
+            cecs_view_iter_t it = cecs_view_iter(ecs, engine->render_view_id);
+            while (cecs_view_iter_next(&it))
+            {
+                total_entities += it.num_entities;
+            }
+            snprintf(entities_str, sizeof(entities_str), "ENTITIES: %d", total_entities);
         }
         
 

@@ -339,207 +339,6 @@ static void update_colliders(physics_t* physics, scene_t* scene)
     }
 }
 
-static void broad_phase(physics_t* physics, scene_t* scene, float dt)
-{
-    // Broad phase is purely bounding sphere tests
-    // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
-    //       but should work this out at some point ^
-
-
-    chds_vec_clear(physics->frame.broad_phase_collisions);
-
-    // TODO: How can we get the number of entities in a nicer way?
-
-    int num_entities = 0;
-    {
-        cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->colliders_view);
-        while (cecs_view_iter_next(&it))
-        {
-            num_entities += it.num_entities;
-        }
-    }
-
-    // TODO: Idk what the calc is.
-    chds_vec_reserve(physics->frame.broad_phase_collisions, num_entities * num_entities);
-
-    // TODO: COmment properly.
-    /*
-    TODO: A static mesh may not have physics data, therefore, the inner loop shouldn't use the
-            collision view as it requires the physics data component.
-
-    TODO: Refactor loop into separate ones. One for the moving vs moving and one for moving vs static
-
-    this means physicsdata + collider vs physicsdata + collider and physicsdata + collider vs collider
-
-    Note we can do this thing for the moving entities:
-    for i in entities
-        for j = i + 1 in entities
-
-    */
-
-    cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->moving_colliders_view);
-    while (cecs_view_iter_next(&it))
-    {
-        physics_data_t* physics_datas = cecs_get_column(it, COMPONENT_PHYSICS_DATA);
-        transform_t* transforms = cecs_get_column(it, COMPONENT_TRANSFORM);
-        const mesh_instance_t* mis = cecs_get_column(it, COMPONENT_MESH_INSTANCE);
-        const collider_t* colliders = cecs_get_column(it, COMPONENT_COLLIDER);
-
-        for (int i = 0; i < it.num_entities; ++i)
-        {
-            physics_data_t* physics_data = &physics_datas[i];
-
-            // TODO: Because of testing only past the current moving entity,
-            //       we cannot have this check as it means a static mesh
-            //       wouldn't 'collide' with a moving one...
-            /*
-            // If entity not moving, it cannot have collided with something.
-            if (physics_data->velocity.x == 0 &&
-                physics_data->velocity.y == 0 &&
-                physics_data->velocity.z == 0)
-            {
-                continue;
-            }*/
-
-            transform_t* transform = &transforms[i];
-            const mesh_instance_t* mi = &mis[i];
-            const mesh_base_t* mb = &scene->mesh_bases.bases[mi->mb_id];
-            const collider_t* collider = &colliders[i];
-
-            // Iterate from the current entity, will this work????
-            // TODO: This might not work if we don't resolve collisions
-            //       properly between two entities!!!!!!! Otherwise only
-            //       one will be updated!!!!!!
-            cecs_view_iter_t it_from_it0 = it; // TODO: Rename this....
-
-            // Check each remaining moving entity
-            do
-            {
-                // TODO: Detect.
-                const mesh_instance_t* mis1 = cecs_get_column(it_from_it0, COMPONENT_MESH_INSTANCE);
-                const collider_t* colliders1 = cecs_get_column(it_from_it0, COMPONENT_COLLIDER);
-                physics_data_t* physics_datas1 = cecs_get_column(it_from_it0, COMPONENT_PHYSICS_DATA);
-                transform_t* transforms1 = cecs_get_column(it_from_it0, COMPONENT_TRANSFORM);
-
-                // Start past current entity
-                for (int j = i + 1; j < it_from_it0.num_entities; ++j)
-                {
-                    mesh_instance_t* mi1 = &mis1[j];
-
-                    // TODO: Cannot collide with self for now, leave this as reminder
-                    //       until the logic is validated.
-                    // Don't collide with self.
-                    //if (mi1 == mi) continue;
-
-                    const collider_t* collider1 = &colliders1[j];
-                    transform_t* transform1 = &transforms1[j];
-
-                    // Account for entity1's velocity.
-                    physics_data_t* physics_data1 = &physics_datas1[j];
-                    const v3_t rel_v = v3_sub_v3(physics_data->velocity, physics_data1->velocity);
-
-                    bounding_sphere_t bs0 = collider->shape.bs;
-                    const bounding_sphere_t bs1 = collider1->shape.bs;
-
-                    // 'Sweep' sphere to account for velocities, otherwise we would miss
-                    // collisions at low fps or high velocity. Instead of sweeping just
-                    // scale and move bounding sphere.
-                    v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
-                    bs0.radius += 0.5f * v3_size(rel_v) * dt;
-
-                    // Test for overlap.
-                    const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, bs0.centre));
-                    const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
-
-                    if (dist <= n)
-                    {
-                        //printf("potentially collidign WITH MOVING!\n");
-                        // TODO:
-                        
-                        // TODO: Write out potential collision, doesn't have to be perfect for now.
-                        potential_collision_t pc = {
-                            .c0 = collider,
-                            .mi0 = mi,
-                            .pd0 = physics_data,
-                            .t0 = transform,
-                            .c1 = collider1,
-                            .mi1 = mi1,
-                            .pd1 = physics_data1,
-                            .t1 = transform1
-                        };
-
-                        chds_vec_push_back(physics->frame.broad_phase_collisions, pc);
-                    }
-                }
-            } while (cecs_view_iter_next(&it_from_it0));
-
-            // Check with each static entity
-            cecs_view_iter_t sc_it = cecs_view_iter(physics->ecs, 
-                physics->static_colliders_view);
-
-            while (cecs_view_iter_next(&sc_it))
-            {
-                // TODO: Detect.
-                const mesh_instance_t* mis1 = cecs_get_column(sc_it, COMPONENT_MESH_INSTANCE);
-                const collider_t* colliders1 = cecs_get_column(sc_it, COMPONENT_COLLIDER);
-                const transform_t* transforms1 = cecs_get_column(sc_it, COMPONENT_TRANSFORM);
-
-                // Start past current entity
-                for (int j = 0; j < sc_it.num_entities; ++j)
-                {
-                    mesh_instance_t* mi1 = &mis1[j];
-                    const collider_t* collider1 = &colliders1[j];
-                    transform_t* transform1 = &transforms1[j];
-
-                    bounding_sphere_t bs0 = collider->shape.bs;
-                    const bounding_sphere_t bs1 = collider1->shape.bs;
-
-                    // 'Sweep' sphere to account for velocities, otherwise we would miss
-                    // collisions at low fps or high velocity. Instead of sweeping just
-                    // scale and move bounding sphere.
-                    v3_add_v3(bs0.centre, v3_mul_f(physics_data->velocity, 0.5f * dt));
-                    bs0.radius += 0.5f * v3_size(physics_data->velocity) * dt;
-
-                    // Test for overlap.
-                    const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, bs0.centre));
-                    const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
-
-                    if (dist <= n)
-                    {
-                        //printf("potentially collidign - WITH STATIC!\n");
-                        // TODO:
-
-                        // TODO: Write out potential collision, doesn't have to be perfect for now.
-                        //potential_collision_t pc = {
-                        //    .collider_aid = it_id,
-                        //    .collider_offset = i,
-                        //    .target_aid = it_id1,
-                        //    .target_offset = j
-                        //};
-                        //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
-
-                        
-                        potential_collision_t pc = {
-                            .c0 = collider,
-                            .mi0 = mi,
-                            .pd0 = physics_data,
-                            .t0 = transform,
-                            .c1 = collider1,
-                            .mi1 = mi1,
-                            .pd1 = 0, // static
-                            .t1 = transform1
-                        };
-
-                        chds_vec_push_back(physics->frame.broad_phase_collisions, pc);
-
-                        
-                    }
-                }
-            }
-        }
-    }
-}
-
 static void test_point_with_ellipsoid(v3_t p, v3_t start, v3_t vel, float a, float *t, uint8_t* found_collision, v3_t* collision_point)
 {
     float b = 2.f * dot(vel, v3_sub_v3(start, p));
@@ -586,6 +385,16 @@ static void test_edge_with_ellipsoid(v3_t p0, v3_t p1, v3_t start, v3_t vel, flo
         }
     }
 }
+
+
+typedef struct
+{
+    float t;
+    v3_t rel_vel;
+    v3_t collision_normal;
+    uint8_t hit;
+
+} collision_data_t;
 
 // NOTE: Only for one at a time
 // TODO: When/if we get to discrete we will want to solve for multiple at once ???
@@ -650,7 +459,7 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
     v3_sub_eq_v3(&b_pd->velocity, v3_mul_f(total_impulse, b_inv_mass));
 }
 
-static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
+static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
 
     // TODO: Note this is continuous detection, do we realy need this??? it feels kinda free here with this
@@ -663,13 +472,13 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     //      
     //       Not really sure how to go about that but can solve it when needed? ^^^
     // TODO: Assert in broad phase to ensure this doesn't happen?
-    physics_data_t* mi_pd = pc.pd1;
-    transform_t* mi_transform = pc.t1;
+    const physics_data_t* mi_pd = pc.pd1;
+    const transform_t* mi_transform = pc.t1;
 
     // c0 is ellipsoid collider !
-    collider_t* ellipsoid_collider = pc.c0;
-    physics_data_t* ellipsoid_pd = pc.pd0;
-    transform_t* ellipsoid_transform = pc.t0;
+    const collider_t* ellipsoid_collider = pc.c0;
+    const physics_data_t* ellipsoid_pd = pc.pd0;
+    const transform_t* ellipsoid_transform = pc.t0;
     v3_t e_pos = ellipsoid_transform->position;
 
     v3_t ellipsoid = ellipsoid_collider->shape.ellipsoid;
@@ -691,7 +500,6 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     v3_mul_eq_v3(&e_vel, inv_ellipsoid);
 
-    //v3_t vel = pc.pd0->velocity;
     v3_t e_start_pos = e_pos;
     v3_mul_eq_v3(&e_start_pos, inv_ellipsoid);
     
@@ -848,21 +656,30 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     // For now with the continuous collision detection we will just resolve the 
     // first collision but ideally we would resolve collisions until there is no
     // time left.
+    collision_data_t cd = { .t = -1.f };
     if (found_collision)
     {
+        
         v3_t collision_normal = v3_sub_v3(ellipsoid_transform->position, v3_mul_v3(nearest_collision_point, ellipsoid));
         v3_normalise(&collision_normal);
 
+        cd.collision_normal = collision_normal;
+        cd.t = earliest_t;
+        cd.rel_vel = vel;
+        cd.hit = 1;
+        
         // Combine coefficients by taking averages.
-        float e = max(0.f, (ellipsoid_collider->restiution_coeff + mi_collider->restiution_coeff) / 2.f);
-        float mu = max(0.f, (ellipsoid_collider->friction_coeff + mi_collider->friction_coeff) / 2.f);
+        //float e = max(0.f, (ellipsoid_collider->restiution_coeff + mi_collider->restiution_coeff) / 2.f);
+        //float mu = max(0.f, (ellipsoid_collider->friction_coeff + mi_collider->friction_coeff) / 2.f);
 
         // TODO: This seems to break with high dt!!
-        resolve_single_collision(vel, collision_normal, earliest_t, ellipsoid_pd, mi_pd, ellipsoid_transform, mi_transform, e, mu, dt);
+        //resolve_single_collision(vel, collision_normal, earliest_t, ellipsoid_pd, mi_pd, ellipsoid_transform, mi_transform, e, mu, dt);
+        
     }
+    return cd;
 }
 
-static void narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
+static collision_data_t narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
     // NOTE: Currently this means they must already collide as the broad phase is 
     //       sphere vs sphere.
@@ -872,7 +689,7 @@ static void narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, po
      
 }
 
-static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
+static float narrow_phase(physics_t* physics, scene_t* scene, float dt)
 {    
     /*
     TODO:
@@ -892,10 +709,39 @@ static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
     
     */
 
+    /*
+    
+    TODO: For anything that collides, we need to handle collisions for the whole 
+          time dt!
+
+          the issue here is just with the logic in general really.
+          we kinda need to run the broad phase for one object at a time i think.
+
+          here we have broad phase collisions and handle each one rather than the
+          first.....
+
+
+    TODO: Refactor, process broad phase for one object at a time, if going above a 
+          certain speed use CCD, for now just always use that though. Then for CCD
+          iterate until no more dt.
+
+    TODO: This also reflects how the logic is wrong because we weren't processing
+          for the entire dt! Only a little bit, but then moving the whole dt,
+          so technically moving too much?
+          
+    */
+
+
+    collision_data_t first_cd = { .t = 10.f };
+    potential_collision_t first_pc = { 0 };
+    uint8_t found_collision = 0;
 
     const int num_potential_collisions = chds_vec_size(physics->frame.broad_phase_collisions);
+
     for (int i = 0; i < num_potential_collisions; ++i)
     {
+        collision_data_t tmp_cd = { .t = -1.f };
+
         potential_collision_t pc = physics->frame.broad_phase_collisions[i];
 
         // Sort shapes ascending so we only have to solve A vs B, never B vs A.
@@ -904,7 +750,7 @@ static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
             SWAP(collider_t*, pc.c0, pc.c1);
             SWAP(mesh_instance_t*, pc.mi0, pc.mi1);
             SWAP(physics_data_t*, pc.pd0, pc.pd1);
-            SWAP(physics_data_t*, pc.t0, pc.t1);
+            SWAP(transform_t*, pc.t0, pc.t1);
         }
 
         // TODO: Could sort by shape value (int) then only have to have to solve A vs B never B vs A.
@@ -914,10 +760,11 @@ static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
         {
             switch (pc.c1->shape.type)
             {
-            case COLLISION_SHAPE_ELLIPSOID: narrow_ellipsoid_vs_ellipsoid(physics, scene, pc, dt);  break;
-            case COLLISION_SHAPE_MESH: narrow_ellipsoid_vs_mi(physics, scene, pc, dt); break;
+            case COLLISION_SHAPE_ELLIPSOID: break; //tmp_cdt = narrow_ellipsoid_vs_ellipsoid(physics, scene, pc, dt);  break;
+            case COLLISION_SHAPE_MESH: tmp_cd = narrow_ellipsoid_vs_mi(physics, scene, pc, dt); break;
             default:
             {
+                log_error("Collider not supported!");
                 break;
             }
             }
@@ -943,12 +790,283 @@ static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
             break;
         }
         }
+
+        if (tmp_cd.hit && tmp_cd.t < first_cd.t)
+        {
+            found_collision = 1;
+            first_cd = tmp_cd;
+            first_pc = pc;
+
+            // TODO: It works here, so the issue is purely that we're not handling some collision???
+            /*
+            
+            but what are we not handling that we're meant to handle. I don't really get it.
+
+            must be something to do with how we're actually comparing the mi against the ellipsoids here?
+
+            so we're finding the first sphere the mi collides with and handling that,
+            so there must be some issue where we're not handling it the other way around!
+
+            wait....
+            is it not obvious...
+
+            we compare mi to ellipsoid a,b
+            maybe it collides with b first, so collision mi to b is handled.
+
+            but now a has not been collided with. but in our outer loop, we are only
+            comparing a with entities after a!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+            DAMN.
+
+
+
+
+            */
+
+            /*
+            float e = max(0.f, (first_pc.c0->restiution_coeff + first_pc.c1->restiution_coeff) / 2.f);
+            float mu = max(0.f, (first_pc.c0->friction_coeff + first_pc.c1->friction_coeff) / 2.f);
+
+            resolve_single_collision(first_cd.rel_vel, first_cd.collision_normal, first_cd.t, first_pc.pd0, first_pc.pd1, first_pc.t0, first_pc.t1, e, mu, dt);
+
+            first_cd = (collision_data_t){ .t = 100000};
+            first_pc = (potential_collision_t){ 0 };*/
+        }
     }
+    
+    
+    if (!found_collision || first_cd.t < 0.f || first_cd.t > 1.f)
+    {
+        return 0.f;
+    }
+
+
+    // Combine coefficients by taking averages.
+    float e = max(0.f, (first_pc.c0->restiution_coeff + first_pc.c1->restiution_coeff) / 2.f);
+    float mu = max(0.f, (first_pc.c0->friction_coeff + first_pc.c1->friction_coeff) / 2.f);
+
+    // TODO: This seems to break with high dt!!
+
+    
+
+    // TODO: Why isn't this working when doing it here? it works when doing it in the collision detection part.
+
+    resolve_single_collision(first_cd.rel_vel, first_cd.collision_normal, first_cd.t, first_pc.pd0, first_pc.pd1, first_pc.t0, first_pc.t1, e, mu, dt);
+
+
+    // TODO: Return remaining time.
+    float remaining_dt = dt * (1.f - first_cd.t);
+    //printf("remaining: %f\n", remaining_dt);
+    return remaining_dt;
+    //return 0.f;
 }
 
 static void resolve_collisions(physics_t* physics, scene_t* scene, float dt)
 {
 
+}
+
+static void broad_phase(physics_t* physics, scene_t* scene, float dt)
+{
+    // Broad phase is purely bounding sphere tests
+    // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
+    //       but should work this out at some point ^
+
+
+    /*
+    
+    TODO: Logic is wrong again. It SHOUlD gather all the collision pairs then find
+    the first collision
+    
+    */
+
+
+    chds_vec_clear(physics->frame.broad_phase_collisions);
+
+    // TODO: How can we get the number of entities in a nicer way?
+
+    int num_entities = 0;
+    {
+        cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->colliders_view);
+        while (cecs_view_iter_next(&it))
+        {
+            num_entities += it.num_entities;
+        }
+    }
+
+    // TODO: Idk what the calc is.
+    chds_vec_reserve(physics->frame.broad_phase_collisions, num_entities * num_entities);
+
+    // TODO: COmment properly.
+    int iterations = 0;
+    while (dt > 0.f)
+    {
+        chds_vec_clear(physics->frame.broad_phase_collisions);
+
+        cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->moving_colliders_view);
+        while (cecs_view_iter_next(&it))
+        {
+            physics_data_t* physics_datas = cecs_get_column(it, COMPONENT_PHYSICS_DATA);
+            transform_t* transforms = cecs_get_column(it, COMPONENT_TRANSFORM);
+            const mesh_instance_t* mis = cecs_get_column(it, COMPONENT_MESH_INSTANCE);
+            const collider_t* colliders = cecs_get_column(it, COMPONENT_COLLIDER);
+
+            for (int i = 0; i < it.num_entities; ++i)
+            {
+                physics_data_t* physics_data = &physics_datas[i];
+
+                // TODO: Because of testing only past the current moving entity,
+                //       we cannot have this check as it means a static mesh
+                //       wouldn't 'collide' with a moving one...
+                /*
+                // If entity not moving, it cannot have collided with something.
+                if (physics_data->velocity.x == 0 &&
+                    physics_data->velocity.y == 0 &&
+                    physics_data->velocity.z == 0)
+                {
+                    continue;
+                }*/
+
+                transform_t* transform = &transforms[i];
+                const mesh_instance_t* mi = &mis[i];
+                const mesh_base_t* mb = &scene->mesh_bases.bases[mi->mb_id];
+                const collider_t* collider = &colliders[i];
+
+                // Iterate from the current entity, will this work????
+                cecs_view_iter_t it_from_it0 = it; // TODO: Rename this....
+
+
+                // Check each remaining moving entity
+                do
+                {
+                    // TODO: Detect.
+                    const mesh_instance_t* mis1 = cecs_get_column(it_from_it0, COMPONENT_MESH_INSTANCE);
+                    const collider_t* colliders1 = cecs_get_column(it_from_it0, COMPONENT_COLLIDER);
+                    physics_data_t* physics_datas1 = cecs_get_column(it_from_it0, COMPONENT_PHYSICS_DATA);
+                    transform_t* transforms1 = cecs_get_column(it_from_it0, COMPONENT_TRANSFORM);
+
+                    // Start past current entity
+                    for (int j = i + 1; j < it_from_it0.num_entities; ++j)
+                    {
+                        mesh_instance_t* mi1 = &mis1[j];
+
+                        const collider_t* collider1 = &colliders1[j];
+                        transform_t* transform1 = &transforms1[j];
+
+                        // Account for entity1's velocity.
+                        physics_data_t* physics_data1 = &physics_datas1[j];
+                        const v3_t rel_v = v3_sub_v3(physics_data->velocity, physics_data1->velocity);
+
+                        bounding_sphere_t bs0 = collider->shape.bs;
+                        const bounding_sphere_t bs1 = collider1->shape.bs;
+
+                        // 'Sweep' sphere to account for velocities, otherwise we would miss
+                        // collisions at low fps or high velocity. Instead of sweeping just
+                        // scale and move bounding sphere.
+                        v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
+                        bs0.radius += 0.5f * v3_size(rel_v) * dt;
+
+                        // Test for overlap.
+                        const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, bs0.centre));
+                        const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
+
+                        if (dist <= n)
+                        {
+                            //printf("potentially collidign WITH MOVING!\n");
+                            // TODO:
+
+                            // TODO: Write out potential collision, doesn't have to be perfect for now.
+                            potential_collision_t pc = {
+                                .c0 = collider,
+                                .mi0 = mi,
+                                .pd0 = physics_data,
+                                .t0 = transform,
+                                .c1 = collider1,
+                                .mi1 = mi1,
+                                .pd1 = physics_data1,
+                                .t1 = transform1
+                            };
+
+                            chds_vec_push_back(physics->frame.broad_phase_collisions, pc);
+                        }
+                    }
+                } while (cecs_view_iter_next(&it_from_it0));
+
+                // Check with each static entity
+                cecs_view_iter_t sc_it = cecs_view_iter(physics->ecs,
+                    physics->static_colliders_view);
+
+                while (cecs_view_iter_next(&sc_it))
+                {
+                    // TODO: Detect.
+                    const mesh_instance_t* mis1 = cecs_get_column(sc_it, COMPONENT_MESH_INSTANCE);
+                    const collider_t* colliders1 = cecs_get_column(sc_it, COMPONENT_COLLIDER);
+                    const transform_t* transforms1 = cecs_get_column(sc_it, COMPONENT_TRANSFORM);
+
+                    // Start past current entity
+                    for (int j = 0; j < sc_it.num_entities; ++j)
+                    {
+                        mesh_instance_t* mi1 = &mis1[j];
+                        const collider_t* collider1 = &colliders1[j];
+                        transform_t* transform1 = &transforms1[j];
+
+                        bounding_sphere_t bs0 = collider->shape.bs;
+                        const bounding_sphere_t bs1 = collider1->shape.bs;
+
+                        // 'Sweep' sphere to account for velocities, otherwise we would miss
+                        // collisions at low fps or high velocity. Instead of sweeping just
+                        // scale and move bounding sphere.
+                        v3_add_v3(bs0.centre, v3_mul_f(physics_data->velocity, 0.5f * dt));
+                        bs0.radius += 0.5f * v3_size(physics_data->velocity) * dt;
+
+                        // Test for overlap.
+                        const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, bs0.centre));
+                        const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
+
+                        if (dist <= n)
+                        {
+                            //printf("potentially collidign - WITH STATIC!\n");
+                            // TODO:
+
+                            // TODO: Write out potential collision, doesn't have to be perfect for now.
+                            //potential_collision_t pc = {
+                            //    .collider_aid = it_id,
+                            //    .collider_offset = i,
+                            //    .target_aid = it_id1,
+                            //    .target_offset = j
+                            //};
+                            //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
+
+
+                            potential_collision_t pc = {
+                                .c0 = collider,
+                                .mi0 = mi,
+                                .pd0 = physics_data,
+                                .t0 = transform,
+                                .c1 = collider1,
+                                .mi1 = mi1,
+                                .pd1 = 0, // static
+                                .t1 = transform1
+                            };
+
+                            chds_vec_push_back(physics->frame.broad_phase_collisions, pc);
+                        }
+                    }
+                }
+            }
+        }
+
+        float remaining_dt = narrow_phase(physics, scene, dt);
+        float used_dt = dt - remaining_dt;
+        dt = remaining_dt;
+
+        apply_velocities(physics, used_dt);
+
+        // TODO: Note, at this point we should be integrating position up to remaining dt.
+
+        ++iterations;
+    }
 }
 
 static void handle_collisions(physics_t* physics, scene_t* scene, float dt)
@@ -986,15 +1104,32 @@ static void handle_collisions(physics_t* physics, scene_t* scene, float dt)
 
     TODO: We could use continuous if the object is moving a certain speed >30?
     
-    maybe for now for continuos we just solve one collision essentially.
-
     */
+
+    // TODO: As a compromise between CCD and discrete, we could do discrete but
+    //       with substepping. So discrete at 4 points through dt e.g.
+
+
+    /*
+    
+    TODO: Getting CCD working as we want it.
+
+    Idea is that we must simulate an object for the entire dt.
+
+    Narrow phase loop should be altered to find the collision of closest time for all
+    collisions.
+    
+    
+    
+    
+    */
+
 
     update_colliders(physics, scene);
 
     broad_phase(physics, scene, dt);
 
-    narrow_phase(physics, scene, dt);
+    //narrow_phase(physics, scene, dt);
 }
 
 void physics_data_init(physics_data_t* data)
@@ -1011,7 +1146,7 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt)
 
     handle_collisions(physics, scene, dt);
 
-    apply_velocities(physics, dt);
+    //apply_velocities(physics, dt);
 }
 
 void collider_init(collider_t* c)

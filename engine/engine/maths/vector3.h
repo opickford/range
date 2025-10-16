@@ -156,7 +156,8 @@ inline char* v3_to_str(v3_t v)
 	return format_str("%f %f %f", v.x, v.y, v.z);
 }
 
-// TODO: This shouldn't be in vector3.h?
+// TODO: This shouldn't be in vector3.h? 
+// TODO: It only works because it's in view space.
 inline int is_front_face(v3_t v0, v3_t v1, v3_t v2)
 {
     // Camera is at origin as coordinates are given in view space, so 
