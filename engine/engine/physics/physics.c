@@ -498,15 +498,17 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
     // TODO: Should we clamp low velocities?
 
     /*
-    if (v3_size(a_pd->velocity) < 0.001f)
+    if (v3_size(a_pd->velocity) < 0.01f)
     {
         a_pd->velocity = v3_uniform(0.f);
     }
 
-    if (v3_size(b_pd->velocity) < 0.001f)
+    if (v3_size(b_pd->velocity) < 0.01f)
     {
         b_pd->velocity = v3_uniform(0.f);
-    }*/
+    }
+    */
+    //printf("%f %f\n", v3_size(a_pd->velocity), v3_size(b_pd->velocity));
 }
 
 static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
@@ -771,6 +773,7 @@ static collision_data_t narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_
     float c = dot(rel_p, rel_p) - (R * R);
     float r = -1.f;
 
+    /*
     // Apparently this doesn't work when gravity is included? But why is it different to
     // the ellipsoid triangle collision?
     uint8_t hit = lowest_root(a, b, c, dt, &r);
@@ -790,7 +793,7 @@ static collision_data_t narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_
 
     // TODO: Positions are very close, sometimes the sphere goes through????
     
-
+    */
     // Calculate position before collision.
     //v3_t a_hit = v3_add_v3(a_pos, v3_mul_f(a_pd->velocity, r));
     //v3_t b_hit = v3_add_v3(b_pos, v3_mul_f(b_pd->velocity, r));
@@ -803,7 +806,7 @@ static collision_data_t narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_
 
 
 
-
+    
     //printf("a_hit: %s\n", v3_to_str(a_hit));
     //printf("b_hit: %s\n", v3_to_str(b_hit));
     //printf("cn: %s\n", v3_to_str(n));
@@ -816,14 +819,29 @@ static collision_data_t narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_
     //pc.pd0->velocity = v3_uniform(0);
     //pc.pd1->velocity = v3_uniform(0);
 
+    v3_t a_deepest = v3_add_v3(a_pos, v3_mul_f(n, -a_radius));
+    v3_t b_deepest = v3_add_v3(b_pos, v3_mul_f(n, b_radius));
+
+    float penetration_depth = v3_size(v3_sub_v3(a_deepest, b_deepest));
+    float t = penetration_depth / v3_size(rel_v);
+    //printf("t %f\n", t);
+
+    // TODO: tried out another way, doesn't seem to fix it.
+
+
+    if (t < 0 || t > 1)
+    {
+        printf("oops!\n");
+    }
+
 
     // TODO: Gravity is pushing the ball into another.
 
     collision_data_t cd = { 0 };
     cd.rel_vel = rel_v;
-    cd.t = r;
+    cd.t = t;
     cd.collision_normal = n; // TODO: Visualise this normal!!!!!!!!!!! would be ideal to call a renderer debug func from here.
-    cd.hit = hit;
+    cd.hit = 1;
     //cd.hit = 0;
     return cd;
      
@@ -1043,6 +1061,9 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
 
     // TODO: Potentially infinite or very long loop.
     int iterations = 0;
+
+    // Note, if one object is perfectly on top of another this will not work, we would be 
+    // resolving collisions forever annoyingly.
 
     while (dt > 0.f) 
     {

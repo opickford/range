@@ -323,7 +323,7 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
             cecs_add_component(engine->ecs, cube_entity1, COMPONENT_TRANSFORM);
             transform_t* transform1 = cecs_get_component(engine->ecs, cube_entity1, COMPONENT_TRANSFORM);
             transform_init(transform1);
-            transform1->position = (v3_t){ 0, 10, 0 };
+            transform1->position = (v3_t){ .1, 10, 0 };
 
             transform1->scale = v3_uniform(1);
 
