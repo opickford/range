@@ -96,6 +96,10 @@ status_t engine_init(engine_t* engine, int window_width, int window_height)
 
 void engine_run(engine_t* engine)
 {
+    // TODO: Outline somewhere nicer.
+    const float physics_dt = 1.f / 60.f; // 60fps
+
+
     // TEMP:
     g_elapsed = 0.f;
 
@@ -151,6 +155,9 @@ void engine_run(engine_t* engine)
     engine->ui.text[engine->ui.text_count++] = text_create(physics_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
 
     engine->running = 1;
+
+    float physics_dt_counter = 0.f;
+
     while (engine->running)
     {
         timer_t t = timer_start();
@@ -168,10 +175,15 @@ void engine_run(engine_t* engine)
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
 
         // Apply physics
-        timer_restart(&t);
-        physics_tick(&engine->physics, &engine->scene, dt);
-        snprintf(physics_str, sizeof(physics_str), "Physics: %d", timer_get_elapsed(&t));
-
+        while (physics_dt_counter >= physics_dt)
+        {
+            timer_restart(&t);
+            physics_tick(&engine->physics, &engine->scene, physics_dt);
+            snprintf(physics_str, sizeof(physics_str), "Physics: %d", timer_get_elapsed(&t));
+            
+            physics_dt_counter -= physics_dt;
+        }
+        
         // Clear the canvas.
         timer_restart(&t);
         render_target_clear(&engine->renderer.target, engine->scene.bg_colour);
@@ -249,6 +261,7 @@ void engine_run(engine_t* engine)
         dt = (float)(endTime.QuadPart - startTime.QuadPart) / frequency.QuadPart;
 
         dt_counter += dt;
+        physics_dt_counter += dt;
 
         startTime = endTime;
 

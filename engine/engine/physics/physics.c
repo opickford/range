@@ -345,7 +345,6 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
     // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
     //       but should work this out at some point ^
 
-
     chds_vec_clear(physics->frame.broad_phase_collisions);
 
     // TODO: How can we get the number of entities in a nicer way?
@@ -441,12 +440,6 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
                     bounding_sphere_t bs0 = collider->shape.bs;
                     const bounding_sphere_t bs1 = collider1->shape.bs;
 
-                    // 'Sweep' sphere to account for velocities, otherwise we would miss
-                    // collisions at low fps or high velocity. Instead of sweeping just
-                    // scale and move bounding sphere.
-                    v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
-                    bs0.radius += 0.5f * v3_size(rel_v) * dt;
-
                     // Test for overlap.
                     const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, bs0.centre));
                     const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
@@ -493,12 +486,6 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
 
                     bounding_sphere_t bs0 = collider->shape.bs;
                     const bounding_sphere_t bs1 = collider1->shape.bs;
-
-                    // 'Sweep' sphere to account for velocities, otherwise we would miss
-                    // collisions at low fps or high velocity. Instead of sweeping just
-                    // scale and move bounding sphere.
-                    v3_add_v3(bs0.centre, v3_mul_f(physics_data->velocity, 0.5f * dt));
-                    bs0.radius += 0.5f * v3_size(physics_data->velocity) * dt;
 
                     // Test for overlap.
                     const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, bs0.centre));
@@ -963,38 +950,18 @@ static void handle_collisions(physics_t* physics, scene_t* scene, float dt)
 
     */
 
-    // TODO: Do we actually want to be running continuous detection? Should I not 
-    //       just use discrete 1/60 e.g?  Roblox and unity use this apparently.
-    /*
-    We should just do physics at 60fps essentially. If something is really fast
-    we will miss it but who cares. although apparently the speed is only 30m/s 
-    that would cause tunnelling. if :
-
-    min_collider_thickness = 0.5f
-    physics_dt = 1.f / 60.f;
-    vel_max = min_collider_thickness / physics_dt;
-            = 30.f
-
-    some things might need continuous detection. maybe we should only support 
-    continuous for ellipsoid vs mi?? so player and fast moving spheres?
-
-    continuous detection means we resolve each earliest collision found for the
-    whole time step (dt).
-
-    discrete means we detect and resolve at a fix interval, where we gather all
-    collisions at that point and solve them
-
-    TODO: We could use continuous if the object is moving a certain speed >30?
-    
-    maybe for now for continuos we just solve one collision essentially.
-
-    */
-
     update_colliders(physics, scene);
 
-    broad_phase(physics, scene, dt);
+    // TODO: detect_collisions();
+    // TODO: resolve_collisions();
 
-    narrow_phase(physics, scene, dt);
+    // Detect collisions
+    {
+        broad_phase(physics, scene, dt);
+        narrow_phase(physics, scene, dt);
+
+    }
+    
 }
 
 void physics_data_init(physics_data_t* data)
@@ -1078,7 +1045,13 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt)
 
        - pseudocode:
 
+       move all objects
+       
+       gather all collision pairs
 
+       resolve collisions
+
+       
 
 
 
@@ -1088,11 +1061,13 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt)
        */
 
 
+
+
     apply_forces(physics, dt);
+    apply_velocities(physics, dt);
 
     handle_collisions(physics, scene, dt);
 
-    apply_velocities(physics, dt);
 }
 
 void collider_init(collider_t* c)
