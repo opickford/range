@@ -1337,9 +1337,6 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt)
     
     */
 
-
-
-
     // TODO: Should forces be applied like this if we're doing the collisions that way???
     apply_forces(physics, dt);
 
