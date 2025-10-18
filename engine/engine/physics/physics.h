@@ -26,7 +26,10 @@ typedef struct
     physics_frame_t frame;
 
     // Views
+    // TODO: All need renaming for clarity?
     cecs_view_id_t physics_view; // TODO: Rename physicsdata view?
+    cecs_view_id_t non_collider_physics_view; // TODO: Rename physicsdata view?
+    cecs_view_id_t collider_physics_view;
     cecs_view_id_t moving_colliders_view;
     cecs_view_id_t static_colliders_view;
     cecs_view_id_t colliders_view;

@@ -41,13 +41,13 @@ static uint8_t lowest_root(float a, float b, float c, float max_r, float* r)
     }
 
     // Return the lowest postive root below given max.
-    if (x0 > 0 && x0 < max_r)
+    if (x0 > 0.f && x0 < max_r)
     {
         *r = x0;
         return 1;
     }
 
-    if (x1 > 0 && x1 < max_r)
+    if (x1 > 0.f && x1 < max_r)
     {
         *r = x1;
         return 1;
@@ -62,6 +62,17 @@ static void physics_setup_views(physics_t* physics)
     physics->physics_view = cecs_view(physics->ecs,
         CECS_COMPONENT_ID_TO_BITSET(COMPONENT_PHYSICS_DATA) | 
         CECS_COMPONENT_ID_TO_BITSET(COMPONENT_TRANSFORM),
+        0);
+
+    physics->non_collider_physics_view = cecs_view(physics->ecs,
+        CECS_COMPONENT_ID_TO_BITSET(COMPONENT_PHYSICS_DATA) |
+        CECS_COMPONENT_ID_TO_BITSET(COMPONENT_TRANSFORM),
+        CECS_COMPONENT_ID_TO_BITSET(COMPONENT_COLLIDER));
+
+    physics->collider_physics_view = cecs_view(physics->ecs,
+        CECS_COMPONENT_ID_TO_BITSET(COMPONENT_PHYSICS_DATA) |
+        CECS_COMPONENT_ID_TO_BITSET(COMPONENT_TRANSFORM) |
+        CECS_COMPONENT_ID_TO_BITSET(COMPONENT_COLLIDER),
         0);
 
     physics->colliders_view = cecs_view(physics->ecs,
@@ -111,6 +122,7 @@ static void apply_forces(physics_t* physics, float dt)
     // Disable gravity for now.
     // TODO: Define in physics world.
     static const v3_t gravity = { 0, -9.8f, 0 };
+    //static const v3_t gravity = { 0, 0, 0 };
     
     cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->physics_view);
 
@@ -206,9 +218,13 @@ static void apply_forces(physics_t* physics, float dt)
     }
 }
 
-static void apply_velocities(physics_t* physics, float dt)
+static void apply_non_collider_velocities(physics_t* physics, float dt)
 {
-    cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->physics_view);
+    // TODO: Rename? Only applies velocities to none colliders.
+
+    // Apply velocities to entities without colliders as their
+    // velocities are applied during CCD.
+    cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->non_collider_physics_view);
     while (cecs_view_iter_next(&it))
     {
         physics_data_t* physics_datas = cecs_get_column(it, COMPONENT_PHYSICS_DATA);
@@ -224,6 +240,27 @@ static void apply_velocities(physics_t* physics, float dt)
         }
     }
 }
+
+static void apply_collider_velocities(physics_t* physics, float dt)
+{
+    // Apply velocities to entities with colliders, to be called during CCD.
+    cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->collider_physics_view);
+    while (cecs_view_iter_next(&it))
+    {
+        physics_data_t* physics_datas = cecs_get_column(it, COMPONENT_PHYSICS_DATA);
+        transform_t* transforms = cecs_get_column(it, COMPONENT_TRANSFORM);
+
+        for (int i = 0; i < it.num_entities; ++i)
+        {
+            physics_data_t* physics_data = &physics_datas[i];
+            transform_t* transform = &transforms[i];
+
+            // Update position with new velocity.
+            v3_add_eq_v3(&transform->position, v3_mul_f(physics_data->velocity, dt));
+        }
+    }
+}
+
 
 static void update_collision_mesh_bounding_sphere(collider_t* collider, const mesh_instance_t* mi, const transform_t transform)
 {
@@ -457,6 +494,19 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
 
     v3_add_eq_v3(&a_pd->velocity, v3_mul_f(total_impulse, a_inv_mass));
     v3_sub_eq_v3(&b_pd->velocity, v3_mul_f(total_impulse, b_inv_mass));
+
+    // TODO: Should we clamp low velocities?
+
+    /*
+    if (v3_size(a_pd->velocity) < 0.001f)
+    {
+        a_pd->velocity = v3_uniform(0.f);
+    }
+
+    if (v3_size(b_pd->velocity) < 0.001f)
+    {
+        b_pd->velocity = v3_uniform(0.f);
+    }*/
 }
 
 static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
@@ -681,11 +731,102 @@ static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scen
 
 static collision_data_t narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
+    // TODO: I think this is going to be too complicated. 
+    // Or we can transform one ellipsoid into a sphere and do sphere -> ellipsoid
+
+
     // NOTE: Currently this means they must already collide as the broad phase is 
     //       sphere vs sphere.
 
     //log_error("narrow_ellipsoid_vs_ellipsoid not implemented!!\n");
     //assert(0);
+   
+    // TODO: Just handling spheres for now!!!
+
+    // TODO: This method doesn't actually work. we need to solve a quadratic.
+    //       i suppose this makes the broad phase still valid as it's a quicker test.
+
+
+    physics_data_t* a_pd = pc.pd0;
+    physics_data_t* b_pd = pc.pd1;
+
+    v3_t a_pos = pc.t0->position;
+    v3_t b_pos = pc.t1->position;
+
+    v3_t a_ellipsoid = pc.c0->shape.ellipsoid;
+    v3_t b_ellipsoid = pc.c1->shape.ellipsoid;
+
+    // Assuming spheres for now!!!!
+    float a_radius = a_ellipsoid.x;
+    float b_radius = b_ellipsoid.x;
+
+    v3_t rel_v = v3_sub_v3(a_pd->velocity, b_pd->velocity);
+    v3_t rel_p = v3_sub_v3(a_pos, b_pos);
+
+    float R = a_radius + b_radius;
+
+    // TODO: Comment how this is derived.
+    float a = dot(rel_v, rel_v); // TODO: If this returns 0, we will divide by 0.
+
+    float b = 2.f * dot(rel_p, rel_v);
+    float c = dot(rel_p, rel_p) - (R * R);
+    float r = -1.f;
+
+    // Apparently this doesn't work when gravity is included? But why is it different to
+    // the ellipsoid triangle collision?
+    uint8_t hit = lowest_root(a, b, c, dt, &r);
+    
+    // TODO: We shouldn't actually be getting here.
+    if (!hit)
+    {
+        // TODO: Getting a lot of these?
+        // TODO: Error when this happens, the ball falls inside another!! So we are hitting but not??
+        //       the root must be negative or something? Suggesting we should've already collided with it????
+
+        printf("not hit\n");
+        printf("%f %f %f %f %f \n", a, b, c, r, dt);
+
+        return (collision_data_t) { 0 };
+    }
+
+    // TODO: Positions are very close, sometimes the sphere goes through????
+    
+
+    // Calculate position before collision.
+    //v3_t a_hit = v3_add_v3(a_pos, v3_mul_f(a_pd->velocity, r));
+    //v3_t b_hit = v3_add_v3(b_pos, v3_mul_f(b_pd->velocity, r));
+    //
+    //v3_t n = v3_normalised(v3_sub_v3(a_pos, b_pos));
+    v3_t n = v3_normalised(rel_p);
+
+    //v3_sub_eq_v3(&a_hit, n);
+    //v3_add_eq_v3(&b_hit, n);
+
+
+
+
+    //printf("a_hit: %s\n", v3_to_str(a_hit));
+    //printf("b_hit: %s\n", v3_to_str(b_hit));
+    //printf("cn: %s\n", v3_to_str(n));
+    //printf("t: %f\n", r);
+
+
+    // TODO: TEMP: TESTING>
+    //pc.t0->position = a_hit;
+    //pc.t1->position = b_hit;
+    //pc.pd0->velocity = v3_uniform(0);
+    //pc.pd1->velocity = v3_uniform(0);
+
+
+    // TODO: Gravity is pushing the ball into another.
+
+    collision_data_t cd = { 0 };
+    cd.rel_vel = rel_v;
+    cd.t = r;
+    cd.collision_normal = n; // TODO: Visualise this normal!!!!!!!!!!! would be ideal to call a renderer debug func from here.
+    cd.hit = hit;
+    //cd.hit = 0;
+    return cd;
      
 }
 
@@ -760,7 +901,7 @@ static float narrow_phase(physics_t* physics, scene_t* scene, float dt)
         {
             switch (pc.c1->shape.type)
             {
-            case COLLISION_SHAPE_ELLIPSOID: break; //tmp_cdt = narrow_ellipsoid_vs_ellipsoid(physics, scene, pc, dt);  break;
+            case COLLISION_SHAPE_ELLIPSOID: tmp_cd = narrow_ellipsoid_vs_ellipsoid(physics, scene, pc, dt); break;
             case COLLISION_SHAPE_MESH: tmp_cd = narrow_ellipsoid_vs_mi(physics, scene, pc, dt); break;
             default:
             {
@@ -833,10 +974,12 @@ static float narrow_phase(physics_t* physics, scene_t* scene, float dt)
             first_cd = (collision_data_t){ .t = 100000};
             first_pc = (potential_collision_t){ 0 };*/
         }
+        
     }
     
     
-    if (!found_collision || first_cd.t < 0.f || first_cd.t > 1.f)
+    //if (!found_collision || first_cd.t < 0.f || first_cd.t > 1.f)
+    if (!found_collision)
     {
         return 0.f;
     }
@@ -848,16 +991,15 @@ static float narrow_phase(physics_t* physics, scene_t* scene, float dt)
 
     // TODO: This seems to break with high dt!!
 
-    
-
-    // TODO: Why isn't this working when doing it here? it works when doing it in the collision detection part.
-
-    resolve_single_collision(first_cd.rel_vel, first_cd.collision_normal, first_cd.t, first_pc.pd0, first_pc.pd1, first_pc.t0, first_pc.t1, e, mu, dt);
-
-
-    // TODO: Return remaining time.
     float remaining_dt = dt * (1.f - first_cd.t);
+    float used_dt = dt - remaining_dt;
+
+    // TODO: Is used dt passed here correct???
+    //resolve_single_collision(first_cd.rel_vel, first_cd.collision_normal, first_cd.t, first_pc.pd0, first_pc.pd1, first_pc.t0, first_pc.t1, e, mu, dt);
+    resolve_single_collision(first_cd.rel_vel, first_cd.collision_normal, first_cd.t, first_pc.pd0, first_pc.pd1, first_pc.t0, first_pc.t1, e, mu, used_dt);
+    // TODO: Return remaining time.
     //printf("remaining: %f\n", remaining_dt);
+    
     return remaining_dt;
     //return 0.f;
 }
@@ -899,8 +1041,10 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
     chds_vec_reserve(physics->frame.broad_phase_collisions, num_entities * num_entities);
 
     // TODO: COmment properly.
+
+    // TODO: Potentially infinite or very long loop.
     int iterations = 0;
-    while (dt > 0.f)
+    while (dt > 0.f) 
     {
         chds_vec_clear(physics->frame.broad_phase_collisions);
 
@@ -964,12 +1108,28 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
                         // 'Sweep' sphere to account for velocities, otherwise we would miss
                         // collisions at low fps or high velocity. Instead of sweeping just
                         // scale and move bounding sphere.
-                        v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
-                        bs0.radius += 0.5f * v3_size(rel_v) * dt;
+                        //v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
+                        //bs0.radius += 0.5f * v3_size(rel_v) * dt;
+
+                        // TODO: Handle rel_v being 0.
+
+                        // TODO: THE ISSUE IS WITH THE BROAD PHASE NOT MARKING THE SHPERES AS COLLIDING!!!
+                        // TODO: Without dt applied here it works perfectly... why???? 
+                        // is this formula correct?
+                        v3_t mid_p = v3_add_v3(bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
+                        float expanded_radius = bs0.radius + bs1.radius + 0.5f * v3_size(rel_v) * dt;
+
+                        //v3_add_eq_v3(&bs0.centre, v3_mul_f(rel_v, 0.5f * dt));
+                        //bs0.radius += 0.5f * v3_size(rel_v) * dt;
+
+                        // TODO: Something going wrong here still maybe.
 
                         // Test for overlap.
-                        const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, bs0.centre));
-                        const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
+                        const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, mid_p));
+                        const float n = (expanded_radius * expanded_radius);
+
+                        //const float dist = v3_size_sqrd(v3_sub_v3(bs1.centre, bs0.centre));
+                        //const float n = (bs0.radius + bs1.radius) * (bs0.radius + bs1.radius);
 
                         if (dist <= n)
                         {
@@ -1061,9 +1221,7 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
         float used_dt = dt - remaining_dt;
         dt = remaining_dt;
 
-        apply_velocities(physics, used_dt);
-
-        // TODO: Note, at this point we should be integrating position up to remaining dt.
+        apply_collider_velocities(physics, used_dt);
 
         ++iterations;
     }
@@ -1142,11 +1300,26 @@ void physics_data_init(physics_data_t* data)
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)
 {
+    // TODO: I'm starting to think discrete is the way... And can just add continuous if needed.
+    /*
+    
+    TODO: Convert to discrete. Save this stuff for another time if necessary.
+
+    We should combine discrete and CCD, only CCD for fast moving objects, note also CCD
+    is expensive when dealing with lots of collisions, and just unnecessary, it's causing
+    infinite loops etc.
+
+
+    How could we combine them?
+    
+    */
+
+    // TODO: Should forces be applied like this if we're doing the collisions that way???
     apply_forces(physics, dt);
 
     handle_collisions(physics, scene, dt);
 
-    //apply_velocities(physics, dt);
+    apply_non_collider_velocities(physics, dt);
 }
 
 void collider_init(collider_t* c)

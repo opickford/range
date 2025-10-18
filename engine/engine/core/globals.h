@@ -13,4 +13,6 @@ uint8_t g_debug_velocities;
 
 float g_elapsed;
 
+float g_physics_dt_factor;
+
 #endif

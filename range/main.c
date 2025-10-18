@@ -47,6 +47,7 @@ void create_map(engine_t* engine)
 
     
     // Create an entity
+    
     {
         cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
         map_entity = cube_entity;
@@ -144,12 +145,12 @@ void engine_on_init(engine_t* engine)
 void engine_on_update(engine_t* engine, float dt)
 {
     {
-        physics_data_t* pd = cecs_get_component(engine->ecs, map_entity, COMPONENT_PHYSICS_DATA);
+        //physics_data_t* pd = cecs_get_component(engine->ecs, map_entity, COMPONENT_PHYSICS_DATA);
         //pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
     }
 
     {
-        physics_data_t* pd = cecs_get_component(engine->ecs, monkey_entity, COMPONENT_PHYSICS_DATA);
+        //physics_data_t* pd = cecs_get_component(engine->ecs, monkey_entity, COMPONENT_PHYSICS_DATA);
         //pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
 
     }
@@ -249,6 +250,112 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
         g_debug_velocities = !g_debug_velocities;
         break;
     }
+    case VK_F7:
+    {
+        scene_t* scene = &engine->scene;
+        mesh_base_t* mb = &scene->mesh_bases.bases[sphere_base];
+
+        // TODO: INVALID_ENTITY SHOULD BE PREFIXED!
+        {
+            static cecs_entity_id_t cube_entity = INVALID_ENTITY;
+            if (cube_entity != INVALID_ENTITY)
+            {
+                // TODO: Something is going wrong when destroy an entity here!!!!!!!!!!!!!
+            }
+
+            
+
+            cube_entity = cecs_create_entity(engine->ecs);
+
+            // Add a mesh_instance_t component.
+            cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+            mesh_instance_t* mi = cecs_get_component(engine->ecs, cube_entity,
+                COMPONENT_MESH_INSTANCE);
+            mesh_instance_init(mi, mb);
+
+            v3_t colour =
+            {
+                1,0,0
+            };
+            mesh_instance_set_albedo(mi, mb, colour);
+
+            cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+            transform_t* transform = cecs_get_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+            transform_init(transform);
+            transform->position = (v3_t){ 0, 3, 0 };
+
+            transform->scale = v3_uniform(1);
+
+            physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+            physics_data_init(physics_data);
+            
+            physics_data->mass = 1.f;
+
+            // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
+
+            collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
+            collider_init(collider);
+            collider->shape.ellipsoid = transform->scale;
+        }
+        
+
+        // TODO: INVALID_ENTITY SHOULD BE PREFIXED!
+        {
+            static cecs_entity_id_t cube_entity1 = INVALID_ENTITY;
+            if (cube_entity1 != INVALID_ENTITY)
+            {
+            }
+
+            cube_entity1 = cecs_create_entity(engine->ecs);
+
+            // Add a mesh_instance_t component.
+            cecs_add_component(engine->ecs, cube_entity1, COMPONENT_MESH_INSTANCE);
+            mesh_instance_t* mi1 = cecs_get_component(engine->ecs, cube_entity1,
+                COMPONENT_MESH_INSTANCE);
+            mesh_instance_init(mi1, mb);
+
+            v3_t colour1 =
+            {
+                0,1,0
+            };
+            mesh_instance_set_albedo(mi1, mb, colour1);
+
+            cecs_add_component(engine->ecs, cube_entity1, COMPONENT_TRANSFORM);
+            transform_t* transform1 = cecs_get_component(engine->ecs, cube_entity1, COMPONENT_TRANSFORM);
+            transform_init(transform1);
+            transform1->position = (v3_t){ 0, 10, 0 };
+
+            transform1->scale = v3_uniform(1);
+
+            physics_data_t* physics_data1 = cecs_add_component(engine->ecs, cube_entity1, COMPONENT_PHYSICS_DATA);
+            physics_data_init(physics_data1);
+
+            physics_data1->mass = 1.f;
+
+            // TODO: Must remember that the pointers go invalid quick, should specifiy this in cecs!!!!
+
+            collider_t* collider1 = cecs_add_component(engine->ecs, cube_entity1, COMPONENT_COLLIDER);
+            collider_init(collider1);
+            collider1->shape.ellipsoid = transform1->scale;
+        }
+        
+
+        break;
+    }
+    case VK_F8:
+    {
+        if (g_physics_dt_factor == 1.f)
+        {
+            g_physics_dt_factor = 0.1f;
+        }
+        else
+        {
+            g_physics_dt_factor = 1.f;
+        }
+        
+        break;
+    }
+
     }
 }
 
@@ -282,13 +389,14 @@ void engine_on_lmbdown(engine_t* engine)
     transform_init(transform);
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
 
-    transform->scale = v3_uniform(0.1f);
+    transform->scale = v3_uniform(1);
     //transform->scale = (v3_t){ 0.5f,2,1 };
 
     physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
     physics_data_init(physics_data);
 
     physics_data->mass = 1.f;
+
 
     // TODO: Dt?
     float speed = physics_data->mass * 20.f;

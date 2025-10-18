@@ -98,6 +98,7 @@ void engine_run(engine_t* engine)
 {
     // TEMP:
     g_elapsed = 0.f;
+    g_physics_dt_factor = 1.f;
 
     // TEMP
     LARGE_INTEGER frequency = { 0 };
@@ -171,7 +172,7 @@ void engine_run(engine_t* engine)
 
         // Apply physics
         timer_restart(&t);
-        physics_tick(&engine->physics, &engine->scene, dt);
+        physics_tick(&engine->physics, &engine->scene, dt * g_physics_dt_factor);
         snprintf(physics_str, sizeof(physics_str), "Physics: %d", timer_get_elapsed(&t));
 
         // Clear the canvas.
