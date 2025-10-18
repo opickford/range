@@ -3,9 +3,12 @@
 #ifndef PHYSICS_FRAME_H
 #define PHYSICS_FRAME_H
 
+#include <maths/vector3.h>
+
 #include <cecs/archetype.h>
 
 #include <chds/vec.h>
+
 
 #include <string.h>
 
@@ -48,6 +51,18 @@ typedef struct
 
 } potential_collision_t;
 
+typedef struct
+{
+    v3_t rel_vel;
+    v3_t collision_normal;
+
+    uint8_t hit;
+
+    potential_collision_t pc; // TODO: TEMP: Just for the entity ptrs?
+
+} collision_data_t;
+
+
 //typedef struct
 //{
 //    int temp;
@@ -58,9 +73,9 @@ typedef struct
     chds_vec(potential_collision_t) broad_phase_collisions;
     // float dt;
     // TODO: Should this have dt? Simplifies passing args but not needed in some places.
-
     // TODO: Store collisions for discrete collision resolution.
-    //chds_vec(collision_t) collisions;
+
+    chds_vec(collision_data_t) collisions;
 
 } physics_frame_t;
 
