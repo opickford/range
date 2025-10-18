@@ -55,8 +55,9 @@ void create_map(engine_t* engine)
         // Add a mesh_instance_t component.
         mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
         mesh_instance_init(mi, &scene->mesh_bases.bases[map_base]);
+        mesh_instance_set_albedo(mi, &scene->mesh_bases.bases[map_base], (v3_t) { 0, 0, 1 });
 
-        mi->texture_id = 0;
+        //mi->texture_id = 0;
 
         transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
         transform_init(transform);
@@ -72,9 +73,10 @@ void create_map(engine_t* engine)
 
         collider->shape.type = COLLISION_SHAPE_MESH;
 
+        
         physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
         physics_data_init(pd);
-        pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
+        pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things? Not currently supporting collision with no physics data.
         pd->floating = 1;
         
 
@@ -154,8 +156,6 @@ void engine_on_update(engine_t* engine, float dt)
         //pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
 
     }
-    
-    return;
 }
 
 void engine_on_keyup(engine_t* engine, WPARAM wParam)

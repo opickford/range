@@ -746,7 +746,6 @@ static collision_data_t narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_
     // TODO: This method doesn't actually work. we need to solve a quadratic.
     //       i suppose this makes the broad phase still valid as it's a quicker test.
 
-
     physics_data_t* a_pd = pc.pd0;
     physics_data_t* b_pd = pc.pd1;
 
@@ -996,7 +995,7 @@ static float narrow_phase(physics_t* physics, scene_t* scene, float dt)
 
     // TODO: Is used dt passed here correct???
     //resolve_single_collision(first_cd.rel_vel, first_cd.collision_normal, first_cd.t, first_pc.pd0, first_pc.pd1, first_pc.t0, first_pc.t1, e, mu, dt);
-    resolve_single_collision(first_cd.rel_vel, first_cd.collision_normal, first_cd.t, first_pc.pd0, first_pc.pd1, first_pc.t0, first_pc.t1, e, mu, used_dt);
+    resolve_single_collision(first_cd.rel_vel, first_cd.collision_normal, first_cd.t, first_pc.pd0, first_pc.pd1, first_pc.t0, first_pc.t1, e, mu, dt);
     // TODO: Return remaining time.
     //printf("remaining: %f\n", remaining_dt);
     
@@ -1044,6 +1043,7 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
 
     // TODO: Potentially infinite or very long loop.
     int iterations = 0;
+
     while (dt > 0.f) 
     {
         chds_vec_clear(physics->frame.broad_phase_collisions);
@@ -1223,6 +1223,8 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
 
         apply_collider_velocities(physics, used_dt);
 
+
+
         ++iterations;
     }
 }
@@ -1302,6 +1304,7 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt)
 {
     // TODO: I'm starting to think discrete is the way... And can just add continuous if needed.
     /*
+   
     
     TODO: Convert to discrete. Save this stuff for another time if necessary.
 
@@ -1309,10 +1312,33 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt)
     is expensive when dealing with lots of collisions, and just unnecessary, it's causing
     infinite loops etc.
 
+    Too much weird stuff is going on, like sometimes the ball on top will push the one below 
+    through the ground. I think the issue is to do with the resolved velocity causing antoher 
+    collision but we update everything to that position anyways
+
 
     How could we combine them?
     
     */
+
+    /*
+    
+    Discrete Refactor:
+
+    - Firstly, we want to separate physics dt from renderer dt, this means that the physics will
+      only update the positions once every 4 frames for example, this could create a jittery look.
+      A solution to this would be to separate physics and render positions and interpolate them in
+      the renderer, effectively smoothing out the jitteryness.
+    
+    
+    
+    
+    
+    
+    */
+
+
+
 
     // TODO: Should forces be applied like this if we're doing the collisions that way???
     apply_forces(physics, dt);
