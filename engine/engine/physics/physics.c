@@ -1007,6 +1007,87 @@ void physics_data_init(physics_data_t* data)
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)
 {
+    /*
+    TODO:
+    Outline:
+
+    - Broad phase gathers potential pairs of collisions
+    - Narrow phase confirms collisions
+    - Solver resolves contacts iteratively.
+
+    */
+
+    // TODO: Do we actually want to be running continuous detection? Should I not 
+    //       just use discrete 1/60 e.g?  Roblox and unity use this apparently.
+    /*
+    We should just do physics at 60fps essentially. If something is really fast
+    we will miss it but who cares. although apparently the speed is only 30m/s
+    that would cause tunnelling. if :
+
+    min_collider_thickness = 0.5f
+    physics_dt = 1.f / 60.f;
+    vel_max = min_collider_thickness / physics_dt;
+            = 30.f
+
+    some things might need continuous detection. maybe we should only support
+    continuous for ellipsoid vs mi?? so player and fast moving spheres?
+
+    continuous detection means we resolve each earliest collision found for the
+    whole time step (dt).
+
+    discrete means we detect and resolve at a fix interval, where we gather all
+    collisions at that point and solve them
+
+    TODO: We could use continuous if the object is moving a certain speed >30?
+
+    */
+
+    // TODO: As a compromise between CCD and discrete, we could do discrete but
+    //       with substepping. So discrete at 4 points through dt e.g.
+
+
+    // TODO: I'm starting to think discrete is the way... And can just add continuous if needed.
+       /*
+
+
+       TODO: Convert to discrete. Save this stuff for another time if necessary.
+
+       We should combine discrete and CCD, only CCD for fast moving objects, note also CCD
+       is expensive when dealing with lots of collisions, and just unnecessary, it's causing
+       infinite loops etc.
+
+       Too much weird stuff is going on, like sometimes the ball on top will push the one below
+       through the ground. I think the issue is to do with the resolved velocity causing antoher
+       collision but we update everything to that position anyways
+
+
+       How could we combine them?
+
+       */
+
+       /*
+
+       Discrete Refactor:
+
+       - Firstly, we want to separate physics dt from renderer dt, this means that the physics will
+         only update the positions once every 4 frames for example, this could create a jittery look.
+         A solution to this would be to separate physics and render positions and interpolate them in
+         the renderer, effectively smoothing out the jitteryness.
+
+       - Simply implement discrete, so check for collision at the current position or the end position?
+
+       - pseudocode:
+
+
+
+
+
+
+
+
+       */
+
+
     apply_forces(physics, dt);
 
     handle_collisions(physics, scene, dt);
