@@ -435,7 +435,6 @@ static void broad_phase(physics_t* physics, scene_t* scene, float dt)
 
                     // Account for entity1's velocity.
                     physics_data_t* physics_data1 = &physics_datas1[j];
-                    const v3_t rel_v = v3_sub_v3(physics_data->velocity, physics_data1->velocity);
 
                     bounding_sphere_t bs0 = collider->shape.bs;
                     const bounding_sphere_t bs1 = collider1->shape.bs;
@@ -576,15 +575,15 @@ static void test_edge_with_ellipsoid(v3_t p0, v3_t p1, v3_t start, v3_t vel, flo
 
 // NOTE: Only for one at a time
 // TODO: When/if we get to discrete we will want to solve for multiple at once ???
-static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float collision_time, physics_data_t* a_pd, physics_data_t* b_pd, transform_t* a_t, transform_t* b_t, 
+static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float penetration_depth, physics_data_t* a_pd, physics_data_t* b_pd, transform_t* a_t, transform_t* b_t, 
     float e, float mu, float dt)
 {
     // Resolve a collision between objects A and B.
-    const float slop = 0.001f;
+    const float slop = 0; // TODO: Do we want slop? This is actually stopping us from separating fully right????
     const float vel_along_n = dot(rel_vel, collision_normal);
     
     // Avoid jitter by moving slightly away from collision point.
-    float penetration_depth = max(0.f, vel_along_n * (1.f - collision_time) * dt);
+    //float penetration_depth = max(0.f, vel_along_n * (1.f - collision_time) * dt);
     penetration_depth = max(penetration_depth - slop, 0.f);
 
     // If inv mass = 0, the object will not gain velocity
@@ -597,8 +596,14 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
     // Separate objects.
     v3_t correction = v3_mul_f(collision_normal, penetration_depth / total_inv_mass);
 
-    v3_sub_eq_v3(&a_t->position, v3_mul_f(correction, a_inv_mass));
-    v3_add_eq_v3(&b_t->position, v3_mul_f(correction, b_inv_mass));
+    //printf("a_t->position before: %s\n", v3_to_str(a_t->position));
+
+    v3_add_eq_v3(&a_t->position, v3_mul_f(correction, a_inv_mass));
+    v3_sub_eq_v3(&b_t->position, v3_mul_f(correction, b_inv_mass));
+
+    //printf("a_t->position after: %s\n", v3_to_str(a_t->position));
+    //printf("collision noraml: %s\n", v3_to_str(collision_normal));
+    //printf("penetratoin_depth: %f\n", penetration_depth);
 
     // Normal impulse, apply restitution.
 
@@ -635,10 +640,11 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
 
     v3_add_eq_v3(&a_pd->velocity, v3_mul_f(total_impulse, a_inv_mass));
     v3_sub_eq_v3(&b_pd->velocity, v3_mul_f(total_impulse, b_inv_mass));
+
+
 }
 
-
-static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
+static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
 
     // TODO: REFACTOR TO BE DISCRETE, NO NEED FOR CONTINUOUS RN!!!!!!
@@ -670,19 +676,7 @@ static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scen
 
     // Calculate relative velocity between objects.
     v3_t vel = v3_sub_v3(ellipsoid_pd->velocity, mi_pd->velocity);
-    v3_t dir = v3_normalised(vel);
 
-    // Scale velocity by dt to calculate how much the entity will move this frame, to check if we actually hit.
-    v3_t e_vel = v3_mul_f(vel, dt);
-
-
-
-    float vel_size = v3_size(e_vel);
-    v3_t e_dir = v3_normalised(e_vel);
-
-    v3_mul_eq_v3(&e_vel, inv_ellipsoid);
-
-    //v3_t vel = pc.pd0->velocity;
     v3_t e_start_pos = e_pos;
     v3_mul_eq_v3(&e_start_pos, inv_ellipsoid);
 
@@ -696,16 +690,14 @@ static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scen
     // TODO: We will have to deal with both velocities after getting it working one way first at least.
 
     // TODO: Rneame stuff.
-    float earliest_t = 1.f;
-    float nearest_dist = 0.f;
-    v3_t nearest_collision_point = { 0 };
+
     uint8_t found_collision = 0;
-    v3_t collision_face_normal = { 0 };
+    v3_t nearest_collision_point;
+    float penetration_depth = 0;
 
     // TODO: Slap this in a function that returns the collision?
     for (int i = 0; i < mb->num_faces * 3; i += 3)
     {
-        // TODO: These are just wrong???
         v3_t p0 = wsps[mb->position_indices[i]];
         v3_t p1 = wsps[mb->position_indices[i + 1]];
         v3_t p2 = wsps[mb->position_indices[i + 2]];
@@ -715,120 +707,90 @@ static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scen
         v3_mul_eq_v3(&p1, inv_ellipsoid);
         v3_mul_eq_v3(&p2, inv_ellipsoid);
 
-        plane_t plane = plane_from_points(p0, p1, p2);
+        // TODO: Find all points of collision?
+
+        /*
+        todo: PROJECT SPHERE CENTRE ONTO TRI PLANE
+              DETERMINE IN PROJECTION LIES INSIDE TRIANGLE.
+
+              i think we also need the edge or vertex contact but suhould test.
+        
+
+
+        test if the sphere and plane intersect
+        then determine if the point is in the triangle?
+
+        
+        */
+
+        float d0 = v3_size_sqrd(v3_sub_v3(p0, e_start_pos));
+        float d1 = v3_size_sqrd(v3_sub_v3(p1, e_start_pos));
+        float d2 = v3_size_sqrd(v3_sub_v3(p2, e_start_pos));
+
+        plane_t tri_plane = plane_from_points(p0, p1, p2);
+
 
         // Backface culling, velocity and normal should face towards each other!
         // dot(A,B) = |A||B|cos(theta), note, we only care about sign.
-        // If angle is > 90, they are facing each other so use: cos(>90) < 0
-        if (dot(plane.normal, e_dir) >= 0)
+        // If angle is < 90, they not facing each other so use: cos(>90) < 0
+        if (dot(vel, tri_plane.normal) >= 0) continue;
+
+        float D = signed_distance(&tri_plane, e_start_pos);
+        float dist = fabsf(D);
+
+        // TODO: Handle edges and vertices, maybe just use the previous method???
+
+        // TODO: Handle multiple
+        if (dist <= 1.f)
         {
-            continue;
-        }
+            v3_t plane_collision_point = v3_sub_v3(e_start_pos, v3_mul_f(tri_plane.normal, D));
 
-        float d = signed_distance(&plane, e_start_pos);
-        float dot_normal_velocity = dot(plane.normal, e_vel);
-
-        // Determine what time the sphere collides with the plane (if it does).
-        uint8_t embedded_in_plane = 0;
-        float t0 = 0.0f;
-        float t1 = 1.0f;
-
-        // If sphere moving parallel to the plane, e.g. 90deg between normal and velocity
-        if (dot_normal_velocity == 0.0f)
-            //if (fabsf(dot_normal_velocity) < FLT_EPSILON)  // TODO: Do we need this ??
-        {
-            if (fabs(d) >= 1.0f)
+            //v3_t sphere_collision_point = v3_sub_v3(e_start_pos, tri_plane.normal);
+            
+            if (point_in_triangle(plane_collision_point, p0, p1, p2))
             {
-                // Sphere is not embedded in the plane so no collision.
-                continue;
-            }
-            else
-            {
-                // Sphere is embedded in plane, so it intersects in the whole range [0..1]
-                embedded_in_plane = 1;
-            }
-        }
-        else
-        {
-            // Calculate collision interval.
-            t0 = (-1.0f - d) / dot_normal_velocity;
-            t1 = (1.0f - d) / dot_normal_velocity;
-
-            // TODO: This is giving a huge range for t0,t1? because dot_normal_velocity is so low?
-
-            // Sort ascending.
-            if (t0 > t1) SWAP(float, t0, t1);
-
-            // Check that at least one result is within range:
-            if (t0 > 1.0f || t1 < 0.0f) continue;
-
-            // Clamp times of collision.
-            if (t0 < 0.0f) t0 = 0.0f;
-            if (t1 < 0.0f) t1 = 0.0f;
-            if (t0 > 1.0f) t0 = 1.0f;
-            if (t1 > 1.0f) t1 = 1.0f;
-        }
-
-        // At this point we know the sphere intersects the plane sometime between 
-        // t0 and t1. Calculate the actual time.
-        uint8_t found_new_collision = 0;
-        v3_t collision_point = { 0 };
-        float t = 1.0f;
-
-
-        // Check if the collision is inside the triangle. This must occur at t0 as this is when the
-        // sphere rests on the front side of the triangle plane. Can only happen if not embedded.
-        // This will always happen before a collision with a point or an edge. - TODO: Why?
-
-        if (!embedded_in_plane)
-        {
-            // As we are in ellipsoid space, we are working with a unit sphere (r = 1), 
-            // so calculate the point on the sphere that would collide with the triangle,
-            // then add velocity * t0 to get intersection.
-            v3_t plane_intersection_p = v3_add_v3(v3_sub_v3(e_start_pos, plane.normal), v3_mul_f(e_vel, t0));
-
-            if (point_in_triangle(plane_intersection_p, p0, p1, p2))
-            {
-                found_new_collision = 1;
-                t = t0;
-                collision_point = plane_intersection_p;
-            }
-        }
-
-        // Haven't found collision so sweep sphere against points and edges of triangle.
-        if (!found_new_collision)
-        {
-            float vel_size_sqrd = v3_size_sqrd(e_vel);
-
-            // For each vertex or edge a quadratic equation must be solved, parameterise
-            // equation to: a * t^2 + b * t + c = 0
-
-            // Check against points
-            float a = vel_size_sqrd;
-            test_point_with_ellipsoid(p0, e_start_pos, e_vel, a, &t, &found_new_collision, &collision_point);
-            test_point_with_ellipsoid(p1, e_start_pos, e_vel, a, &t, &found_new_collision, &collision_point);
-            test_point_with_ellipsoid(p2, e_start_pos, e_vel, a, &t, &found_new_collision, &collision_point);
-
-            // p1p0
-            test_edge_with_ellipsoid(p0, p1, e_start_pos, e_vel, vel_size_sqrd, &t, &found_new_collision, &collision_point);
-            test_edge_with_ellipsoid(p0, p2, e_start_pos, e_vel, vel_size_sqrd, &t, &found_new_collision, &collision_point);
-            test_edge_with_ellipsoid(p2, p1, e_start_pos, e_vel, vel_size_sqrd, &t, &found_new_collision, &collision_point);
-        }
-
-        // TODO: Figure out nearest face.
-        if (found_new_collision)
-        {
-            float dist = vel_size * t;
-
-            if (!found_collision || dist < nearest_dist)
-            {
-                earliest_t = t;
-                nearest_dist = dist;
-                nearest_collision_point = collision_point;
-                collision_face_normal = plane.normal;
                 found_collision = 1;
+                
+                nearest_collision_point = plane_collision_point;
+                //nearest_collision_point = v3_add_v3(plane_collision_point, tri_plane.normal);
+
+                penetration_depth = 1.f - dist; // radius - dist
+
+                ///////////////////////////////////////////////
+
+                v3_t actual_plane_collision_point = v3_mul_v3(nearest_collision_point, ellipsoid);
+
+                v3_t collision_normal = v3_sub_v3(ellipsoid_transform->position, actual_plane_collision_point);
+                v3_normalise(&collision_normal);
+
+                // Combine coefficients by taking averages.
+                float e = max(0.f, (ellipsoid_collider->restiution_coeff + mi_collider->restiution_coeff) / 2.f);
+                float mu = max(0.f, (ellipsoid_collider->friction_coeff + mi_collider->friction_coeff) / 2.f);
+
+                // TODO: This seems to break with high dt!!
+                //resolve_single_collision(vel, collision_normal, earliest_t, ellipsoid_pd, mi_pd, ellipsoid_transform, mi_transform, e, mu, dt);
+
+                v3_t n = v3_add_v3(nearest_collision_point, collision_normal);
+                v3_mul_eq_v3(&n, ellipsoid);
+
+                float dist = v3_size(v3_sub_v3(n, e_pos));
+
+                ///ellipsoid_transform->position = n;// v3_add_v3(ellipsoid_transform->position, v3_mul_f(collision_normal, penetration_depth));
+                //ellipsoid_pd->velocity = v3_uniform(0.f);
+                //ellipsoid_pd->mass = 0;
+
+                //v3_add_eq_v3(&ellipsoid_transform->position, v3_mul_f(collision_normal, dist));
+
+                collision_data_t cd = { 0 };
+                cd.collision_normal = collision_normal;
+                cd.hit = 1;
+                cd.rel_vel = vel;
+                cd.penetration_depth = dist;
+                cd.pc = pc;
+                chds_vec_push_back(physics->frame.collisions, cd);
             }
         }
+       
     }
 
     // TODO: This system doesn't allow allow resolving multiple collisions at once.
@@ -839,11 +801,13 @@ static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scen
     // For now with the continuous collision detection we will just resolve the 
     // first collision but ideally we would resolve collisions until there is no
     // time left.
-
+    /*
     collision_data_t cd = { 0 };
     if (found_collision)
     {
-        v3_t collision_normal = v3_sub_v3(ellipsoid_transform->position, v3_mul_v3(nearest_collision_point, ellipsoid));
+        v3_t actual_plane_collision_point = v3_mul_v3(nearest_collision_point, ellipsoid);
+
+        v3_t collision_normal = v3_sub_v3(ellipsoid_transform->position, actual_plane_collision_point);
         v3_normalise(&collision_normal);
 
         // Combine coefficients by taking averages.
@@ -853,13 +817,25 @@ static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scen
         // TODO: This seems to break with high dt!!
         //resolve_single_collision(vel, collision_normal, earliest_t, ellipsoid_pd, mi_pd, ellipsoid_transform, mi_transform, e, mu, dt);
 
+        v3_t n = v3_add_v3(nearest_collision_point, collision_normal);
+        v3_mul_eq_v3(&n, ellipsoid);
+
+        float dist = v3_size(v3_sub_v3(n, e_pos));
+        
+        ///ellipsoid_transform->position = n;// v3_add_v3(ellipsoid_transform->position, v3_mul_f(collision_normal, penetration_depth));
+        //ellipsoid_pd->velocity = v3_uniform(0.f);
+        //ellipsoid_pd->mass = 0;
+
+        //v3_add_eq_v3(&ellipsoid_transform->position, v3_mul_f(collision_normal, dist));
+
 
         cd.collision_normal = collision_normal;
         cd.hit = 1;
         cd.rel_vel = vel;
-    }
+        cd.penetration_depth = dist;
+    }*/
 
-    return cd;
+    //return cd;
 }
 
 /*
@@ -1074,38 +1050,66 @@ static collision_data_t narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scen
     }
 }*/
 
-static collision_data_t narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
+static void narrow_ellipsoid_vs_ellipsoid(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
     // NOTE: Currently this means they must already collide as the broad phase is 
     //       sphere vs sphere.
 
 
     // TODO: I Dont think we need dt here????
+    physics_data_t* a_pd = pc.pd0;
+    physics_data_t* b_pd = pc.pd1;
+
+    v3_t a_pos = pc.t0->position;
+    v3_t b_pos = pc.t1->position;
+
+    v3_t a_ellipsoid = pc.c0->shape.ellipsoid;
+    v3_t b_ellipsoid = pc.c1->shape.ellipsoid;
+
+    // Assuming spheres for now!!!!
+    float a_radius = a_ellipsoid.x;
+    float b_radius = b_ellipsoid.x;
+
+    v3_t rel_v = v3_sub_v3(a_pd->velocity, b_pd->velocity);
+    v3_t rel_p = v3_sub_v3(a_pos, b_pos);
+
+    float R = a_radius + b_radius;
+
+    v3_t n = v3_normalised(rel_p);
+
+    v3_t a_deepest = v3_add_v3(a_pos, v3_mul_f(n, -a_radius));
+    v3_t b_deepest = v3_add_v3(b_pos, v3_mul_f(n, b_radius));
+
+    float penetration_depth = v3_size(v3_sub_v3(a_deepest, b_deepest));
+    //float t = penetration_depth / v3_size(rel_v);
+    //printf("t %f\n", t);
+
+    // TODO: tried out another way, doesn't seem to fix it.
+
+    /**/
+    // TODO: I think negative is allowed but not t > 1???? 
+    //if (t < 0 || t > 1)
+
+    // TODO: Or t cannot be greater than dt???
+    /*
+    if (t > 1)
+    {
+        
+        return;
+    }*/
 
 
+    // TODO: Gravity is pushing the ball into another.
 
-
-
-
-    // TODO: !
-    v3_t rel_vel = { 0,0,0 };
-    v3_t n = { 0,0,0 };
-
-
-
-    collision_data_t cd = {
-        .hit = 0, // TODO: TEMP: !
-        .rel_vel = rel_vel,
-        .collision_normal = n
-    };
-
-    return cd;
-
-
-
-
-
-
+    collision_data_t cd = { 0 };
+    cd.rel_vel = rel_v;
+    cd.penetration_depth = penetration_depth;
+    cd.collision_normal = n; // TODO: Visualise this normal!!!!!!!!!!! would be ideal to call a renderer debug func from here.
+    cd.hit = 1;
+    cd.pc = pc;
+    //cd.hit = 0;
+    
+    chds_vec_push_back(physics->frame.collisions, cd);
 
 
 }
@@ -1137,8 +1141,8 @@ static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
         {
             switch (pc.c1->shape.type)
             {
-            case COLLISION_SHAPE_ELLIPSOID: cd = narrow_ellipsoid_vs_ellipsoid(physics, scene, pc, dt);  break;
-            case COLLISION_SHAPE_MESH: cd = narrow_ellipsoid_vs_mi(physics, scene, pc, dt); break;
+            case COLLISION_SHAPE_ELLIPSOID: narrow_ellipsoid_vs_ellipsoid(physics, scene, pc, dt);  break;
+            case COLLISION_SHAPE_MESH: narrow_ellipsoid_vs_mi(physics, scene, pc, dt); break;
             default:
             {
                 break;
@@ -1167,17 +1171,28 @@ static void narrow_phase(physics_t* physics, scene_t* scene, float dt)
         }
         }
 
+        /*
         if (cd.hit)
         {
             cd.pc = pc;
             chds_vec_push_back(physics->frame.collisions, cd);
-        }
+        }*/
     }
 }
 
 static void resolve_collisions(physics_t* physics, scene_t* scene, float dt)
 {
+    /*
+    
+    TODO: How do we resolve multiple collisions at once? or just sequentially?
+
+    
+
+    
+    */
+
     const int num_collisions = chds_vec_size(physics->frame.collisions);
+    
     for (int i = 0; i < num_collisions; ++i)
     {
         collision_data_t cd = physics->frame.collisions[i];
@@ -1186,8 +1201,7 @@ static void resolve_collisions(physics_t* physics, scene_t* scene, float dt)
         float e = max(0.f, (cd.pc.c0->restiution_coeff + cd.pc.c1->restiution_coeff) / 2.f);
         float mu = max(0.f, (cd.pc.c0->friction_coeff + cd.pc.c1->friction_coeff) / 2.f);
 
-
-        resolve_single_collision(cd.rel_vel, cd.collision_normal, 0.f, cd.pc.pd0, cd.pc.pd1, cd.pc.t0, cd.pc.t1, e, mu, 0.f);
+        resolve_single_collision(cd.rel_vel, cd.collision_normal, cd.penetration_depth, cd.pc.pd0, cd.pc.pd1, cd.pc.t0, cd.pc.t1, e, mu, dt);
     }
 }
 

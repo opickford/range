@@ -9,8 +9,6 @@
 #include <engine/maths/vector3.h>
 #include <engine/common/status.h>
 
-#include <engine/core/globals.h>
-
 float* directions;
 
 mesh_base_id_t sphere_base;
@@ -60,6 +58,7 @@ void create_map(engine_t* engine)
         transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
         transform_init(transform);
         transform->scale = v3_uniform(2);
+
 
         // TODO: currently testing with static.
         //physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
@@ -249,6 +248,7 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
         g_debug_velocities = !g_debug_velocities;
         break;
     }
+
     }
 }
 
@@ -282,7 +282,7 @@ void engine_on_lmbdown(engine_t* engine)
     transform_init(transform);
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
 
-    transform->scale = v3_uniform(0.1f);
+    //transform->scale = v3_uniform(0.1);
     //transform->scale = (v3_t){ 0.5f,2,1 };
 
     physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);

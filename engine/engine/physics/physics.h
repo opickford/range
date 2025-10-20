@@ -7,6 +7,7 @@
 
 #include "maths/vector3.h"
 #include "maths/bounding_sphere.h"
+#include "maths/plane.h"
 
 #include "common/status.h"
 
