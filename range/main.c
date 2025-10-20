@@ -15,6 +15,7 @@ mesh_base_id_t sphere_base;
 mesh_base_id_t cube_base;
 mesh_base_id_t map_base;
 mesh_base_id_t monkey_base;
+mesh_base_id_t bowl_base;
 
 cecs_entity_id_t map_entity;
 cecs_entity_id_t monkey_entity;
@@ -42,6 +43,9 @@ void create_map(engine_t* engine)
 
     monkey_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[monkey_base], "C:/Users/olive/source/repos/range/res/models/suzanne.obj");
+
+    bowl_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[bowl_base], "C:/Users/olive/source/repos/range/res/models/bowl.obj");
 
     
     // Create an entity
@@ -78,6 +82,8 @@ void create_map(engine_t* engine)
 
     }
     
+    
+
     
     // MONKEY
     /*
@@ -246,6 +252,33 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
     case VK_F6:
     {
         g_debug_velocities = !g_debug_velocities;
+        break;
+    }
+    case VK_F7:
+    {
+        cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
+        map_entity = cube_entity;
+
+        // Add a mesh_instance_t component.
+        mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+        mesh_instance_init(mi, &engine->scene.mesh_bases.bases[sphere_base]);
+
+        transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+        transform_init(transform);
+        transform->scale = v3_uniform(3);
+        transform->position = (v3_t){ 0, 10, 0 };
+
+        collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
+        collider_init(collider);
+
+        collider->shape.type = COLLISION_SHAPE_ELLIPSOID;
+        collider->shape.ellipsoid = transform->scale;
+
+
+        physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        physics_data_init(pd);
+        pd->mass = 1000000.f;
+
         break;
     }
 
