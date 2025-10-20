@@ -7,6 +7,7 @@
 
 #include "maths/vector3.h"
 #include "maths/bounding_sphere.h"
+#include "maths/plane.h"
 
 #include "common/status.h"
 
@@ -54,6 +55,7 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt);
 typedef enum
 {
     COLLISION_SHAPE_ELLIPSOID,
+    COLLISION_SHAPE_SPHERE,
     COLLISION_SHAPE_MESH
 } collision_shape_type_t;
 
@@ -71,6 +73,7 @@ typedef struct
     {
         collision_mesh_t mesh;
         v3_t ellipsoid;
+        float radius;
     };
 
     // TODO: How do we ensure that these are set???? Just down to user???
