@@ -316,7 +316,7 @@ void engine_on_lmbdown(engine_t* engine)
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
 
     //transform->scale = v3_uniform(0.1);
-    transform->scale = (v3_t){ 0.5f,2,1 };
+    //transform->scale = (v3_t){ 0.5f,2,1 };
 
     physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
     physics_data_init(physics_data);
