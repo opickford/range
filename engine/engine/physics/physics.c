@@ -751,88 +751,101 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
             }
         }
 
-        if (!collided)
-        {
-            float t;
-            v3_t e_vel = { 0 };
-            float a = 0;
+        
+        float t;
+        v3_t e_vel = { 0 };
+        float a = 0;
             
-            // TODO: How do we choose which point???? Closest or furthest?
-            if (1.f > d0)
+        // Choose the point of furthest collision, this should push the ellipsoid fully out 
+        // of the triangle?
+        if (1.f > d0)
+        {
+            float tmp_penetration_depth = 1.f - d0;
+            if (!collided || (tmp_penetration_depth > penetration_depth))
             {
                 collided = 1;
                 collision_point = p0;
                 penetration_depth = 1.f - d0;
             }
-            if (1.f > d1)
+        }
+        if (1.f > d1)
+        {
+            float tmp_penetration_depth = 1.f - d1;
+            if (!collided || (tmp_penetration_depth > penetration_depth))
             {
                 collided = 1;
                 collision_point = p1;
                 penetration_depth = 1.f - d1;
             }
-            if (1.f > d2)
+        }
+        if (1.f > d2)
+        {
+            float tmp_penetration_depth = 1.f - d2;
+            if (!collided || (tmp_penetration_depth > penetration_depth))
             {
                 collided = 1;
                 collision_point = p2;
-                penetration_depth = 1.f - d2;
+                penetration_depth = tmp_penetration_depth;
             }
-
-            if (!collided)
-            {
-                // TODO: Derive this formula.
-                v3_t p1p0 = v3_sub_v3(p1, p0);
-                t = dot(p1p0, v3_sub_v3(e_start_pos, p0)) / dot(p1p0, p1p0);
+        }
+        
+        // TODO: Derive this formula.
+        v3_t p1p0 = v3_sub_v3(p1, p0);
+        t = dot(p1p0, v3_sub_v3(e_start_pos, p0)) / dot(p1p0, p1p0);
                 
-                if (t >= 0 && t <= 1)
-                {
-                    collision_point = v3_add_v3(p0, v3_mul_f(p1p0, t));
+        if (t >= 0 && t <= 1)
+        {
+            v3_t tmp_collision_point = v3_add_v3(p0, v3_mul_f(p1p0, t));
 
-                    if (v3_size_sqrd(v3_sub_v3(collision_point, e_start_pos)) <= 1.f)
-                    {
-                        collided = 1;
-                        penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(collision_point, e_start_pos));
-                    }
-                }
-            }
-
-            if (!collided)
+            if (v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos)) <= 1.f)
             {
-                v3_t p2p0 = v3_sub_v3(p2, p0);
-                t = dot(p2p0, v3_sub_v3(e_start_pos, p0)) / dot(p2p0, p2p0);
-
-                if (t >= 0 && t <= 1)
+                float tmp_penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos));
+                if (!collided || tmp_penetration_depth > penetration_depth)
                 {
-                    collision_point = v3_add_v3(p0, v3_mul_f(p2p0, t));
-
-                    if (v3_size_sqrd(v3_sub_v3(collision_point, e_start_pos)) <= 1.f)
-                    {
-                        collided = 1;
-                        penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(collision_point, e_start_pos));
-                    }
+                    collided = 1;
+                    penetration_depth = tmp_penetration_depth;
+                    collision_point = tmp_collision_point;
                 }
             }
-
-            if (!collided)
-            {
-                v3_t p1p2 = v3_sub_v3(p1, p2);
-                t = dot(p1p2, v3_sub_v3(e_start_pos, p2)) / dot(p1p2, p1p2);
-
-                if (t >= 0 && t <= 1)
-                {
-                    collision_point = v3_add_v3(p2, v3_mul_f(p1p2, t));
-
-                    if (v3_size_sqrd(v3_sub_v3(collision_point, e_start_pos)) <= 1.f)
-                    {
-                        collided = 1;
-                        penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(collision_point, e_start_pos));
-                    }
-                }
-            }
-
-           
         }
 
+        v3_t p2p0 = v3_sub_v3(p2, p0);
+        t = dot(p2p0, v3_sub_v3(e_start_pos, p0)) / dot(p2p0, p2p0);
 
+        if (t >= 0 && t <= 1)
+        {
+            v3_t tmp_collision_point = v3_add_v3(p0, v3_mul_f(p2p0, t));
+
+            if (v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos)) <= 1.f)
+            {
+                float tmp_penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos));
+                if (!collided || tmp_penetration_depth > penetration_depth)
+                {
+                    collided = 1;
+                    penetration_depth = tmp_penetration_depth;
+                    collision_point = tmp_collision_point;
+                }
+            }
+        }
+
+        v3_t p1p2 = v3_sub_v3(p1, p2);
+        t = dot(p1p2, v3_sub_v3(e_start_pos, p2)) / dot(p1p2, p1p2);
+
+        if (t >= 0 && t <= 1)
+        {
+            v3_t tmp_collision_point = v3_add_v3(p2, v3_mul_f(p1p2, t));
+
+            if (v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos)) <= 1.f)
+            {
+                float tmp_penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos));
+                if (!collided || tmp_penetration_depth > penetration_depth)
+                {
+                    collided = 1;
+                    penetration_depth = tmp_penetration_depth;
+                    collision_point = tmp_collision_point;
+                }
+            }
+        }
 
         if (collided)
         {
