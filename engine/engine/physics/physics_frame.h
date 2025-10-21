@@ -27,12 +27,12 @@ typedef struct transform transform_t;
 // TODO: Should this be elsewhere?
 typedef struct
 {
-    mesh_instance_t* mi0;
+    const mesh_instance_t* mi0;
     collider_t* c0;
     physics_data_t* pd0;
     transform_t* t0;
 
-    mesh_instance_t* mi1;
+    const mesh_instance_t* mi1;
     collider_t* c1;
     physics_data_t* pd1;
     transform_t* t1;
