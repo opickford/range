@@ -600,6 +600,10 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
 
 static void unit_sphere_tri_edge_collision(v3_t p0, v3_t p1, v3_t centre, uint8_t* collided, v3_t* collision_point, float* penetration_depth)
 {
+    // TODO: Write out how this tests against the given penetration depth etc?
+
+    // TODO: Write out how this is derived!!!
+
     v3_t p1p0 = v3_sub_v3(p1, p0);
     float t = dot(p1p0, v3_sub_v3(centre, p0)) / dot(p1p0, p1p0);
 
@@ -620,6 +624,25 @@ static void unit_sphere_tri_edge_collision(v3_t p0, v3_t p1, v3_t centre, uint8_
     }
 }
 
+static void unit_sphere_tri_vertex_collision(v3_t p, v3_t centre, uint8_t* collided, v3_t* collision_point, float* penetration_depth)
+{
+    // If distance between vertex and sphere centre is less than radius, we are colliding.
+    float d = v3_size_sqrd(v3_sub_v3(p, centre));
+
+    // Choose the point of furthest collision, this should ensure we 
+    // push the ellipsoid fully out of the triangle!
+    if (d < 1.f)
+    {
+        float tmp_penetration_depth = 1.f - d;
+        if (!*collided || (tmp_penetration_depth > *penetration_depth))
+        {
+            *collided = 1;
+            *collision_point = p;
+            *penetration_depth = 1.f - d;
+        }
+    }
+}
+
 static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
     // Inspired from: https://www.peroxide.dk/papers/collision/collision.pdf
@@ -630,9 +653,6 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     //      
     //       Not really sure how to go about that but can solve it when needed? ^^^
     // TODO: Assert in broad phase to ensure this doesn't happen?
-
-
-
 
     physics_data_t* mi_pd = pc.pd1;
     transform_t* mi_transform = pc.t1;
@@ -659,11 +679,11 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     const mesh_base_t* mb = mi_collider->shape.mesh.mb;
     v3_t* wsps = mi_collider->shape.mesh.wsps;
 
-    // TODO: We will have to deal with both velocities after getting it working one way first at least.
-
     // TODO: Rneame stuff.
 
-    // TODO: Slap this in a function that returns the collision?
+    // Per mi face, test for collision and pick the furthest point of collision 
+    // on the face from the radius, this should ensure we push the ellipsoid 
+    // fully out of the triangle!
     for (int i = 0; i < mb->num_faces * 3; i += 3)
     {
         v3_t p0 = wsps[mb->position_indices[i]];
@@ -703,45 +723,12 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
             }
         }
 
-        // Test triangle vertices, simply if distance between
-        // vertex and sphere centre is less than radius!
-        float d0 = v3_size_sqrd(v3_sub_v3(p0, e_start_pos));
-        float d1 = v3_size_sqrd(v3_sub_v3(p1, e_start_pos));
-        float d2 = v3_size_sqrd(v3_sub_v3(p2, e_start_pos));
-
-        // Choose the point of furthest collision, this should ensure we 
-        // push the ellipsoid fully out of the triangle!
-        if (d0 < 1.f)
-        {
-            float tmp_penetration_depth = 1.f - d0;
-            if (!collided || (tmp_penetration_depth > penetration_depth))
-            {
-                collided = 1;
-                collision_point = p0;
-                penetration_depth = 1.f - d0;
-            }
-        }
-        if (d1 < 1.f)
-        {
-            float tmp_penetration_depth = 1.f - d1;
-            if (!collided || (tmp_penetration_depth > penetration_depth))
-            {
-                collided = 1;
-                collision_point = p1;
-                penetration_depth = 1.f - d1;
-            }
-        }
-        if (d2 < 1.f)
-        {
-            float tmp_penetration_depth = 1.f - d2;
-            if (!collided || (tmp_penetration_depth > penetration_depth))
-            {
-                collided = 1;
-                collision_point = p2;
-                penetration_depth = tmp_penetration_depth;
-            }
-        }
-        
+        // Test triangle vertices.
+        unit_sphere_tri_vertex_collision(p0, e_start_pos, &collided, &collision_point, &penetration_depth);
+        unit_sphere_tri_vertex_collision(p1, e_start_pos, &collided, &collision_point, &penetration_depth);
+        unit_sphere_tri_vertex_collision(p2, e_start_pos, &collided, &collision_point, &penetration_depth);
+ 
+        // Test against tri edges.
         unit_sphere_tri_edge_collision(p0, p1, e_start_pos, &collided, &collision_point, &penetration_depth);
         unit_sphere_tri_edge_collision(p0, p2, e_start_pos, &collided, &collision_point, &penetration_depth);
         unit_sphere_tri_edge_collision(p2, p1, e_start_pos, &collided, &collision_point, &penetration_depth);
