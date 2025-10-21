@@ -597,6 +597,29 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
 
 }
 
+
+static void unit_sphere_tri_edge_collision(v3_t p0, v3_t p1, v3_t centre, uint8_t* collided, v3_t* collision_point, float* penetration_depth)
+{
+    v3_t p1p0 = v3_sub_v3(p1, p0);
+    float t = dot(p1p0, v3_sub_v3(centre, p0)) / dot(p1p0, p1p0);
+
+    if (t >= 0 && t <= 1)
+    {
+        v3_t tmp_collision_point = v3_add_v3(p0, v3_mul_f(p1p0, t));
+
+        if (v3_size_sqrd(v3_sub_v3(tmp_collision_point, centre)) <= 1.f)
+        {
+            float tmp_penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(tmp_collision_point, centre));
+            if (!*collided || tmp_penetration_depth > *penetration_depth)
+            {
+                *collided = 1;
+                *penetration_depth = tmp_penetration_depth;
+                *collision_point = tmp_collision_point;
+            }
+        }
+    }
+}
+
 static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential_collision_t pc, float dt)
 {
     // Inspired from: https://www.peroxide.dk/papers/collision/collision.pdf
@@ -719,64 +742,9 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
             }
         }
         
-        // TODO: Derive this formula.
-        // Test against triangle edges.
-        v3_t p1p0 = v3_sub_v3(p1, p0);
-        float t = dot(p1p0, v3_sub_v3(e_start_pos, p0)) / dot(p1p0, p1p0);
-                
-        if (t >= 0 && t <= 1)
-        {
-            v3_t tmp_collision_point = v3_add_v3(p0, v3_mul_f(p1p0, t));
-
-            if (v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos)) <= 1.f)
-            {
-                float tmp_penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos));
-                if (!collided || tmp_penetration_depth > penetration_depth)
-                {
-                    collided = 1;
-                    penetration_depth = tmp_penetration_depth;
-                    collision_point = tmp_collision_point;
-                }
-            }
-        }
-
-        v3_t p2p0 = v3_sub_v3(p2, p0);
-        t = dot(p2p0, v3_sub_v3(e_start_pos, p0)) / dot(p2p0, p2p0);
-
-        if (t >= 0 && t <= 1)
-        {
-            v3_t tmp_collision_point = v3_add_v3(p0, v3_mul_f(p2p0, t));
-
-            if (v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos)) <= 1.f)
-            {
-                float tmp_penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos));
-                if (!collided || tmp_penetration_depth > penetration_depth)
-                {
-                    collided = 1;
-                    penetration_depth = tmp_penetration_depth;
-                    collision_point = tmp_collision_point;
-                }
-            }
-        }
-
-        v3_t p1p2 = v3_sub_v3(p1, p2);
-        t = dot(p1p2, v3_sub_v3(e_start_pos, p2)) / dot(p1p2, p1p2);
-
-        if (t >= 0 && t <= 1)
-        {
-            v3_t tmp_collision_point = v3_add_v3(p2, v3_mul_f(p1p2, t));
-
-            if (v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos)) <= 1.f)
-            {
-                float tmp_penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(tmp_collision_point, e_start_pos));
-                if (!collided || tmp_penetration_depth > penetration_depth)
-                {
-                    collided = 1;
-                    penetration_depth = tmp_penetration_depth;
-                    collision_point = tmp_collision_point;
-                }
-            }
-        }
+        unit_sphere_tri_edge_collision(p0, p1, e_start_pos, &collided, &collision_point, &penetration_depth);
+        unit_sphere_tri_edge_collision(p0, p2, e_start_pos, &collided, &collision_point, &penetration_depth);
+        unit_sphere_tri_edge_collision(p2, p1, e_start_pos, &collided, &collision_point, &penetration_depth);
 
         if (collided)
         {
