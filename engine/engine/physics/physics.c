@@ -12,51 +12,6 @@
 
 // TODO: Reorganise functions here.
 
-// Note, this is specifically for solving the intersection time of a swept sphere
-// with a triangle, this will not return a negative root as cannot have negative time.
-// NOTE: This could be made more general if needed elsewhere
-static uint8_t lowest_root(float a, float b, float c, float max_r, float* r)
-{
-    // Use quadratic formula to solve equation, return the lowest root below
-    // max_r.
-
-    // Calculate discriminant for number of roots.
-    float d = b * b - 4.0f * a * c;
-
-    // Negative means no roots.
-    if (d < 0.0f) return 0;
-
-    
-    // Note, x0 == x1 if discriminant == 0 but not a necessary optimisation
-    // makes code very messy without much/any gain.
-    float sqrt_d = sqrtf(d);
-
-    // x = (-b +/- sqrt(discriminant)) / 2a
-    float x0 = (-b - sqrt_d) / (2.f * a);
-    float x1 = (-b + sqrt_d) / (2.f * a);
-
-    if (x0 > x1)
-    {
-        SWAP(float, x0, x1);
-    }
-
-    // Return the lowest postive root below given max.
-    if (x0 > 0 && x0 < max_r)
-    {
-        *r = x0;
-        return 1;
-    }
-
-    if (x1 > 0 && x1 < max_r)
-    {
-        *r = x1;
-        return 1;
-    }
-
-    // No valid solutions
-    return 0;
-}
-
 static void physics_setup_views(physics_t* physics)
 {
     physics->physics_view = cecs_view(physics->ecs,
