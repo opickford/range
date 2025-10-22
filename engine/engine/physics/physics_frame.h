@@ -64,19 +64,9 @@ typedef struct
 
 } collision_data_t;
 
-
-//typedef struct
-//{
-//    int temp;
-//} collision_t;
-
 typedef struct
 {
-    chds_vec(potential_collision_t) broad_phase_collisions;
-    // float dt;
-    // TODO: Should this have dt? Simplifies passing args but not needed in some places.
-    // TODO: Store collisions for discrete collision resolution.
-
+    chds_vec(potential_collision_t) potential_collisions;
     chds_vec(collision_data_t) collisions;
 
 } physics_frame_t;
@@ -88,7 +78,8 @@ inline void physics_frame_init(physics_frame_t* pf)
 
 inline void physics_frame_destroy(physics_frame_t* pf)
 {
-    chds_vec_destroy(pf->broad_phase_collisions);
+    chds_vec_destroy(pf->potential_collisions);
+    chds_vec_destroy(pf->collisions);
 }
 
 #endif

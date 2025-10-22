@@ -2,6 +2,8 @@ add_library(physics STATIC
     physics.h
     physics.c
     physics_frame.h
+    collision.h
+    collision.c
 )
 
 # TODO: This is the same for all libs right?

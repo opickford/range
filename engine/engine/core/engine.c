@@ -234,7 +234,7 @@ void engine_run(engine_t* engine)
                 transform_t* ts = cecs_get_column(it, COMPONENT_TRANSFORM);
                 physics_data_t* pds = cecs_get_column(it, COMPONENT_PHYSICS_DATA);
 
-                for (int i = 0; i < it.num_entities; ++i)
+                for (uint32_t i = 0; i < it.num_entities; ++i)
                 {
                     v3_t vel = pds[i].velocity;
                     float speed = v3_size(vel);

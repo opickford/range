@@ -5,6 +5,7 @@
 #include "mesh_instance.h"
 #include "lights.h"
 
+#include "physics/collision.h"
 #include "physics/physics.h"
 
 #include <cecs/ecs.h>

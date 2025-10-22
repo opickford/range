@@ -74,16 +74,11 @@ void create_map(engine_t* engine)
 
         collider->shape.type = COLLISION_SHAPE_MESH;
 
-        physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
-        physics_data_init(pd);
-        pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
-        pd->floating = 1;
-        
-
+        //physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+        //physics_data_init(pd);
+        //pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
+        //pd->floating = 1;
     }
-    
-    
-
     
     // MONKEY
     /*
@@ -281,7 +276,46 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
 
         break;
     }
+    case VK_F8:
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
+            map_entity = cube_entity;
 
+            // Add a mesh_instance_t component.
+            mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
+            mesh_instance_init(mi, &engine->scene.mesh_bases.bases[sphere_base]);
+
+            v3_t colour =
+            {
+                random_float(),
+                random_float(),
+                random_float()
+            };
+
+            float size = random_float();
+
+            mesh_instance_set_albedo(mi, &engine->scene.mesh_bases.bases[sphere_base], colour);
+
+            transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+            transform_init(transform);
+            transform->scale = v3_uniform(size);
+            transform->position = (v3_t){ 0, transform->scale.x + i * (transform->scale.x * 2), 0};
+
+            collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
+            collider_init(collider);
+
+            collider->shape.type = COLLISION_SHAPE_ELLIPSOID;
+            collider->shape.ellipsoid = transform->scale;
+
+            physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
+            physics_data_init(pd);
+            pd->mass = 1.f;
+        }
+        
+        break;
+    }
     }
 }
 

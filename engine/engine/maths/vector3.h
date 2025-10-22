@@ -20,7 +20,7 @@ No need to overcomplicate this stuff, I can always do it differently in a per-pi
 profiling shows this is an issue.
 */
 
-typedef struct
+typedef struct v3
 {
 	float x, y, z;
 
