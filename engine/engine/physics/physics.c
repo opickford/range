@@ -600,9 +600,77 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
 
 static void unit_sphere_tri_edge_collision(v3_t p0, v3_t p1, v3_t centre, uint8_t* collided, v3_t* collision_point, float* penetration_depth)
 {
-    // TODO: Write out how this tests against the given penetration depth etc?
+    // Essentially performing ray triangle collision but between t0 and t1,
+    // the start and ends of the line.
 
-    // TODO: Write out how this is derived!!!
+    /*
+    
+    How formula is derived:
+
+    To find the closest point on the ray to the centre, we want to minimise
+    the distance between the points.
+
+    Define some variables
+
+        C = sphere centre.
+
+        L(t) = P + Dt, where P is the start of the ray, D is the direction and t
+                       is the time.
+
+        Q = L(t), a point on the ray.
+
+        x = || Q - C ||, x is the distance between a point on the ray and C.
+
+    Remove the size from the equation
+
+        size = sqrt(dot(A, B))
+
+        x^2 = dot(Q - C, Q - C)
+
+    Expand Q
+
+        x^2 = dot( (P + Dt - C), (P + Dt - C) )
+        
+        A = P - C, vector between start point and centre.
+
+        x^2 = dot( (A + Dt), (A + Dt) )
+
+    Use distributive property of dot product
+
+        x^2 = dot(A, A) + 2(A, Dt) + dot(Dt, Dt)
+
+    Factor out scalars, we now have a quadratic.
+
+        x^2 = dot(A, A) + 2t * dot(A, D) + (t^2) * dot(D, D)
+        
+    Differentiate for t
+
+        d/dt = 2 * dot(A, D) + 2t * dot(D, D)
+
+    Solve for minimum t by setting d/dt = 0, this works because
+    in the quadratic equation at^2 + bt + c, the a term 'dot(A, D)'
+    is always positive, meaning we have a U shaped parabola, so 
+    from our start point, we are decreasing, so we get the min.
+
+        0 = 2 * dot(A, D) + 2t * dot(D, D)
+
+        2t * dot(D, D) = -2 * dot(A, D)
+
+        2t = (-2 * dot(A, D)) / dot(D, D)
+        t = -dot(A, D) / dot(D, D)
+
+        t = -dot(P - C, D) / dot(D, D)
+        t = dot(C - P, D) / dot(D, D)
+        
+    If 0 <= t <= 1, the point is on the line. Note, if the 
+    closest point was outside of this range, the sphere could
+    be colliding with the vertex or face instead.
+    
+    If the distance between the point and centre is less than the 
+    radius (1.f as we're working with a unit sphere), 
+    then we have a collision.
+
+    */
 
     v3_t p1p0 = v3_sub_v3(p1, p0);
     float t = dot(p1p0, v3_sub_v3(centre, p0)) / dot(p1p0, p1p0);
@@ -613,6 +681,8 @@ static void unit_sphere_tri_edge_collision(v3_t p0, v3_t p1, v3_t centre, uint8_
 
         if (v3_size_sqrd(v3_sub_v3(tmp_collision_point, centre)) <= 1.f)
         {
+            // Only return a collision if the distance is greater than the
+            // inputted penetration depth.
             float tmp_penetration_depth = 1.f - v3_size_sqrd(v3_sub_v3(tmp_collision_point, centre));
             if (!*collided || tmp_penetration_depth > *penetration_depth)
             {
@@ -633,6 +703,8 @@ static void unit_sphere_tri_vertex_collision(v3_t p, v3_t centre, uint8_t* colli
     // push the ellipsoid fully out of the triangle!
     if (d < 1.f)
     {
+        // Only return a collision if the distance is greater than the
+        // inputted penetration depth.
         float tmp_penetration_depth = 1.f - d;
         if (!*collided || (tmp_penetration_depth > *penetration_depth))
         {
