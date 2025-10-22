@@ -39,7 +39,7 @@ status_t engine_init(engine_t* engine, int window_width, int window_height)
 
     // Set some default settings.
     engine->upscaling_factor = 1;
-    engine->handle_input = 0;
+    engine->noclip = 0;
 
     // Initialise components and views.
     engine_setup_ecs(engine);
