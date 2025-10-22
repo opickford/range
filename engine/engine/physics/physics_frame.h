@@ -64,12 +64,6 @@ typedef struct
 
 } collision_data_t;
 
-
-//typedef struct
-//{
-//    int temp;
-//} collision_t;
-
 typedef struct
 {
     chds_vec(potential_collision_t) broad_phase_collisions;
