@@ -170,6 +170,16 @@ void engine_run(engine_t* engine)
         }
 
         snprintf(process_messages_str, sizeof(process_messages_str), "ProcMsgs: %d", timer_get_elapsed(&t));
+
+        // Handle any keyboard/mouse input.
+        timer_restart(&t);
+        engine_handle_input(engine, dt);
+        snprintf(handle_input_str, sizeof(handle_input_str), "HandleInput: %d", timer_get_elapsed(&t));
+
+        // Fire the engine update event.
+        timer_restart(&t);
+        engine_on_update(engine, dt);
+        snprintf(update_str, sizeof(update_str), "UpdateEvent: %d", timer_get_elapsed(&t));
        
         m4_t view_matrix;
         calculate_view_matrix(&engine->renderer.camera, view_matrix);
@@ -202,15 +212,7 @@ void engine_run(engine_t* engine)
         
         snprintf(render_str, sizeof(render_str), "Render: %d", timer_get_elapsed(&t));
          
-        // Handle any keyboard/mouse input.
-        timer_restart(&t);
-        engine_handle_input(engine, dt);
-        snprintf(handle_input_str, sizeof(handle_input_str), "HandleInput: %d", timer_get_elapsed(&t));
-
-        // Fire the engine update event.
-        timer_restart(&t);
-        engine_on_update(engine, dt);
-        snprintf(update_str, sizeof(update_str), "UpdateEvent: %d", timer_get_elapsed(&t));
+        
 
         // Draw ui elements.
         timer_restart(&t);
