@@ -765,6 +765,7 @@ void collider_init(collider_t* c)
 
     // TODO: Should we default to this??? Note we cannot set the ellipsoid
     //       as this would put random values into the other union members.
+    // TODO: Could define an undefined to default to???
     c->shape.type = COLLISION_SHAPE_ELLIPSOID;
 }
 
