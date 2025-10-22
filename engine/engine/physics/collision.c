@@ -297,11 +297,17 @@ static void broad_phase(physics_t* physics, scene_t* scene)
     }
 }
 
-static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float penetration_depth, physics_data_t* a_pd, physics_data_t* b_pd, transform_t* a_t, transform_t* b_t,
+static void resolve_single_collision(v3_t collision_normal, float penetration_depth, physics_data_t* a_pd, physics_data_t* b_pd, transform_t* a_t, transform_t* b_t,
     float e, float mu)
 {
     const float a_mass = a_pd ? a_pd->mass : 0.f;
     const float b_mass = b_pd ? b_pd->mass : 0.f;
+
+    // Must recalculate relative velocity here so it is updated from any previous collisions.
+    const v3_t a_vel = a_pd ? a_pd->velocity : v3_uniform(0.f);
+    const v3_t b_vel = b_pd ? b_pd->velocity : v3_uniform(0.f);
+
+    v3_t rel_vel = v3_sub_v3(a_vel, b_vel);
     
     // Resolve a collision between objects A and B.
     const float slop = 0; // TODO: Do we want slop? This is actually stopping us from separating fully right????
@@ -600,7 +606,6 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
             collision_data_t cd = { 0 };
             cd.collision_normal = collision_normal;
             cd.hit = 1;
-            cd.rel_vel = vel;
             cd.penetration_depth = penetration_depth;
             cd.pc = pc;
             chds_vec_push_back(physics->frame.collisions, cd);
@@ -639,7 +644,6 @@ static void narrow_sphere_vs_sphere(physics_t* physics, scene_t* scene, potentia
     float penetration_depth = v3_size(v3_sub_v3(a_deepest, b_deepest));
 
     collision_data_t cd = { 0 };
-    cd.rel_vel = rel_v;
     cd.penetration_depth = penetration_depth;
     cd.collision_normal = n;
     cd.hit = 1;
@@ -723,7 +727,7 @@ static void resolve_collisions(physics_t* physics, scene_t* scene)
         float e = max(0.f, (cd.pc.c0->restiution_coeff + cd.pc.c1->restiution_coeff) / 2.f);
         float mu = max(0.f, (cd.pc.c0->friction_coeff + cd.pc.c1->friction_coeff) / 2.f);
 
-        resolve_single_collision(cd.rel_vel, cd.collision_normal, cd.penetration_depth, cd.pc.pd0, cd.pc.pd1, cd.pc.t0, cd.pc.t1, e, mu);
+        resolve_single_collision(cd.collision_normal, cd.penetration_depth, cd.pc.pd0, cd.pc.pd1, cd.pc.t0, cd.pc.t1, e, mu);
     }
 }
 

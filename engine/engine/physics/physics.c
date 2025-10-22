@@ -106,12 +106,6 @@ static void apply_forces(physics_t* physics, float dt)
             // TODO: Apply friction
             // TODO: Cache .
             float speed = v3_size(physics_data->velocity);
-            if (speed > 0.f)
-            {
-                // TODO: Get some data from surfaces colliding with?
-                // TODO: Because i dont have friction, objects slide more when laggy,
-                //       friction should fix this.
-            }
 
             // TODO: essentially i need to figure out what will work best for them game. maybe just remove this for now
             //       honestly. i don't know whether we should use a physically force based drag formula that will take in mass,
@@ -152,12 +146,6 @@ static void apply_forces(physics_t* physics, float dt)
             v3_add_eq_v3(&physics_data->velocity, v3_mul_f(physics_data->impulses, 1.f / physics_data->mass));
 
             elapsed += dt;
-
-
-
-            
-            
-
 
             // Clear impulses/instantaneous forces.
             physics_data->impulses = (v3_t){ 0.f, 0.f, 0.f };

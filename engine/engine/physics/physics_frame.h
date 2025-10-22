@@ -53,7 +53,6 @@ typedef struct
 
 typedef struct
 {
-    v3_t rel_vel;
     v3_t collision_normal;
 
     uint8_t hit;

@@ -19,10 +19,12 @@ mesh_base_id_t bowl_base;
 
 cecs_entity_id_t map_entity;
 cecs_entity_id_t monkey_entity;
+cecs_entity_id_t player_entity;
 
 void create_map(engine_t* engine)
 {
     resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/landscape.bmp");
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/fortnite_peter.bmp");
     
     // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     
@@ -78,6 +80,32 @@ void create_map(engine_t* engine)
         //physics_data_init(pd);
         //pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
         //pd->floating = 1;
+    }
+
+    // Create player
+    if(0){
+        player_entity = cecs_create_entity(engine->ecs);
+
+        // Add a mesh_instance_t component.
+        mesh_instance_t* mi = cecs_add_component(engine->ecs, player_entity, COMPONENT_MESH_INSTANCE);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[cube_base]);
+
+        mi->texture_id = 1;
+
+        transform_t* transform = cecs_add_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
+        transform_init(transform);
+        transform->scale = (v3_t){ 1,2,1 };
+        transform->position = (v3_t){ 0,3,0 };
+
+        collider_t* collider = cecs_add_component(engine->ecs, player_entity, COMPONENT_COLLIDER);
+        collider_init(collider);
+
+        collider->shape.type = COLLISION_SHAPE_ELLIPSOID;
+        collider->shape.ellipsoid = (v3_t){ 1,2,1 };
+
+        physics_data_t* pd = cecs_add_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
+        physics_data_init(pd);
+        pd->mass = 10.f;
     }
     
     // MONKEY
