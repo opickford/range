@@ -317,12 +317,10 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
             physics_data_t* pd = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
             physics_data_init(pd);
             pd->mass = 1.f;
-
         }
         
         break;
     }
-
     }
 }
 

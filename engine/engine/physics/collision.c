@@ -719,7 +719,8 @@ static void narrow_phase(physics_t* physics, scene_t* scene)
 static void resolve_collisions(physics_t* physics, scene_t* scene)
 {
     // Currently just iterating through the collisions, seems to handle everything well 
-    // enough for now, can refactor this to solve collisions together in the future.
+    // enough for now, can refactor this to solve collisions together in the future if 
+    // needed.
     const int num_collisions = (int)chds_vec_size(physics->frame.collisions);
 
     for (int i = 0; i < num_collisions; ++i)
@@ -755,8 +756,8 @@ uint8_t handle_collisions(physics_t* physics, scene_t* scene)
 
     resolve_collisions(physics, scene);
 
-    // Return true if we processed more collisions, signals to keep
-    // iterating.
+    // Return 0 to show there were no collisions, allows us to early out
+    // of iterative solver.
     return (uint8_t)((int)chds_vec_size(physics->frame.collisions) > 0.f);
 }
 
