@@ -22,7 +22,7 @@ cecs_entity_id_t monkey_entity;
 
 void create_map(engine_t* engine)
 {
-    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/fortnite_peter.bmp");
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/landscape.bmp");
     
     // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     

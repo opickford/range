@@ -191,12 +191,7 @@ void engine_run(engine_t* engine)
 
         // Render scene.
         timer_restart(&t);
-        
-        // TODO: Render view..............
-
-        // TODO: How will this work as a view?
-
-            
+    
         render(engine->ecs, 
             engine->render_view_id, 
             engine->lighting_view_id, 

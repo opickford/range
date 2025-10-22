@@ -58,7 +58,7 @@ typedef struct
 
     uint8_t hit;
 
-    float penetration_depth; // TODO: TESTING
+    float penetration_depth;
 
     potential_collision_t pc; // TODO: TEMP: Just for the entity ptrs?
 

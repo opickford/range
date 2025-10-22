@@ -152,21 +152,22 @@ static void broad_phase(physics_t* physics, scene_t* scene)
     // TODO: Idk what the calc is.
     chds_vec_reserve(physics->frame.potential_collisions, num_entities * num_entities);
 
-    // TODO: COmment properly.
     /*
-    TODO: A static mesh may not have physics data, therefore, the inner loop shouldn't use the
-            collision view as it requires the physics data component.
+    We only need to test entities past the current one in the outer loop,
+    this also solves the issue of testing pairs twice. Essentially finding
+    combinations not permutations!
 
-    TODO: Refactor loop into separate ones. One for the moving vs moving and one for moving vs static
+    Outside loop iterates through dynamic entities, as a static entity 
+    cannot really collide with something. So test static after.
 
-    this means physicsdata + collider vs physicsdata + collider and physicsdata + collider vs collider
+    for i in moving_entities
+        for j = i + 1 in moving_entities
+            test collision
 
-    Note we can do this thing for the moving entities:
-    for i in entities
-        for j = i + 1 in entities
-
+        for j in static_entities
+            test_collision
+    
     */
-
     cecs_view_iter_t it = cecs_view_iter(physics->ecs, physics->moving_colliders_view);
     while (cecs_view_iter_next(&it))
     {
@@ -205,7 +206,6 @@ static void broad_phase(physics_t* physics, scene_t* scene)
             // Check each remaining moving entity
             do
             {
-                // TODO: Detect.
                 const mesh_instance_t* mis1 = cecs_get_column(it_from_it0, COMPONENT_MESH_INSTANCE);
                 const collider_t* colliders1 = cecs_get_column(it_from_it0, COMPONENT_COLLIDER);
                 physics_data_t* physics_datas1 = cecs_get_column(it_from_it0, COMPONENT_PHYSICS_DATA);
@@ -236,10 +236,6 @@ static void broad_phase(physics_t* physics, scene_t* scene)
 
                     if (dist <= n)
                     {
-                        //printf("potentially collidign WITH MOVING!\n");
-                        // TODO:
-
-                        // TODO: Write out potential collision, doesn't have to be perfect for now.
                         potential_collision_t pc = {
                             .c0 = collider,
                             .mi0 = mi,
@@ -262,7 +258,6 @@ static void broad_phase(physics_t* physics, scene_t* scene)
 
             while (cecs_view_iter_next(&sc_it))
             {
-                // TODO: Detect.
                 const mesh_instance_t* mis1 = cecs_get_column(sc_it, COMPONENT_MESH_INSTANCE);
                 const collider_t* colliders1 = cecs_get_column(sc_it, COMPONENT_COLLIDER);
                 const transform_t* transforms1 = cecs_get_column(sc_it, COMPONENT_TRANSFORM);
@@ -283,20 +278,6 @@ static void broad_phase(physics_t* physics, scene_t* scene)
 
                     if (dist <= n)
                     {
-                        //printf("potentially collidign - WITH STATIC!\n");
-                        // TODO:
-
-                        // TODO: Write out potential collision, doesn't have to be perfect for now.
-                        //potential_collision_t pc = {
-                        //    .collider_aid = it_id,
-                        //    .collider_offset = i,
-                        //    .target_aid = it_id1,
-                        //    .target_offset = j
-                        //};
-                        //physics_frame->potential_collisions[physics_frame->num_potential_collisions++] = pc;
-
-
-                        // TODO: Should handle colliding when no physics data?
                         potential_collision_t pc = {
                             .c0 = collider,
                             .mi0 = mi,
@@ -304,7 +285,7 @@ static void broad_phase(physics_t* physics, scene_t* scene)
                             .t0 = transform,
                             .c1 = collider1,
                             .mi1 = mi1,
-                            .pd1 = 0, // static
+                            .pd1 = 0, // static, no physics data.
                             .t1 = transform1
                         };
 
