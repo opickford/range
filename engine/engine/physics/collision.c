@@ -319,6 +319,9 @@ static void broad_phase(physics_t* physics, scene_t* scene)
 static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float penetration_depth, physics_data_t* a_pd, physics_data_t* b_pd, transform_t* a_t, transform_t* b_t,
     float e, float mu)
 {
+    const float a_mass = a_pd ? a_pd->mass : 0.f;
+    const float b_mass = b_pd ? b_pd->mass : 0.f;
+    
     // Resolve a collision between objects A and B.
     const float slop = 0; // TODO: Do we want slop? This is actually stopping us from separating fully right????
     const float vel_along_n = dot(rel_vel, collision_normal);
@@ -328,8 +331,8 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
     penetration_depth = max(penetration_depth - slop, 0.f);
 
     // If inv mass = 0, the object will not gain velocity
-    const float a_inv_mass = a_pd->mass > 0.f ? (1.f / a_pd->mass) : 0.f;
-    const float b_inv_mass = b_pd->mass > 0.f ? (1.f / b_pd->mass) : 0.f;
+    const float a_inv_mass = a_mass > 0.f ? (1.f / a_mass) : 0.f;
+    const float b_inv_mass = b_mass > 0.f ? (1.f / b_mass) : 0.f;
 
     const float total_inv_mass = a_inv_mass + b_inv_mass;
     if (total_inv_mass <= 0.f) return;
@@ -373,8 +376,14 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
     // Apply impulses.
     v3_t total_impulse = v3_add_v3(normal_impulse, friction_impulse);
 
-    v3_add_eq_v3(&a_pd->velocity, v3_mul_f(total_impulse, a_inv_mass));
-    v3_sub_eq_v3(&b_pd->velocity, v3_mul_f(total_impulse, b_inv_mass));
+    if (a_pd)
+    {
+        v3_add_eq_v3(&a_pd->velocity, v3_mul_f(total_impulse, a_inv_mass));
+    }
+    if (b_pd)
+    {
+        v3_sub_eq_v3(&b_pd->velocity, v3_mul_f(total_impulse, b_inv_mass));
+    }
 
     /* TODO: Clamp low velocities??? Should this test not be sqrd?
     if (v3_size_sqrd(a_pd->velocity) < 0.0001f)
@@ -517,6 +526,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
 
     physics_data_t* mi_pd = pc.pd1;
     transform_t* mi_transform = pc.t1;
+    v3_t mi_vel = mi_pd ? mi_pd->velocity : v3_uniform(0.f);
 
     // c0 is ellipsoid collider !
     collider_t* ellipsoid_collider = pc.c0;
@@ -530,7 +540,7 @@ static void narrow_ellipsoid_vs_mi(physics_t* physics, scene_t* scene, potential
     // TODO: Rename vars and tidy this all up.
 
     // Calculate relative velocity between objects.
-    v3_t vel = v3_sub_v3(ellipsoid_pd->velocity, mi_pd->velocity);
+    v3_t vel = v3_sub_v3(ellipsoid_pd->velocity, mi_vel);
 
     v3_t e_start_pos = e_pos;
     v3_mul_eq_v3(&e_start_pos, inv_ellipsoid);
@@ -624,9 +634,6 @@ static void narrow_sphere_vs_sphere(physics_t* physics, scene_t* scene, potentia
 
     // We are just treating ellipsoids as spheres here.
 
-    physics_data_t* a_pd = pc.pd0;
-    physics_data_t* b_pd = pc.pd1;
-
     v3_t a_pos = pc.t0->position;
     v3_t b_pos = pc.t1->position;
 
@@ -637,7 +644,10 @@ static void narrow_sphere_vs_sphere(physics_t* physics, scene_t* scene, potentia
     float a_radius = max(a_ellipsoid.x, max(a_ellipsoid.y, a_ellipsoid.z));
     float b_radius = max(b_ellipsoid.x, max(b_ellipsoid.y, b_ellipsoid.z));
 
-    v3_t rel_v = v3_sub_v3(a_pd->velocity, b_pd->velocity);
+    v3_t a_vel = pc.pd0 ? pc.pd0->velocity : v3_uniform(0.f);
+    v3_t b_vel = pc.pd1 ? pc.pd1->velocity : v3_uniform(0.f);
+
+    v3_t rel_v = v3_sub_v3(a_vel, b_vel);
     v3_t rel_p = v3_sub_v3(a_pos, b_pos);
 
     v3_t n = v3_normalised(rel_p);
