@@ -78,12 +78,7 @@ void create_map(engine_t* engine)
         //physics_data_init(pd);
         //pd->mass = 0.f; // TODO: TEMP: Isn't moved by other things?
         //pd->floating = 1;
-        
-
     }
-    
-    
-
     
     // MONKEY
     /*
