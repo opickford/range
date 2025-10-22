@@ -7,14 +7,12 @@
 
 typedef struct v3 v3_t;
 typedef struct mesh_base mesh_base_t;
-
 typedef struct physics physics_t;
 typedef struct scene scene_t;
 
 typedef enum
 {
     COLLISION_SHAPE_ELLIPSOID,
-    COLLISION_SHAPE_SPHERE,
     COLLISION_SHAPE_MESH
 } collision_shape_type_t;
 
@@ -26,8 +24,8 @@ typedef struct
 
 typedef struct
 {
+    // Tagged union for the type narrow phase shape.
     collision_shape_type_t type;
-
     union
     {
         collision_mesh_t mesh;
@@ -39,14 +37,14 @@ typedef struct
     uint8_t dirty; // Recalculate world space positions
     uint8_t scale_dirty; // Recalculate bounding sphere radius
 
-    // TODO: For broad phase. But surely we don't need this if the type isn't a Mesh?
+    // Broad phase shape.
     bounding_sphere_t bs;
 
 } collision_shape_t;
 
+// TODO: In the future this could contain some callback etc.
 typedef struct collider
 {
-    // TODO: In the future this could contain some callback etc.
     collision_shape_t shape;
 
     // Ratio of relative velocity of separation to relative velocity of approach.

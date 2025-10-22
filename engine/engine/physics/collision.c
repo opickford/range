@@ -10,6 +10,8 @@
 #include "maths/matrix4.h"
 #include "maths/bounding_sphere.h"
 
+#include "utils/logger.h"
+
 #include <chds/vec.h>
 
 #include <cecs/ecs.h>
@@ -671,10 +673,11 @@ static void narrow_phase(physics_t* physics, scene_t* scene)
         {
             switch (pc.c1->shape.type)
             {
-            case COLLISION_SHAPE_ELLIPSOID: narrow_sphere_vs_sphere(physics, scene, pc, dt);  break;
-            case COLLISION_SHAPE_MESH: narrow_ellipsoid_vs_mi(physics, scene, pc, dt); break;
+            case COLLISION_SHAPE_ELLIPSOID: narrow_sphere_vs_sphere(physics, scene, pc);  break;
+            case COLLISION_SHAPE_MESH: narrow_ellipsoid_vs_mi(physics, scene, pc); break;
             default:
             {
+                log_error("Collision between COLLISION_SHAPE_ELLIPSOID and %d not supported.\n", (int)pc.c1->shape.type);
                 break;
             }
             }
