@@ -136,7 +136,7 @@ static void broad_phase(physics_t* physics, scene_t* scene)
     // TODO: not ideal if the narrow phase is a sphere, but obv not an issue for now.
     //       but should work this out at some point ^
 
-    chds_vec_clear(physics->frame.broad_phase_collisions);
+    chds_vec_clear(physics->frame.potential_collisions);
 
     // TODO: How can we get the number of entities in a nicer way?
 
@@ -150,7 +150,7 @@ static void broad_phase(physics_t* physics, scene_t* scene)
     }
 
     // TODO: Idk what the calc is.
-    chds_vec_reserve(physics->frame.broad_phase_collisions, num_entities * num_entities);
+    chds_vec_reserve(physics->frame.potential_collisions, num_entities * num_entities);
 
     // TODO: COmment properly.
     /*
@@ -251,7 +251,7 @@ static void broad_phase(physics_t* physics, scene_t* scene)
                             .t1 = transform1
                         };
 
-                        chds_vec_push_back(physics->frame.broad_phase_collisions, pc);
+                        chds_vec_push_back(physics->frame.potential_collisions, pc);
                     }
                 }
             } while (cecs_view_iter_next(&it_from_it0));
@@ -293,9 +293,10 @@ static void broad_phase(physics_t* physics, scene_t* scene)
                         //    .target_aid = it_id1,
                         //    .target_offset = j
                         //};
-                        //physics_frame->broad_phase_collisions[physics_frame->num_potential_collisions++] = pc;
+                        //physics_frame->potential_collisions[physics_frame->num_potential_collisions++] = pc;
 
 
+                        // TODO: Should handle colliding when no physics data?
                         potential_collision_t pc = {
                             .c0 = collider,
                             .mi0 = mi,
@@ -307,7 +308,7 @@ static void broad_phase(physics_t* physics, scene_t* scene)
                             .t1 = transform1
                         };
 
-                        chds_vec_push_back(physics->frame.broad_phase_collisions, pc);
+                        chds_vec_push_back(physics->frame.potential_collisions, pc);
                     }
                 }
             }
@@ -660,10 +661,10 @@ static void narrow_phase(physics_t* physics, scene_t* scene)
 {
     chds_vec_clear(physics->frame.collisions);
 
-    const int num_potential_collisions = (int)chds_vec_size(physics->frame.broad_phase_collisions);
+    const int num_potential_collisions = (int)chds_vec_size(physics->frame.potential_collisions);
     for (int i = 0; i < num_potential_collisions; ++i)
     {
-        potential_collision_t pc = physics->frame.broad_phase_collisions[i];
+        potential_collision_t pc = physics->frame.potential_collisions[i];
 
         // Sort shapes ascending so we only have to solve A vs B, never B vs A.
         if (pc.c0->shape.type > pc.c1->shape.type)
