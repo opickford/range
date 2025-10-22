@@ -62,6 +62,6 @@ typedef struct collider
 void collider_init(collider_t* c);
 void collider_destroy(collider_t* c);
 
-void handle_collisions(physics_t* physics, scene_t* scene);
+uint8_t handle_collisions(physics_t* physics, scene_t* scene);
 
 #endif

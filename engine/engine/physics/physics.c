@@ -50,6 +50,8 @@ status_t physics_init(physics_t* physics, cecs_t* ecs)
     memset(physics, 0, sizeof(physics_t));
     physics->ecs = ecs;
 
+    physics->max_collision_iters = 3;
+
     physics_setup_views(physics);
 
     physics_frame_init(&physics->frame);
@@ -198,7 +200,14 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt)
 
     apply_velocities(physics, dt);
 
-    handle_collisions(physics, scene);
+    for (uint8_t i = 0; i < physics->max_collision_iters; ++i)
+    {
+        if (!handle_collisions(physics, scene))
+        {
+            break;
+        }
+
+    }
 
 }
 

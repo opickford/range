@@ -374,6 +374,16 @@ static void resolve_single_collision(v3_t rel_vel, v3_t collision_normal, float 
 
     v3_add_eq_v3(&a_pd->velocity, v3_mul_f(total_impulse, a_inv_mass));
     v3_sub_eq_v3(&b_pd->velocity, v3_mul_f(total_impulse, b_inv_mass));
+
+    /* TODO: Clamp low velocities??? Should this test not be sqrd?
+    if (v3_size_sqrd(a_pd->velocity) < 0.0001f)
+    {
+        a_pd->velocity = v3_uniform(0.f);
+    }
+    if (v3_size_sqrd(b_pd->velocity) < 0.0001f)
+    {
+        b_pd->velocity = v3_uniform(0.f);
+    }*/
 }
 
 static void unit_sphere_tri_edge_collision(v3_t p0, v3_t p1, v3_t centre, uint8_t* collided, v3_t* collision_point, float* penetration_depth)
@@ -708,12 +718,8 @@ static void narrow_phase(physics_t* physics, scene_t* scene)
 
 static void resolve_collisions(physics_t* physics, scene_t* scene)
 {
-    /*
-
-    TODO: How do we resolve multiple collisions at once? or just sequentially?
-
-    */
-
+    // Currently just iterating through the collisions, seems to handle everything well 
+    // enough for now, can refactor this to solve collisions together in the future.
     const int num_collisions = (int)chds_vec_size(physics->frame.collisions);
 
     for (int i = 0; i < num_collisions; ++i)
@@ -728,7 +734,7 @@ static void resolve_collisions(physics_t* physics, scene_t* scene)
     }
 }
 
-void handle_collisions(physics_t* physics, scene_t* scene)
+uint8_t handle_collisions(physics_t* physics, scene_t* scene)
 {
     /*
     Outline:
@@ -748,6 +754,10 @@ void handle_collisions(physics_t* physics, scene_t* scene)
     }
 
     resolve_collisions(physics, scene);
+
+    // Return true if we processed more collisions, signals to keep
+    // iterating.
+    return (uint8_t)((int)chds_vec_size(physics->frame.collisions) > 0.f);
 }
 
 void collider_init(collider_t* c)

@@ -31,6 +31,8 @@ typedef struct physics
     cecs_view_id_t static_colliders_view;
     cecs_view_id_t colliders_view;
 
+    uint8_t max_collision_iters;
+
 } physics_t;
 
 // TODO: Move to separate file?
