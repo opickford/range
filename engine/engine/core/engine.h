@@ -46,7 +46,7 @@ typedef struct
 	int running;
 
 	// TODO: Move these somewhere?
-	int handle_input;
+	uint8_t noclip;
 	float upscaling_factor;
 
 	// TODO: Allow the user to set callbacks just like the window class.

@@ -313,7 +313,7 @@ void engine_handle_input(engine_t* engine, float dt)
 {
     camera_t* camera = &engine->renderer.camera;
 
-    if (!engine->handle_input)
+    if (!engine->noclip)
     {
         return;
     }
@@ -444,10 +444,10 @@ static void engine_process_keyup(void* ctx, WPARAM wParam)
     {
     case VK_TAB:
     {
-        ShowCursor(engine->handle_input);
-        engine->handle_input = !engine->handle_input;
+        ShowCursor(engine->noclip);
+        engine->noclip = !engine->noclip;
 
-        if (engine->handle_input)
+        if (engine->noclip)
         {
             RECT rect = { 0 };
             GetClientRect(engine->window.hwnd, &rect);
