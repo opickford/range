@@ -42,6 +42,7 @@ typedef struct
 
 } collision_shape_t;
 
+// TODO: Collider stuff could be separated into a new file but not necessary for now.
 // TODO: In the future this could contain some callback etc.
 typedef struct collider
 {

@@ -724,15 +724,12 @@ static void resolve_collisions(physics_t* physics, scene_t* scene)
         float e = max(0.f, (cd.pc.c0->restiution_coeff + cd.pc.c1->restiution_coeff) / 2.f);
         float mu = max(0.f, (cd.pc.c0->friction_coeff + cd.pc.c1->friction_coeff) / 2.f);
 
-        resolve_single_collision(cd.rel_vel, cd.collision_normal, cd.penetration_depth, cd.pc.pd0, cd.pc.pd1, cd.pc.t0, cd.pc.t1, e, mu, dt);
+        resolve_single_collision(cd.rel_vel, cd.collision_normal, cd.penetration_depth, cd.pc.pd0, cd.pc.pd1, cd.pc.t0, cd.pc.t1, e, mu);
     }
 }
 
 void handle_collisions(physics_t* physics, scene_t* scene)
 {
-    // TODO: Does this actually need dt/??????
-
-
     /*
     Outline:
 
