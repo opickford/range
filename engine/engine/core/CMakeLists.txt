@@ -1,10 +1,4 @@
-﻿# CMakeList.txt : CMake project for the range game engine.
-#
-
-
-
-
-# Compile the engine as a static .lib to be used by the game/tools.
+﻿# Compile the engine as a static .lib to be used by the game/tools.
 add_library (core STATIC
     canvas.c
     engine.c
@@ -40,7 +34,7 @@ target_include_directories(core
         $<INSTALL_INTERFACE:include>
 )
 
-set_target_properties(core PROPERTIES FOLDER "engine_t")
+set_target_properties(core PROPERTIES FOLDER "engine")
 
 # TODO: Add tests and install targets if needed.
 

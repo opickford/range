@@ -68,7 +68,7 @@ status_t font_init(font_t* font)
     // Read the given font atlas.
     canvas_t src;
     // TODO: Stop hardcoding this path.
-    status_t status = canvas_init_from_bitmap(&src, "C:/Users/olive/source/repos/range/res/fonts/minogram_6x10_font.bmp");
+    status_t status = canvas_init_from_bitmap(&src, "C:/Users/olive/source/repos/csrge/res/fonts/minogram_6x10_font.bmp");
     if (STATUS_OK != status)
     {
         log_error("Failed to load font atlas bitmap, status: %s", status_to_str(status));
