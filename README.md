@@ -1,3 +1,6 @@
+TODO: Need to figure out if the name is fine? Already a steam game existing with name range.
+TODO: Engine name could be scope (scope creep)
+
 # range
 
 A fast paced 3D shooter game driven by my own software rendered game engine written in C. 
