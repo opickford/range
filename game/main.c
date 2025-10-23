@@ -22,6 +22,66 @@ cecs_entity_id_t map_entity;
 cecs_entity_id_t monkey_entity;
 cecs_entity_id_t player_entity;
 
+static void player_controller(engine_t* engine, float dt)
+{
+    const static v3_t up = { 0, 1.f, 0 };
+    const v3_t right = v3_normalised(cross(engine->renderer.camera.direction, up));
+
+    const float speed = 20.f * dt;
+
+    // TODO: A camera needs some offset?
+
+    physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
+    transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
+
+    if (CSRGE_KEYDOWN(engine->window.keys['I']))
+    {    
+        const v3_t forward = v3_mul_f(engine->renderer.camera.direction, speed);
+        v3_add_eq_v3(&pd->impulses, forward);
+    }
+    if (CSRGE_KEYDOWN(engine->window.keys['K']))
+    {
+        const v3_t forward = v3_mul_f(engine->renderer.camera.direction, speed);
+        v3_sub_eq_v3(&pd->impulses, forward);
+    }
+    if (CSRGE_KEYDOWN(engine->window.keys['J']))
+    {
+        v3_sub_eq_v3(&pd->impulses, v3_mul_f(right, speed));
+    }
+    if (CSRGE_KEYDOWN(engine->window.keys['L']))
+    {   
+        v3_add_eq_v3(&pd->impulses, v3_mul_f(right, speed));
+    }
+    if (CSRGE_KEYDOWN(engine->window.keys[' ']))
+    {
+        const static float jump_height = 5.f;
+        v3_add_eq_v3(&pd->impulses, v3_mul_f(up, jump_height));
+    }
+
+
+
+    /*
+
+    // Calculate lateral vector
+        V3 up = V3(0, 1, 0);
+        V3 right = vectorCrossProduct(up, forward);
+        right.normalize();
+
+        // Set the camera behind where the player is looking and apply lateral offset
+        camera->physics->position = physicsData->position - camera->physics->direction * cameraDistance + (right * thirdPersonLateralOffset);
+    */
+    
+    const static float cam_dist = 4.f;
+    
+    const static float lateral_offset = 2.f;
+    const static float vertical_offset = 2.f;
+
+    v3_t pos = v3_sub_v3(t->position, v3_mul_f(engine->renderer.camera.direction, cam_dist));
+    v3_add_eq_v3(&pos, v3_mul_f(right, lateral_offset));
+    v3_add_eq_v3(&pos, v3_mul_f(up, vertical_offset));
+    engine->renderer.camera.position = pos;
+}
+
 void create_map(engine_t* engine)
 {
     resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/csrge/res/textures/landscape.bmp");
@@ -185,19 +245,11 @@ void engine_on_update(engine_t* engine, float dt)
 
         v3_t dir = v3_normalised(v3_sub_v3(engine->renderer.camera.position, t->position));
         
-        v3_add_eq_v3(&pd->impulses, v3_mul_f(dir, 0.01));
+        //v3_add_eq_v3(&pd->impulses, v3_mul_f(dir, 0.01));
 
     }
 
-    if (CSRGE_KEYDOWN(engine->window.keys['L']))
-    {
-        physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
-        transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
-
-        v3_add_eq_v3(&pd->impulses, (v3_t){0,10,0});
-    }
-    
-    return;
+    player_controller(engine, dt);
 }
 
 void engine_on_keyup(engine_t* engine, WPARAM wParam)
