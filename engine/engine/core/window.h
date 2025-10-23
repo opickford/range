@@ -7,13 +7,8 @@
 
 #include <Windows.h>
 
-// TODO: Do we like the RANGE_ prefix? should we use something else?
-// TODO: RANGE_ is an existing game engine name!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-// TODO: I like the name SCOPE for the game engine (scope creep.)
-
-#define RANGE_WINDOW_CLASS "range_window_class"
-#define RANGE_WINDOW_TITLE "range"
+#define CSRGE_WND_CLASS "CSRGE_WND_CLASS"
+#define CSRGE_WND_TITLE "csrge"
 
 // TODO: Should this be abstracted to some input file/functionality?
 #define RANGE_WND_KEYDOWN 0x80

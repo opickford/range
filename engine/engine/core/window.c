@@ -153,7 +153,7 @@ status_t window_init(window_t* window, canvas_t* canvas, void* ctx, int width, i
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = hinstance;
     wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    wc.lpszClassName = RANGE_WINDOW_CLASS;
+    wc.lpszClassName = CSRGE_WND_CLASS;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
@@ -166,8 +166,8 @@ status_t window_init(window_t* window, canvas_t* canvas, void* ctx, int width, i
     // Create the window
     window->hwnd = CreateWindowExA(
         0,                          // window_t styles, TODO: PASS window_style?
-        RANGE_WINDOW_CLASS,         // window_t class
-        RANGE_WINDOW_TITLE,         // window_t caption
+        CSRGE_WND_CLASS,         // window_t class
+        CSRGE_WND_TITLE,         // window_t caption
         window_style,
 
         // Size and position

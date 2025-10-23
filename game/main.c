@@ -24,8 +24,8 @@ cecs_entity_id_t player_entity;
 
 void create_map(engine_t* engine)
 {
-    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/landscape.bmp");
-    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/range/res/textures/fortnite_peter.bmp");
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/csrge/res/textures/landscape.bmp");
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/csrge/res/textures/fortnite_peter.bmp");
     
     // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     
@@ -36,22 +36,22 @@ void create_map(engine_t* engine)
     
     // Load some mesh bases.
     sphere_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(&scene->mesh_bases.bases[sphere_base], "C:/Users/olive/source/repos/range/res/models/sphere.obj");
+    mesh_base_from_obj(&scene->mesh_bases.bases[sphere_base], "C:/Users/olive/source/repos/csrge/res/models/sphere.obj");
 
     cube_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(&scene->mesh_bases.bases[cube_base], "C:/Users/olive/source/repos/range/res/models/cube.obj");
+    mesh_base_from_obj(&scene->mesh_bases.bases[cube_base], "C:/Users/olive/source/repos/csrge/res/models/cube.obj");
 
     map_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(&scene->mesh_bases.bases[map_base], "C:/Users/olive/source/repos/range/res/models/physics_test_map.obj");
+    mesh_base_from_obj(&scene->mesh_bases.bases[map_base], "C:/Users/olive/source/repos/csrge/res/models/physics_test_map.obj");
 
     monkey_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(&scene->mesh_bases.bases[monkey_base], "C:/Users/olive/source/repos/range/res/models/suzanne.obj");
+    mesh_base_from_obj(&scene->mesh_bases.bases[monkey_base], "C:/Users/olive/source/repos/csrge/res/models/suzanne.obj");
 
     bowl_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(&scene->mesh_bases.bases[bowl_base], "C:/Users/olive/source/repos/range/res/models/bowl.obj");
+    mesh_base_from_obj(&scene->mesh_bases.bases[bowl_base], "C:/Users/olive/source/repos/csrge/res/models/bowl.obj");
 
     terrain_base = mesh_bases_add(&scene->mesh_bases);
-    mesh_base_from_obj(&scene->mesh_bases.bases[terrain_base], "C:/Users/olive/source/repos/range/res/models/terrain.obj");
+    mesh_base_from_obj(&scene->mesh_bases.bases[terrain_base], "C:/Users/olive/source/repos/csrge/res/models/terrain.obj");
 
     // Create an entity
     {

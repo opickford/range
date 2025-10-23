@@ -1,4 +1,4 @@
-﻿# CMakeList.txt : CMake project for the range game engine.
+﻿# CMakeList.txt : CMake project for CSRGE
 #
 
 # TODO: Fix comments.
