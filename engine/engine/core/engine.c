@@ -382,33 +382,33 @@ void engine_handle_input(engine_t* engine, float dt)
 
     
 
-    if (RANGE_KEYDOWN(keys['W']))
+    if (CSRGE_KEYDOWN(keys['W']))
     {
         v3_add_eq_v3(&camera->position, v3_mul_f(camera->direction, meters_per_second));
     }
-    if (RANGE_KEYDOWN(keys['S']))
+    if (CSRGE_KEYDOWN(keys['S']))
     {
         v3_sub_eq_v3(&camera->position, v3_mul_f(camera->direction, meters_per_second));
     }
-    if (RANGE_KEYDOWN(keys['A']))
+    if (CSRGE_KEYDOWN(keys['A']))
     {
         v3_t up = { 0, 1, 0 };
         v3_t right = v3_normalised(cross(camera->direction, up));
 
         v3_sub_eq_v3(&camera->position, v3_mul_f(right, meters_per_second));
     }
-    if (RANGE_KEYDOWN(keys['D']))
+    if (CSRGE_KEYDOWN(keys['D']))
     {
         v3_t up = { 0, 1, 0 };
         v3_t right = v3_normalised(cross(camera->direction, up));
 
         v3_add_eq_v3(&camera->position, v3_mul_f(right, meters_per_second));
     }
-    if (RANGE_KEYDOWN(keys[VK_LSHIFT]))
+    if (CSRGE_KEYDOWN(keys[VK_LSHIFT]))
     {
         camera->position.y -= meters_per_second;
     }
-    if (RANGE_KEYDOWN(keys[VK_SPACE]))
+    if (CSRGE_KEYDOWN(keys[VK_SPACE]))
     {
         camera->position.y += meters_per_second;
     }

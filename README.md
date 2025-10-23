@@ -7,6 +7,11 @@ A game engine specifically designed for a fast paced 3D shooter game written in 
 For now the game engine development is solely driven by necessity for the game, however, in the future, the game may
 be split off as a separate project.
 
+# TODO: Name for game.
+
+TODO: I do like the name ScopeEngine but there is a game called scope already. I like the idea of scope creep and the
+name being called scope.
+
 ## Installation
 
 # Generating visual studio stuff.

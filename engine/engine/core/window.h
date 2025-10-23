@@ -11,8 +11,8 @@
 #define CSRGE_WND_TITLE "csrge"
 
 // TODO: Should this be abstracted to some input file/functionality?
-#define RANGE_WND_KEYDOWN 0x80
-#define RANGE_KEYDOWN(k) ((k) & RANGE_WND_KEYDOWN)
+#define CSRGE_WND_KEYDOWN 0x80
+#define CSRGE_KEYDOWN(k) ((k) & CSRGE_WND_KEYDOWN)
 
 
 // TODO: Is all of this really necessary.

@@ -189,7 +189,7 @@ void engine_on_update(engine_t* engine, float dt)
 
     }
 
-    if (RANGE_KEYDOWN(engine->window.keys['L']))
+    if (CSRGE_KEYDOWN(engine->window.keys['L']))
     {
         physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
         transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
