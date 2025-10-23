@@ -1,9 +1,11 @@
-# range
+# csrge
 
-A fast paced 3D shooter game driven by my own software rendered game engine written in C. 
+A 'C Software Rendered Game Engine'.
 
-For now the game engine development is solely driven by necessity for the game, however, in the future, the engine
-may be split off into it's own project.
+A game engine specifically designed for a fast paced 3D shooter game written in C. 
+
+For now the game engine development is solely driven by necessity for the game, however, in the future, the game may
+be split off as a separate project.
 
 ## Installation
 

@@ -3,7 +3,7 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
-project ("range" C)
+project ("game" C)
 
 # Compile options.
 add_compile_options(/TC) # Compile to C.
@@ -11,7 +11,7 @@ add_compile_options(/W3) # Enable max warnings. TODO: Switch to W4.
 
 # Include sub-projects.
 add_subdirectory ("engine")
-add_subdirectory ("range")
+add_subdirectory ("game")
 
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "range")
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "game")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
