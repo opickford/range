@@ -99,7 +99,6 @@ void engine_run(engine_t* engine)
     // TODO: Outline somewhere nicer.
     const float physics_dt = 1.f / 60.f; // 60fps
 
-
     // TEMP:
     g_elapsed = 0.f;
 

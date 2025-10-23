@@ -24,15 +24,26 @@ cecs_entity_id_t player_entity;
 
 static void player_controller(engine_t* engine, float dt)
 {
+    /*
+    TODO: How can this be customisable?
+    
+    We really want this player controller to be provided by the engine.
+    - Where/how can we provide it?
+
+    Note, using this we see the choppy movement due to less physics updates,
+    therefore, we need to lerp between positions for all entities.
+    
+    */
+
     const static v3_t up = { 0, 1.f, 0 };
     const v3_t right = v3_normalised(cross(engine->renderer.camera.direction, up));
 
-    const float speed = 20.f * dt;
-
-    // TODO: A camera needs some offset?
 
     physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
     transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
+
+    // By multiplying by dt we're essentially converting the force into an impulse.
+    const float speed = 20.f * dt * pd->mass;
 
     if (CSRGE_KEYDOWN(engine->window.keys['I']))
     {    
@@ -54,25 +65,11 @@ static void player_controller(engine_t* engine, float dt)
     }
     if (CSRGE_KEYDOWN(engine->window.keys[' ']))
     {
-        const static float jump_height = 5.f;
+        const float jump_height = pd->mass;
         v3_add_eq_v3(&pd->impulses, v3_mul_f(up, jump_height));
     }
 
-
-
-    /*
-
-    // Calculate lateral vector
-        V3 up = V3(0, 1, 0);
-        V3 right = vectorCrossProduct(up, forward);
-        right.normalize();
-
-        // Set the camera behind where the player is looking and apply lateral offset
-        camera->physics->position = physicsData->position - camera->physics->direction * cameraDistance + (right * thirdPersonLateralOffset);
-    */
-    
     const static float cam_dist = 4.f;
-    
     const static float lateral_offset = 2.f;
     const static float vertical_offset = 2.f;
 
@@ -168,7 +165,7 @@ void create_map(engine_t* engine)
 
         physics_data_t* pd = cecs_add_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
         physics_data_init(pd);
-        pd->mass = 1.f;
+        pd->mass = 50.f;
     }
     
     // MONKEY
