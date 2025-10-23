@@ -189,6 +189,15 @@ void engine_on_update(engine_t* engine, float dt)
         v3_add_eq_v3(&pd->impulses, v3_mul_f(dir, 0.01));
 
     }
+
+    if (RANGE_KEYDOWN(engine->window.keys['L']))
+    {
+        physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
+        transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
+
+        v3_add_eq_v3(&pd->impulses, (v3_t){0,10,0});
+
+    }
     
     return;
 }

@@ -7,8 +7,18 @@
 
 #include <Windows.h>
 
+// TODO: Do we like the RANGE_ prefix? should we use something else?
+// TODO: RANGE_ is an existing game engine name!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+// TODO: I like the name SCOPE for the game engine (scope creep.)
+
 #define RANGE_WINDOW_CLASS "range_window_class"
 #define RANGE_WINDOW_TITLE "range"
+
+// TODO: Should this be abstracted to some input file/functionality?
+#define RANGE_WND_KEYDOWN 0x80
+#define RANGE_KEYDOWN(k) ((k) & RANGE_WND_KEYDOWN)
+
 
 // TODO: Is all of this really necessary.
 
@@ -38,6 +48,9 @@ typedef struct
 	
 	// Relative mouse movement from raw input.
 	int mouse_dx, mouse_dy;
+
+    // Keyboard state
+    BYTE keys[256];
 	
 } window_t;
 

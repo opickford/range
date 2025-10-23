@@ -311,12 +311,23 @@ void engine_destroy(engine_t* engine)
 
 void engine_handle_input(engine_t* engine, float dt)
 {
-    camera_t* camera = &engine->renderer.camera;
+    // Note the mouse state is updated elsewhere
+    // Update keyboard state.
+    BYTE* keys = engine->window.keys;
+    if (!GetKeyboardState(keys))
+    {
+        // TODO: Handle error?
+        log_error("Failed to get keyboard state.");
+        return;
+    }
 
     if (!engine->noclip)
     {
         return;
     }
+
+    // TODO: Should pass to noclip controller function.
+    camera_t* camera = &engine->renderer.camera;
 
     // TODO: Could move this to an input handler or something. 
     //       Not sure if necessary.
@@ -369,44 +380,35 @@ void engine_handle_input(engine_t* engine, float dt)
     const float SPEED = 10.f;
     float meters_per_second = SPEED * dt;
 
-    // Process keyboard input.
-    BYTE keys[256];
-    if (!GetKeyboardState(keys))
-    {
-        // TODO: Handle error?
-        log_error("Failed to get keyboard state.");
-        return;
-    }
+    
 
-    const int KeyDown = 0x80;
-
-    if (keys['W'] & KeyDown)
+    if (RANGE_KEYDOWN(keys['W']))
     {
         v3_add_eq_v3(&camera->position, v3_mul_f(camera->direction, meters_per_second));
     }
-    if (keys['S'] & KeyDown)
+    if (RANGE_KEYDOWN(keys['S']))
     {
         v3_sub_eq_v3(&camera->position, v3_mul_f(camera->direction, meters_per_second));
     }
-    if (keys['A'] & KeyDown)
+    if (RANGE_KEYDOWN(keys['A']))
     {
         v3_t up = { 0, 1, 0 };
         v3_t right = v3_normalised(cross(camera->direction, up));
 
         v3_sub_eq_v3(&camera->position, v3_mul_f(right, meters_per_second));
     }
-    if (keys['D'] & KeyDown)
+    if (RANGE_KEYDOWN(keys['D']))
     {
         v3_t up = { 0, 1, 0 };
         v3_t right = v3_normalised(cross(camera->direction, up));
 
         v3_add_eq_v3(&camera->position, v3_mul_f(right, meters_per_second));
     }
-    if (keys[VK_LSHIFT] & KeyDown)
+    if (RANGE_KEYDOWN(keys[VK_LSHIFT]))
     {
         camera->position.y -= meters_per_second;
     }
-    if (keys[VK_SPACE] & KeyDown)
+    if (RANGE_KEYDOWN(keys[VK_SPACE]))
     {
         camera->position.y += meters_per_second;
     }
