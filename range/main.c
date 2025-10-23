@@ -16,6 +16,7 @@ mesh_base_id_t cube_base;
 mesh_base_id_t map_base;
 mesh_base_id_t monkey_base;
 mesh_base_id_t bowl_base;
+mesh_base_id_t terrain_base;
 
 cecs_entity_id_t map_entity;
 cecs_entity_id_t monkey_entity;
@@ -49,7 +50,9 @@ void create_map(engine_t* engine)
     bowl_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[bowl_base], "C:/Users/olive/source/repos/range/res/models/bowl.obj");
 
-    
+    terrain_base = mesh_bases_add(&scene->mesh_bases);
+    mesh_base_from_obj(&scene->mesh_bases.bases[terrain_base], "C:/Users/olive/source/repos/range/res/models/terrain.obj");
+
     // Create an entity
     {
         cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
@@ -57,13 +60,13 @@ void create_map(engine_t* engine)
 
         // Add a mesh_instance_t component.
         mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
-        mesh_instance_init(mi, &scene->mesh_bases.bases[map_base]);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[terrain_base]);
 
         mi->texture_id = 0;
 
         transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
         transform_init(transform);
-        transform->scale = v3_uniform(2);
+        transform->scale = v3_uniform(5);
 
 
         // TODO: currently testing with static.
@@ -83,12 +86,12 @@ void create_map(engine_t* engine)
     }
 
     // Create player
-    if(0){
+    {
         player_entity = cecs_create_entity(engine->ecs);
 
         // Add a mesh_instance_t component.
         mesh_instance_t* mi = cecs_add_component(engine->ecs, player_entity, COMPONENT_MESH_INSTANCE);
-        mesh_instance_init(mi, &scene->mesh_bases.bases[cube_base]);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[sphere_base]);
 
         mi->texture_id = 1;
 
@@ -105,7 +108,7 @@ void create_map(engine_t* engine)
 
         physics_data_t* pd = cecs_add_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
         physics_data_init(pd);
-        pd->mass = 10.f;
+        pd->mass = 1.f;
     }
     
     // MONKEY
@@ -150,8 +153,8 @@ void create_map(engine_t* engine)
     collider->shape.ellipsoid = v3_uniform(radius);
     printf("%f\n", radius);
     */
-    scene->ambient_light = v3_uniform(1.f);
-    //scene->ambient_light = v3_uniform(0.1f);
+    //scene->ambient_light = v3_uniform(1.f);
+    scene->ambient_light = v3_uniform(0.1f);
     
     scene->bg_colour = 0x11111111;
     
@@ -177,8 +180,13 @@ void engine_on_update(engine_t* engine, float dt)
     }
 
     {
-        physics_data_t* pd = cecs_get_component(engine->ecs, monkey_entity, COMPONENT_PHYSICS_DATA);
-        //pd->velocity = (v3_t){ 0.f, 0.f, -1.f };
+        physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
+        transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
+
+
+        v3_t dir = v3_normalised(v3_sub_v3(engine->renderer.camera.position, t->position));
+        
+        v3_add_eq_v3(&pd->impulses, v3_mul_f(dir, 0.01));
 
     }
     
@@ -344,6 +352,17 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
         
         break;
     }
+    case VK_SPACE:
+    {
+        //physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
+        //transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
+
+        //v3_t dir = v3_normalised(v3_sub_v3(engine->renderer.camera.position, t->position));
+
+        //v3_add_eq_v3(&pd->impulses, (v3_t) {0, 10, 0});
+
+    }
+    
     }
 }
 

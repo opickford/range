@@ -19,32 +19,33 @@ inline float lerp(float a, float b, float t)
 	return a + (b - a) * t;
 }
 
+/*
 inline void direction_to_eulers(const v3_t direction, float* pitch, float* yaw)
 {
 	// Converts a direction to its euler angles, roll is 0 for a direction.
 
 
-	/*
-	camera->direction[0] = sinf(camera->yaw) * cosPitch;
-    camera->direction[1] = sinf(camera->pitch);
-    camera->direction[2] = cosf(camera->yaw) * cosPitch;
-
-
-	asin(dir[0] / cosPitch) = acos(dir[2] / cosPitch)
-	atan2f(
-
-	pitch = asin(direction[1])
-	cos(yaw) = acos(dir[2] / cosPitch)
-	*/
+	
+	//camera->direction[0] = sinf(camera->yaw) * cosPitch;
+    //camera->direction[1] = sinf(camera->pitch);
+    //camera->direction[2] = cosf(camera->yaw) * cosPitch;
+    //
+    //
+	//asin(dir[0] / cosPitch) = acos(dir[2] / cosPitch)
+	//atan2f(
+    //
+	//pitch = asin(direction[1])
+	//cos(yaw) = acos(dir[2] / cosPitch)
+	
 
 	// Pitch
-	//*pitch = atan2f(direction[1], sqrtf(direction[0] * direction[0] + direction[2] * direction[2]));
+	*pitch = atan2f(direction.y, sqrtf(direction.x * direction.x + direction.z * direction.z));
 
 	// Yaw
-	//*yaw = -atan2f(direction[0], -direction[2]);
+	*yaw = -atan2f(direction.x, -direction.z);
 
 	
 
-}
+}*/
 
 #endif
