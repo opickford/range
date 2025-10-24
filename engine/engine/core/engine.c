@@ -39,7 +39,7 @@ status_t engine_init(engine_t* engine, int window_width, int window_height)
 
     // Set some default settings.
     engine->upscaling_factor = 1;
-    engine->noclip = 0;
+    engine->input_mode = INPUT_MODE_UI;
 
     // Initialise components and views.
     engine_setup_ecs(engine);
@@ -133,6 +133,7 @@ void engine_run(engine_t* engine)
     char update_str[64] = "";
     char vertices_str[64] = "";
     char physics_str[64] = "";
+    char input_mode_str[64] = "";
     
 
     // TODO: This can be a ui add text function
@@ -152,6 +153,7 @@ void engine_run(engine_t* engine)
     engine->ui.text[engine->ui.text_count++] = text_create(update_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
     engine->ui.text[engine->ui.text_count++] = text_create(vertices_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
     engine->ui.text[engine->ui.text_count++] = text_create(physics_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
+    engine->ui.text[engine->ui.text_count++] = text_create(input_mode_str, 10, engine->ui.text_count * h + 10, COLOUR_WHITE, TEXT_SCALE);
 
     engine->running = 1;
 
@@ -211,8 +213,6 @@ void engine_run(engine_t* engine)
         
         snprintf(render_str, sizeof(render_str), "Render: %d", timer_get_elapsed(&t));
          
-        
-
         // Draw ui elements.
         timer_restart(&t);
         ui_draw(&engine->ui, engine->upscaling_factor);
@@ -293,6 +293,28 @@ void engine_run(engine_t* engine)
             }
             snprintf(vertices_str, sizeof(vertices_str), "VERTICES: %d", total_faces * 3);
         }
+
+        const char* mode = "";
+        switch (engine->input_mode)
+        {
+        case INPUT_MODE_UI:
+        {
+            mode = "UI";
+            break;
+        }
+        case INPUT_MODE_NOCLIP:
+        {
+            mode = "NOCLIP";
+            break;
+        }
+        case INPUT_MODE_GAME:
+        {
+            mode = "GAME";
+            break;
+        }
+        }
+        snprintf(input_mode_str, sizeof(input_mode_str), "INPUT MODE: %s", mode);
+
         
 
 
@@ -320,7 +342,7 @@ void engine_handle_input(engine_t* engine, float dt)
         return;
     }
 
-    if (!engine->noclip)
+    if (engine->input_mode == INPUT_MODE_UI)
     {
         return;
     }
@@ -374,6 +396,15 @@ void engine_handle_input(engine_t* engine, float dt)
     v3_normalise(&camera->direction);
 
     // TODO: How do I make the engine actually m/s?
+
+
+
+    // Only move camera here if in noclip, note, should this be the same for direction?
+    // TODO: Maybe we should provide some camera rotation thing.
+    if (engine->input_mode != INPUT_MODE_NOCLIP)
+    {
+        return;
+    }
 
     // Direct position changes must be multipled by dt.
     const float SPEED = 10.f;
@@ -437,6 +468,8 @@ static void engine_on_resize(void* ctx)
 
 static void engine_process_keyup(void* ctx, WPARAM wParam) 
 {
+    // TODO: Handle failure for all these win32 calls??
+
     engine_t* engine = (engine_t*)ctx;
 
     // Handle any engine specific keybinds, if
@@ -445,11 +478,37 @@ static void engine_process_keyup(void* ctx, WPARAM wParam)
     {
     case VK_TAB:
     {
-        ShowCursor(engine->noclip);
-        engine->noclip = !engine->noclip;
-
-        if (engine->noclip)
+        ++engine->input_mode;
+        if (engine->input_mode == INPUT_MODE_INVALID)
         {
+            engine->input_mode = (input_mode_t)0;
+        }
+
+        switch (engine->input_mode)
+        {
+        case INPUT_MODE_UI:
+        {
+            ShowCursor(1);
+
+            // Release the cursor so it can move freely..
+            ClipCursor(NULL);
+
+            break;
+        }
+        case INPUT_MODE_NOCLIP:
+        case INPUT_MODE_GAME:
+        {
+            CURSORINFO ci = { 0 };
+            ci.cbSize = sizeof(CURSORINFO);
+            GetCursorInfo(&ci);
+            
+            // Only hide cursor if already showing, this avoids stacking, as 
+            // if we call ShowCursor(0) twice, we have to then undo it twice.
+            if (ci.flags == CURSOR_SHOWING)
+            {
+                ShowCursor(0);
+            }
+
             RECT rect = { 0 };
             GetClientRect(engine->window.hwnd, &rect);
 
@@ -473,11 +532,14 @@ static void engine_process_keyup(void* ctx, WPARAM wParam)
             cursor_area.bottom = center.y;
 
             ClipCursor(&cursor_area);
+
+            break;
         }
-        else
+        default:
         {
-            // Release the cursor so it can move freely..
-            ClipCursor(NULL);
+            log_error("Undefined input mode.\n");
+            break;
+        }
         }
 
         break;

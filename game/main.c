@@ -24,6 +24,10 @@ cecs_entity_id_t player_entity;
 
 static void player_controller(engine_t* engine, float dt)
 {
+    if (engine->input_mode != INPUT_MODE_GAME) return;
+
+
+
     /*
     TODO: How can this be customisable?
     
@@ -45,21 +49,21 @@ static void player_controller(engine_t* engine, float dt)
     // By multiplying by dt we're essentially converting the force into an impulse.
     const float speed = 20.f * dt * pd->mass;
 
-    if (CSRGE_KEYDOWN(engine->window.keys['I']))
+    if (CSRGE_KEYDOWN(engine->window.keys['W']))
     {    
         const v3_t forward = v3_mul_f(engine->renderer.camera.direction, speed);
         v3_add_eq_v3(&pd->impulses, forward);
     }
-    if (CSRGE_KEYDOWN(engine->window.keys['K']))
+    if (CSRGE_KEYDOWN(engine->window.keys['S']))
     {
         const v3_t forward = v3_mul_f(engine->renderer.camera.direction, speed);
         v3_sub_eq_v3(&pd->impulses, forward);
     }
-    if (CSRGE_KEYDOWN(engine->window.keys['J']))
+    if (CSRGE_KEYDOWN(engine->window.keys['A']))
     {
         v3_sub_eq_v3(&pd->impulses, v3_mul_f(right, speed));
     }
-    if (CSRGE_KEYDOWN(engine->window.keys['L']))
+    if (CSRGE_KEYDOWN(engine->window.keys['D']))
     {   
         v3_add_eq_v3(&pd->impulses, v3_mul_f(right, speed));
     }
@@ -69,14 +73,22 @@ static void player_controller(engine_t* engine, float dt)
         v3_add_eq_v3(&pd->impulses, v3_mul_f(up, jump_height));
     }
 
-    const static float cam_dist = 4.f;
-    const static float lateral_offset = 2.f;
-    const static float vertical_offset = 2.f;
+    if (0)
+    {
+        const static float cam_dist = 4.f;
+        const static float lateral_offset = 2.f;
+        const static float vertical_offset = 2.f;
 
-    v3_t pos = v3_sub_v3(t->position, v3_mul_f(engine->renderer.camera.direction, cam_dist));
-    v3_add_eq_v3(&pos, v3_mul_f(right, lateral_offset));
-    v3_add_eq_v3(&pos, v3_mul_f(up, vertical_offset));
-    engine->renderer.camera.position = pos;
+        v3_t pos = v3_sub_v3(t->position, v3_mul_f(engine->renderer.camera.direction, cam_dist));
+        v3_add_eq_v3(&pos, v3_mul_f(right, lateral_offset));
+        v3_add_eq_v3(&pos, v3_mul_f(up, vertical_offset));
+        engine->renderer.camera.position = pos;
+    }
+    else
+    {
+        engine->renderer.camera.position = t->position;
+    }
+    
 }
 
 void create_map(engine_t* engine)
