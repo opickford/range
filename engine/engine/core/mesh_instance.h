@@ -42,6 +42,9 @@ typedef struct mesh_instance
     // TODO: Float or v3_t???
 	chds_vec(v3_t) vertex_alebdos;
 
+    // TODO: A scene could have a base ambient light, but mesh instances should also be able to!
+    //       This will let them glow. This could potentially be per vertex but probably not worth.
+
 	// Offsets into frame_data_t, these exist here as they are tied
 	// to the mesh_instance_t itself.
 

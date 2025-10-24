@@ -14,6 +14,8 @@ typedef struct scene
 	mesh_bases_t mesh_bases; // TODO: Should these simply be global? 
                           // TODO: Make chds_vec
 
+    // TODO: A scene could have a base ambient light, but mesh instances should also be able to!
+    //       This will let them glow. This could potentially be per vertex but probably not worth.
 	v3_t ambient_light;
     int bg_colour;
 
