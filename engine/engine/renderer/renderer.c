@@ -37,10 +37,10 @@ status_t renderer_init(renderer_t* renderer, int width, int height)
 	return STATUS_OK;
 }
 
-status_t renderer_rev3_size(renderer_t* renderer, int width, int height)
+status_t renderer_resize(renderer_t* renderer, int width, int height)
 {
 	// Resize the render target.
-	status_t status = render_target_rev3_size(&renderer->target, width, height);
+	status_t status = render_target_resize(&renderer->target, width, height);
 	if (STATUS_OK != status)
 	{
 		return status;
