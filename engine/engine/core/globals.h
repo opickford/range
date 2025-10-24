@@ -13,4 +13,7 @@ uint8_t g_debug_velocities;
 
 float g_elapsed;
 
+// For slowing down/speeding up physics.
+float g_physics_time_scale;
+
 #endif

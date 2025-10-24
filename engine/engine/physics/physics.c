@@ -182,6 +182,25 @@ void physics_data_init(physics_data_t* data)
 
 void physics_tick(physics_t* physics, scene_t* scene, float dt)
 {
+    // TODO: TEMP: 
+    {
+        cecs_view_id_t v = cecs_view(physics->ecs, CECS_COMPONENT_ID_TO_BITSET(COMPONENT_TRANSFORM), 0);
+        cecs_view_iter_t it = cecs_view_iter(physics->ecs, v);
+        while (cecs_view_iter_next(&it))
+        {
+            transform_t* transforms = cecs_get_column(it, COMPONENT_TRANSFORM);
+
+            for (uint32_t i = 0; i < it.num_entities; ++i)
+            {
+                transform_t* transform = &transforms[i];
+
+                transform->previous_position = transform->position;
+                transform->previous_rotation = transform->rotation;
+                //transform->previous_scale = transform->scale;
+            }
+        }
+    }
+
     // TODO: Comment how all this works.
 
     apply_forces(physics, dt);
