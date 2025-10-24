@@ -17,6 +17,14 @@
 
 #include <cecs/ecs.h>
 
+typedef enum input_mode
+{
+    INPUT_MODE_UI,
+    INPUT_MODE_NOCLIP,
+    INPUT_MODE_GAME,
+    INPUT_MODE_INVALID
+} input_mode_t;
+
 typedef struct
 {
     cecs_t* ecs;
@@ -46,7 +54,7 @@ typedef struct
 	int running;
 
 	// TODO: Move these somewhere?
-	uint8_t noclip;
+    input_mode_t input_mode;
 	float upscaling_factor;
 
 	// TODO: Allow the user to set callbacks just like the window class.

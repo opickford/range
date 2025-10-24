@@ -693,7 +693,7 @@ static void narrow_phase(physics_t* physics, scene_t* scene)
         case COLLISION_SHAPE_MESH:
         {
             // TODO: a mesh should never be colliding into something right???? So this is kinda invalid???
-            log_error("Mesh instance collinding is not supported! Note, we should not have got here.\n"); break;
+            log_error("Mesh instance colliding is not supported! Note, we should not have got here.\n"); break;
 
             switch (pc.c1->shape.type)
             {

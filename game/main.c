@@ -22,6 +22,88 @@ cecs_entity_id_t map_entity;
 cecs_entity_id_t monkey_entity;
 cecs_entity_id_t player_entity;
 
+uint8_t third_person = 1;
+
+static void player_controller(engine_t* engine, float dt)
+{
+
+    if (engine->input_mode != INPUT_MODE_GAME) return;
+
+    /*
+    TODO: How can this be customisable?
+    
+    We really want this player controller to be provided by the engine.
+    - Where/how can we provide it?
+
+    Note, using this we see the choppy movement due to less physics updates,
+    therefore, we need to lerp between positions for all entities.
+
+
+    TODO:
+    - Could accept an entity id.
+    - Would this control the mouse as well?? 
+    - This shouldn't be based off a camera direction right? more a player direction?
+    
+    */
+
+    const static v3_t up = { 0, 1.f, 0 };
+    const v3_t right = v3_normalised(cross(engine->renderer.camera.direction, up));
+
+    physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
+    transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
+
+    // By multiplying by dt we're essentially converting the force into an impulse.
+    const float speed = 20.f * dt * pd->mass;
+
+    if (CSRGE_KEYDOWN(engine->window.keys['W']))
+    {    
+        const v3_t forward = v3_mul_f(engine->renderer.camera.direction, speed);
+        v3_add_eq_v3(&pd->impulses, forward);
+    }
+    if (CSRGE_KEYDOWN(engine->window.keys['S']))
+    {
+        const v3_t forward = v3_mul_f(engine->renderer.camera.direction, speed);
+        v3_sub_eq_v3(&pd->impulses, forward);
+    }
+    if (CSRGE_KEYDOWN(engine->window.keys['A']))
+    {
+        v3_sub_eq_v3(&pd->impulses, v3_mul_f(right, speed));
+    }
+    if (CSRGE_KEYDOWN(engine->window.keys['D']))
+    {   
+        v3_add_eq_v3(&pd->impulses, v3_mul_f(right, speed));
+    }
+    if (CSRGE_KEYDOWN(engine->window.keys[' ']))
+    {
+
+        //collider_t* c = cecs_get_component(engine->ecs, player_entity, COMPONENT_COLLIDER);
+
+        
+        // TODO: Only if colliding with something???
+        const float jump_height = pd->mass;
+        v3_add_eq_v3(&pd->impulses, v3_mul_f(up, jump_height));
+        
+        
+    }
+
+    if (third_person)
+    {
+        const static float cam_dist = 4.f;
+        const static float lateral_offset = 2.f;
+        const static float vertical_offset = 2.f;
+
+        v3_t pos = v3_sub_v3(t->position, v3_mul_f(engine->renderer.camera.direction, cam_dist));
+        v3_add_eq_v3(&pos, v3_mul_f(right, lateral_offset));
+        v3_add_eq_v3(&pos, v3_mul_f(up, vertical_offset));
+        engine->renderer.camera.position = pos;
+    }
+    else
+    {
+        engine->renderer.camera.position = t->position;
+    }
+    
+}
+
 void create_map(engine_t* engine)
 {
     resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/csrge/res/textures/landscape.bmp");
@@ -66,7 +148,7 @@ void create_map(engine_t* engine)
 
         transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
         transform_init(transform);
-        transform->scale = v3_uniform(5);
+        transform->scale = v3_uniform(10);
 
 
         // TODO: currently testing with static.
@@ -108,7 +190,7 @@ void create_map(engine_t* engine)
 
         physics_data_t* pd = cecs_add_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
         physics_data_init(pd);
-        pd->mass = 1.f;
+        pd->mass = 50.f;
     }
     
     // MONKEY
@@ -183,14 +265,13 @@ void engine_on_update(engine_t* engine, float dt)
         physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
         transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
 
-
         v3_t dir = v3_normalised(v3_sub_v3(engine->renderer.camera.position, t->position));
         
-        v3_add_eq_v3(&pd->impulses, v3_mul_f(dir, 0.01));
+        //v3_add_eq_v3(&pd->impulses, v3_mul_f(dir, 0.01));
 
     }
-    
-    return;
+
+    player_controller(engine, dt);
 }
 
 void engine_on_keyup(engine_t* engine, WPARAM wParam)
@@ -352,15 +433,10 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
         
         break;
     }
-    case VK_SPACE:
+    case 'H':
     {
-        //physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
-        //transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
-
-        //v3_t dir = v3_normalised(v3_sub_v3(engine->renderer.camera.position, t->position));
-
-        //v3_add_eq_v3(&pd->impulses, (v3_t) {0, 10, 0});
-
+        third_person = !third_person;
+        break;
     }
     
     }

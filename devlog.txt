@@ -59,6 +59,21 @@ for starting physics implementation.
 - Implement collision response with Coulomb friction and restitution impulses.
 - Handle relative velocities for collision detection and resolution.
 
+# Forgot to update devlog past here again.
+
+12? - 22/10/25
+- Refactor collision system to be discrete.
+- Implement sphere vs sphere collision detection.
+- Implement iterative solver to help solving multiple resting collisions.
+
+23/10/25
+- Rename range -> CSRGE.
+- Implement basic player controller with 3rd person camera.
+
+24/10/25
+- Implement different INPUT modes in the engine.
+
 TODOS:
+- Lerp between physics positions to create smooth movement.
 - Refactor PointLight position to be a Transform component so the physics system can update it?
 - Reimplement shadows.

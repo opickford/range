@@ -10,6 +10,11 @@
 #define CSRGE_WND_CLASS "CSRGE_WND_CLASS"
 #define CSRGE_WND_TITLE "csrge"
 
+// TODO: Should this be abstracted to some input file/functionality?
+#define CSRGE_WND_KEYDOWN 0x80
+#define CSRGE_KEYDOWN(k) ((k) & CSRGE_WND_KEYDOWN)
+
+
 // TODO: Is all of this really necessary.
 
 // TODO: Top of file comments.
@@ -38,6 +43,9 @@ typedef struct
 	
 	// Relative mouse movement from raw input.
 	int mouse_dx, mouse_dy;
+
+    // Keyboard state
+    BYTE keys[256];
 	
 } window_t;
 
