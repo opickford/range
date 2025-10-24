@@ -196,6 +196,5 @@ void physics_tick(physics_t* physics, scene_t* scene, float dt)
         }
 
     }
-
 }
 
