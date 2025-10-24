@@ -1495,6 +1495,8 @@ void light_front_faces(
                 
                 int pl_vsps_offset = 0;
 
+                // TODO: This iter code is actually using a decently large portion of CPU time!!!!
+                //       Not happy with how much it is using.
                 cecs_view_iter_t it = cecs_view_iter(ecs, lighting_view);
                 while (cecs_view_iter_next(&it))
                 {
