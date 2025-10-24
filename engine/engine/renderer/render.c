@@ -1121,7 +1121,14 @@ void model_to_view_space(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* 
             // Calculate model matrix.
             // TODO: rotation or direction or eulers?
             m4_t model_matrix;
-            m4_model_matrix(transform.position, transform.rotation, transform.scale, model_matrix);
+            //m4_model_matrix(transform.position, transform.rotation, transform.scale, model_matrix);
+
+            m4_model_matrix(
+                v3_lerp(transform.previous_position, transform.position, frame_data->physics_alpha),
+                v3_lerp(transform.previous_rotation, transform.rotation, frame_data->physics_alpha),
+                //v3_lerp(transform.previous_scale, transform.scale, frame_data->a), 
+                transform.scale, 
+                model_matrix);
 
             m4_t model_view_matrix;
             m4_mul_m4(view_matrix, model_matrix, model_view_matrix);
@@ -1171,7 +1178,12 @@ void model_to_view_space(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* 
             // Calculate normal matrix.
             // TODO: rotation or direction or eulers?
             m4_t normal_matrix;
-            m4_normal_matrix(transform.rotation, transform.scale, normal_matrix);
+            //m4_normal_matrix(transform.rotation, transform.scale, normal_matrix);
+            m4_normal_matrix(
+                v3_lerp(transform.previous_rotation, transform.rotation, frame_data->physics_alpha),
+                //v3_lerp(transform.previous_scale, transform.scale, frame_data->a),
+                transform.scale,
+                normal_matrix);
 
             m4_t view_normal_matrix;
             m4_mul_m4(view_matrix, normal_matrix, view_normal_matrix);
@@ -1195,7 +1207,6 @@ void model_to_view_space(cecs_t* ecs, cecs_view_id_t render_view, frame_data_t* 
             }
         }
 
-        // TODO: I believe the bounding sphere is the same for the sphere and cube for some reason????
         for (int i = 0; i < it.num_entities; ++i)
         {
             mesh_instance_t* mi = &mis[i];

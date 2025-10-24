@@ -18,6 +18,8 @@
 
 typedef struct
 {
+    float physics_alpha; // Time through the physics step, used for smooth interpolation.
+
 	// transform_t Stage
 	chds_vec(v3_t) view_space_positions;
     chds_vec(v3_t) view_space_normals;

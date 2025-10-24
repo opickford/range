@@ -194,6 +194,10 @@ void engine_run(engine_t* engine)
             
             physics_dt_counter -= physics_dt;
         }
+
+        // Essentially calculate how far are we through the physics frame. Allows us to
+        // smooth motion.
+        engine->renderer.frame_data.physics_alpha = physics_dt_counter / physics_dt;
         
         // Clear the canvas.
         timer_restart(&t);
@@ -272,6 +276,7 @@ void engine_run(engine_t* engine)
         snprintf(dir_str, sizeof(dir_str), "DIR: %.2f %.2f %.2f", engine->renderer.camera.direction.x, engine->renderer.camera.direction.y, engine->renderer.camera.direction.z);
         snprintf(pos_str, sizeof(pos_str), "POS: %.2f %.2f %.2f", engine->renderer.camera.position.x, engine->renderer.camera.position.y, engine->renderer.camera.position.z);
         
+        // Vertex Count
         {
             int total_faces = 0;
             int mis_count = 0;
@@ -294,26 +299,30 @@ void engine_run(engine_t* engine)
             snprintf(vertices_str, sizeof(vertices_str), "VERTICES: %d", total_faces * 3);
         }
 
-        const char* mode = "";
-        switch (engine->input_mode)
+        // Input Mode
         {
-        case INPUT_MODE_UI:
-        {
-            mode = "UI";
-            break;
+            const char* mode = "";
+            switch (engine->input_mode)
+            {
+            case INPUT_MODE_UI:
+            {
+                mode = "UI";
+                break;
+            }
+            case INPUT_MODE_NOCLIP:
+            {
+                mode = "NOCLIP";
+                break;
+            }
+            case INPUT_MODE_GAME:
+            {
+                mode = "GAME";
+                break;
+            }
+            }
+            snprintf(input_mode_str, sizeof(input_mode_str), "INPUT MODE: %s", mode);
         }
-        case INPUT_MODE_NOCLIP:
-        {
-            mode = "NOCLIP";
-            break;
-        }
-        case INPUT_MODE_GAME:
-        {
-            mode = "GAME";
-            break;
-        }
-        }
-        snprintf(input_mode_str, sizeof(input_mode_str), "INPUT MODE: %s", mode);
+        
 
         
 

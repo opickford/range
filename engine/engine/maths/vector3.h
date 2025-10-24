@@ -135,6 +135,11 @@ inline v3_t v3_inv(v3_t v)
     return (v3_t) { 1.f / v.x, 1.f / v.y, 1.f / v.z };
 }
 
+inline v3_t v3_lerp(v3_t v0, v3_t v1, float t)
+{
+    return v3_add_v3(v0, v3_mul_f(v3_sub_v3(v1, v0), t));
+}
+
 /*
 inline void v3_write(float* out, v3_t v)
 {
@@ -144,12 +149,13 @@ inline void v3_write(float* out, v3_t v)
 }
 */
 
+
+
 inline v3_t v3_read(const float* in)
 {
 	return (v3_t) {in[0], in[1], in[2] };
 }
 
-// TODO: v3_lerp?
 
 inline char* v3_to_str(v3_t v)
 {

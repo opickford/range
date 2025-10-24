@@ -47,7 +47,8 @@ static void player_controller(engine_t* engine, float dt)
     */
 
     const static v3_t up = { 0, 1.f, 0 };
-    const v3_t right = v3_normalised(cross(engine->renderer.camera.direction, up));
+    const v3_t forward = v3_normalised((v3_t) { engine->renderer.camera.direction.x, 0.f, engine->renderer.camera.direction.z });
+    const v3_t right = v3_normalised(cross(forward, up));
 
     physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
     transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
@@ -57,13 +58,11 @@ static void player_controller(engine_t* engine, float dt)
 
     if (CSRGE_KEYDOWN(engine->window.keys['W']))
     {    
-        const v3_t forward = v3_mul_f(engine->renderer.camera.direction, speed);
-        v3_add_eq_v3(&pd->impulses, forward);
+        v3_add_eq_v3(&pd->impulses, v3_mul_f(forward, speed));
     }
     if (CSRGE_KEYDOWN(engine->window.keys['S']))
     {
-        const v3_t forward = v3_mul_f(engine->renderer.camera.direction, speed);
-        v3_sub_eq_v3(&pd->impulses, forward);
+        v3_sub_eq_v3(&pd->impulses, v3_mul_f(forward, speed));
     }
     if (CSRGE_KEYDOWN(engine->window.keys['A']))
     {
@@ -81,25 +80,25 @@ static void player_controller(engine_t* engine, float dt)
         
         // TODO: Only if colliding with something???
         const float jump_height = pd->mass;
-        v3_add_eq_v3(&pd->impulses, v3_mul_f(up, jump_height));
-        
-        
+        v3_add_eq_v3(&pd->impulses, v3_mul_f(up, jump_height));   
     }
 
+    v3_t player_pos = v3_lerp(t->previous_position, t->position, engine->renderer.frame_data.physics_alpha);
     if (third_person)
     {
         const static float cam_dist = 4.f;
         const static float lateral_offset = 2.f;
         const static float vertical_offset = 2.f;
 
-        v3_t pos = v3_sub_v3(t->position, v3_mul_f(engine->renderer.camera.direction, cam_dist));
+
+        v3_t pos = v3_sub_v3(player_pos, v3_mul_f(engine->renderer.camera.direction, cam_dist));
         v3_add_eq_v3(&pos, v3_mul_f(right, lateral_offset));
         v3_add_eq_v3(&pos, v3_mul_f(up, vertical_offset));
         engine->renderer.camera.position = pos;
     }
     else
     {
-        engine->renderer.camera.position = t->position;
+        engine->renderer.camera.position = player_pos;
     }
     
 }
@@ -146,11 +145,12 @@ void create_map(engine_t* engine)
 
         mi->texture_id = 0;
 
-        transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
-        transform_init(transform);
-        transform->scale = v3_uniform(10);
-
-
+        {
+            transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+            transform_init(transform);
+            transform->scale = v3_uniform(10);
+        }
+        
         // TODO: currently testing with static.
         //physics_data_t* physics_data = cecs_add_component(engine->ecs, cube_entity, COMPONENT_PHYSICS_DATA);
         //physics_data_init(physics_data);
@@ -177,10 +177,12 @@ void create_map(engine_t* engine)
 
         mi->texture_id = 1;
 
-        transform_t* transform = cecs_add_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
-        transform_init(transform);
-        transform->scale = (v3_t){ 1,2,1 };
-        transform->position = (v3_t){ 0,3,0 };
+        {
+            transform_t* transform = cecs_add_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
+            transform_init(transform);
+            transform->scale = (v3_t) { 1, 2, 1 };
+            transform->position = (v3_t) { 0, 3, 0 };
+        }
 
         collider_t* collider = cecs_add_component(engine->ecs, player_entity, COMPONENT_COLLIDER);
         collider_init(collider);
@@ -418,7 +420,7 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
             transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
             transform_init(transform);
             transform->scale = v3_uniform(size);
-            transform->position = (v3_t){ 0, transform->scale.x + i * (transform->scale.x * 2), 0};
+            transform->position = (v3_t) { 0, transform->scale.x + i * (transform->scale.x * 2), 0 };
 
             collider_t* collider = cecs_add_component(engine->ecs, cube_entity, COMPONENT_COLLIDER);
             collider_init(collider);
@@ -468,10 +470,11 @@ void engine_on_lmbdown(engine_t* engine)
     mesh_instance_set_albedo(mi, mb, colour);
 
     cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
+
     transform_t* transform = cecs_get_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
     transform_init(transform);
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
-
+    
     //transform->scale = v3_uniform(0.1);
     //transform->scale = (v3_t){ 0.5f,2,1 };
 
