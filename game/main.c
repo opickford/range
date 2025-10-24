@@ -278,7 +278,6 @@ void engine_on_update(engine_t* engine, float dt)
 
 void engine_on_keyup(engine_t* engine, WPARAM wParam)
 {
-
     switch (wParam)
     {
     case VK_F1:
@@ -353,13 +352,7 @@ void engine_on_keyup(engine_t* engine, WPARAM wParam)
         break;
     }
     case VK_F5:
-    {
-        engine->renderer.camera.position = (v3_t){ -5, 0, 2 };
-        engine->renderer.camera.direction = (v3_t){ 1,0,0 };
-
-        // TODO: Function for this.
-        engine->renderer.camera.pitch = asinf(engine->renderer.camera.direction.y);
-        engine->renderer.camera.yaw = atan2f(engine->renderer.camera.direction.x, engine->renderer.camera.direction.z);
+    {   
 
         break;
     }

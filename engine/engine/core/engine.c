@@ -101,6 +101,7 @@ void engine_run(engine_t* engine)
 
     // TEMP:
     g_elapsed = 0.f;
+    g_physics_time_scale = 1.f;
 
     // TEMP
     LARGE_INTEGER frequency = { 0 };
@@ -261,7 +262,7 @@ void engine_run(engine_t* engine)
         dt = (float)(endTime.QuadPart - startTime.QuadPart) / frequency.QuadPart;
 
         dt_counter += dt;
-        physics_dt_counter += dt;
+        physics_dt_counter += dt * g_physics_time_scale;
 
         startTime = endTime;
 
