@@ -80,7 +80,5 @@ for starting physics implementation.
 - Refactor player controller and billboards into scripts.
 
 TODOS:
-- Refactor player controller into some provided functionality area? 
-- Implement billboards, this could go into the provided functionality area.
 - Refactor PointLight position to be a Transform component so the physics system can update it?
 - Reimplement shadows.
