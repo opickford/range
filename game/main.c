@@ -106,6 +106,10 @@ static void player_controller(engine_t* engine, float dt)
 
 static void update_billboard(engine_t* engine, float dt)
 {
+    // TODO: Should be a billboard tag component which you add to an entity, then a system does this for you.
+    // TODO: Could be an engine functon to create a billboard entity.
+    // TODO: We really want to support transparency in textures for this.
+
 
     transform_t* transform = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_TRANSFORM);
 
@@ -114,7 +118,6 @@ static void update_billboard(engine_t* engine, float dt)
 
     direction_to_eulers(dir, &transform->rotation.x, &transform->rotation.y);
     transform->rotation.x = 0;
-
 }
 
 void create_map(engine_t* engine)
@@ -158,7 +161,7 @@ void create_map(engine_t* engine)
         mesh_instance_t* mi = cecs_add_component(engine->ecs, cube_entity, COMPONENT_MESH_INSTANCE);
         mesh_instance_init(mi, &scene->mesh_bases.bases[terrain_base]);
 
-        //mi->texture_id = 0;
+        mi->texture_id = 0;
 
         {
             transform_t* transform = cecs_add_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
@@ -190,7 +193,7 @@ void create_map(engine_t* engine)
         mesh_instance_t* mi = cecs_add_component(engine->ecs, player_entity, COMPONENT_MESH_INSTANCE);
         mesh_instance_init(mi, &scene->mesh_bases.bases[sphere_base]);
 
-        //mi->texture_id = 1;
+        mi->texture_id = 1;
 
         {
             transform_t* transform = cecs_add_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
@@ -223,7 +226,7 @@ void create_map(engine_t* engine)
         {
             transform_t* transform = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_TRANSFORM);
             transform_init(transform);
-            transform->scale = (v3_t){ 1, 2, 0.01 };
+            transform->scale = (v3_t){ 1, 2, 0 };
             transform->position = (v3_t){ 5, 3, 0 };
         }
 

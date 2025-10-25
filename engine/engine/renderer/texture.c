@@ -80,7 +80,6 @@ status_t texture_load_from_bmp(texture_t* texture, const char* file)
         log_warn("Potential memory leak. Failed to ReleaseDC when texture_load_from_bmp.");
     }
 
-    
     chds_vec_resize(texture->pixels, texture->width * texture->height * 3);
     
     // TODO: Gotta test the texture a few ways, do we want r,g,b uint8? 3 floats? what.
