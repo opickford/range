@@ -5,11 +5,11 @@
 
 #include <cecs/ecs.h>
 
+// TODO: Refactor this script to really make sense, e.g. we can pass in a camera offset.
 uint8_t third_person = 1;
 
 inline void player_controller(engine_t* engine, cecs_entity_id_t eid, float dt)
 {
-
     if (engine->input_mode != INPUT_MODE_GAME) return;
 
     /*
@@ -57,10 +57,6 @@ inline void player_controller(engine_t* engine, cecs_entity_id_t eid, float dt)
     }
     if (CSRGE_KEYDOWN(engine->window.keys[' ']))
     {
-
-        //collider_t* c = cecs_get_component(engine->ecs, player_entity, COMPONENT_COLLIDER);
-
-        
         // TODO: Only if colliding with something???
         const float jump_height = pd->mass;
         v3_add_eq_v3(&pd->impulses, v3_mul_f(up, jump_height));   
@@ -72,7 +68,6 @@ inline void player_controller(engine_t* engine, cecs_entity_id_t eid, float dt)
         const static float cam_dist = 4.f;
         const static float lateral_offset = 2.f;
         const static float vertical_offset = 2.f;
-
 
         v3_t pos = v3_sub_v3(player_pos, v3_mul_f(engine->renderer.camera.direction, cam_dist));
         v3_add_eq_v3(&pos, v3_mul_f(right, lateral_offset));
