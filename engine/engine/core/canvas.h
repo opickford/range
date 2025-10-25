@@ -16,7 +16,7 @@ typedef struct
 
 status_t canvas_init(canvas_t* canvas, int width, int height);
 
-status_t canvas_rev3_size(canvas_t* canvas, int width, int height);
+status_t canvas_resize(canvas_t* canvas, int width, int height);
 
 void canvas_fill(canvas_t* canvas, const unsigned int colour);
 

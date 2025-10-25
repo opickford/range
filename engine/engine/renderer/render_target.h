@@ -43,7 +43,7 @@ inline status_t render_target_init(render_target_t* rt, const int width, const i
 
 inline status_t render_target_resize(render_target_t* rt, int width, int height)
 {
-    status_t status = canvas_rev3_size(&rt->canvas, width, height);
+    status_t status = canvas_resize(&rt->canvas, width, height);
 
     if (STATUS_OK != status)
     {

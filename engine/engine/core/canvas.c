@@ -187,7 +187,7 @@ status_t canvas_write_to_bmp(const canvas_t* canvas, const char* file)
     return STATUS_OK;
 }
 
-status_t canvas_rev3_size(canvas_t* canvas, int width, int height)
+status_t canvas_resize(canvas_t* canvas, int width, int height)
 {
 	// Check the size has changed.
 	if (canvas->width == width && canvas->height == height)

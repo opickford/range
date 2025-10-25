@@ -27,7 +27,7 @@ status_t depth_buffer_init(depth_buffer_t* depth_buffer, int width, int height)
 	return STATUS_OK;
 }
 
-status_t depth_buffer_rev3_size(depth_buffer_t* depth_buffer, int width, int height)
+status_t depth_buffer_resize(depth_buffer_t* depth_buffer, int width, int height)
 {
 	// Check the size has changed.
 	if (depth_buffer->width == width && depth_buffer->height == height)

@@ -16,7 +16,7 @@ typedef struct
 
 status_t depth_buffer_init(depth_buffer_t* depth_buffer, int width, int height);
 
-status_t depth_buffer_rev3_size(depth_buffer_t* depth_buffer, int width, int height);
+status_t depth_buffer_resize(depth_buffer_t* depth_buffer, int width, int height);
 
 void depth_buffer_fill(depth_buffer_t* depth_buffer, float depth);
 
