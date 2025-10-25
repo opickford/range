@@ -249,6 +249,16 @@ void window_display(window_t* window)
     //       issue with the width/height needing to be multiples 
     //       of something..
 
+    /*
+    
+    TODO: Swap to CreateDIBSection, CreateCompatibleDC and BitBlt or StretchBlt
+        
+         tested and it WAS faster.
+    
+    
+    
+    */
+
     if (window->canvas->width != window->width || window->canvas->height != window->height)
     {
         StretchDIBits(

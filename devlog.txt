@@ -74,6 +74,7 @@ for starting physics implementation.
 - Implement different INPUT modes in the engine.
 - Fix player controller's forward vector including y axis.
 - Implement smooth motion by interpolating positions when rendering.
+- Implement basic billboard.
 
 TODOS:
 - Refactor player controller into some provided functionality area? 

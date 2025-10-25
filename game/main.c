@@ -21,6 +21,7 @@ mesh_base_id_t terrain_base;
 cecs_entity_id_t map_entity;
 cecs_entity_id_t monkey_entity;
 cecs_entity_id_t player_entity;
+cecs_entity_id_t billboard_entity;
 
 uint8_t third_person = 1;
 
@@ -103,10 +104,27 @@ static void player_controller(engine_t* engine, float dt)
     
 }
 
+static void update_billboard(engine_t* engine, float dt)
+{
+    // TODO: Should be a billboard tag component which you add to an entity, then a system does this for you.
+    // TODO: Could be an engine functon to create a billboard entity.
+    // TODO: We really want to support transparency in textures for this.
+
+
+    transform_t* transform = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_TRANSFORM);
+
+    v3_t dir = v3_sub_v3(transform->position, engine->renderer.camera.position);
+    v3_normalise(&dir);
+
+    direction_to_eulers(dir, &transform->rotation.x, &transform->rotation.y);
+    transform->rotation.x = 0;
+}
+
 void create_map(engine_t* engine)
 {
     resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/csrge/res/textures/landscape.bmp");
     resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/csrge/res/textures/fortnite_peter.bmp");
+    resources_load_texture(&engine->resources, "C:/Users/olive/source/repos/csrge/res/textures/rickreal.bmp");
     
     // TODO: Map like a csgo 1v1 map, just a floor and scoreboard and maybe some obstacles.
     
@@ -134,7 +152,7 @@ void create_map(engine_t* engine)
     terrain_base = mesh_bases_add(&scene->mesh_bases);
     mesh_base_from_obj(&scene->mesh_bases.bases[terrain_base], "C:/Users/olive/source/repos/csrge/res/models/terrain.obj");
 
-    // Create an entity
+    // Create terrain
     {
         cecs_entity_id_t cube_entity = cecs_create_entity(engine->ecs);
         map_entity = cube_entity;
@@ -194,6 +212,38 @@ void create_map(engine_t* engine)
         physics_data_init(pd);
         pd->mass = 50.f;
     }
+
+    // Create billboard
+    {
+        billboard_entity = cecs_create_entity(engine->ecs);
+
+        // Add a mesh_instance_t component.
+        mesh_instance_t* mi = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_MESH_INSTANCE);
+        mesh_instance_init(mi, &scene->mesh_bases.bases[cube_base]);
+
+        mi->texture_id = 2;
+
+        {
+            transform_t* transform = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_TRANSFORM);
+            transform_init(transform);
+            transform->scale = (v3_t){ 1, 2, 0 };
+            transform->position = (v3_t){ 5, 3, 0 };
+        }
+
+       
+        collider_t* collider = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_COLLIDER);
+        collider_init(collider);
+
+        //collider->shape.type = COLLISION_SHAPE_ELLIPSOID;
+        //collider->shape.ellipsoid = (v3_t){ 1,2,1 };
+
+        collider->shape.type = COLLISION_SHAPE_MESH;
+
+        /*
+        physics_data_t* pd = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_PHYSICS_DATA);
+        physics_data_init(pd);
+        pd->mass = 50.f;*/
+    }
     
     // MONKEY
     /*
@@ -237,8 +287,8 @@ void create_map(engine_t* engine)
     collider->shape.ellipsoid = v3_uniform(radius);
     printf("%f\n", radius);
     */
-    //scene->ambient_light = v3_uniform(1.f);
-    scene->ambient_light = v3_uniform(0.1f);
+    scene->ambient_light = v3_uniform(1.f);
+    //scene->ambient_light = v3_uniform(0.1f);
     
     scene->bg_colour = 0x11111111;
     
@@ -274,6 +324,7 @@ void engine_on_update(engine_t* engine, float dt)
     }
 
     player_controller(engine, dt);
+    update_billboard(engine, dt);
 }
 
 void engine_on_keyup(engine_t* engine, WPARAM wParam)
@@ -467,7 +518,9 @@ void engine_on_lmbdown(engine_t* engine)
     transform_t* transform = cecs_get_component(engine->ecs, cube_entity, COMPONENT_TRANSFORM);
     transform_init(transform);
     transform->position = v3_add_v3(engine->renderer.camera.position, v3_mul_f(engine->renderer.camera.direction, 3));
-    
+    transform->scale = v3_uniform(0.1f);
+
+
     //transform->scale = v3_uniform(0.1);
     //transform->scale = (v3_t){ 0.5f,2,1 };
 

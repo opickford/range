@@ -459,7 +459,7 @@ static void engine_on_resize(void* ctx)
 {
     engine_t* engine = (engine_t*)ctx;
 
-    status_t status = renderer_rev3_size(&engine->renderer, 
+    status_t status = renderer_resize(&engine->renderer, 
         (int)(engine->window.width / engine->upscaling_factor), 
         (int)(engine->window.height / engine->upscaling_factor));
 
