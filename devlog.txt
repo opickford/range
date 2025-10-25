@@ -76,6 +76,9 @@ for starting physics implementation.
 - Implement smooth motion by interpolating positions when rendering.
 - Implement basic billboard.
 
+25/10/25
+- Refactor player controller and billboards into modules.
+
 TODOS:
 - Refactor player controller into some provided functionality area? 
 - Implement billboards, this could go into the provided functionality area.

@@ -15,6 +15,7 @@ add_subdirectory(engine/core)
 add_subdirectory(engine/renderer)
 add_subdirectory(engine/ui)
 add_subdirectory(engine/physics)
+add_subdirectory(engine/scripts)
 
 add_library(engine INTERFACE)
 

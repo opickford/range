@@ -9,6 +9,9 @@
 #include <engine/maths/vector3.h>
 #include <engine/common/status.h>
 
+#include <engine/scripts/gameplay/player_controller.h>
+#include <engine/scripts/rendering/billboard.h>
+
 float* directions;
 
 mesh_base_id_t sphere_base;
@@ -22,103 +25,6 @@ cecs_entity_id_t map_entity;
 cecs_entity_id_t monkey_entity;
 cecs_entity_id_t player_entity;
 cecs_entity_id_t billboard_entity;
-
-uint8_t third_person = 1;
-
-static void player_controller(engine_t* engine, float dt)
-{
-
-    if (engine->input_mode != INPUT_MODE_GAME) return;
-
-    /*
-    TODO: How can this be customisable?
-    
-    We really want this player controller to be provided by the engine.
-    - Where/how can we provide it?
-
-    Note, using this we see the choppy movement due to less physics updates,
-    therefore, we need to lerp between positions for all entities.
-
-
-    TODO:
-    - Could accept an entity id.
-    - Would this control the mouse as well?? 
-    - This shouldn't be based off a camera direction right? more a player direction?
-    
-    */
-
-    const static v3_t up = { 0, 1.f, 0 };
-    const v3_t forward = v3_normalised((v3_t) { engine->renderer.camera.direction.x, 0.f, engine->renderer.camera.direction.z });
-    const v3_t right = v3_normalised(cross(forward, up));
-
-    physics_data_t* pd = cecs_get_component(engine->ecs, player_entity, COMPONENT_PHYSICS_DATA);
-    transform_t* t = cecs_get_component(engine->ecs, player_entity, COMPONENT_TRANSFORM);
-
-    // By multiplying by dt we're essentially converting the force into an impulse.
-    const float speed = 20.f * dt * pd->mass;
-
-    if (CSRGE_KEYDOWN(engine->window.keys['W']))
-    {    
-        v3_add_eq_v3(&pd->impulses, v3_mul_f(forward, speed));
-    }
-    if (CSRGE_KEYDOWN(engine->window.keys['S']))
-    {
-        v3_sub_eq_v3(&pd->impulses, v3_mul_f(forward, speed));
-    }
-    if (CSRGE_KEYDOWN(engine->window.keys['A']))
-    {
-        v3_sub_eq_v3(&pd->impulses, v3_mul_f(right, speed));
-    }
-    if (CSRGE_KEYDOWN(engine->window.keys['D']))
-    {   
-        v3_add_eq_v3(&pd->impulses, v3_mul_f(right, speed));
-    }
-    if (CSRGE_KEYDOWN(engine->window.keys[' ']))
-    {
-
-        //collider_t* c = cecs_get_component(engine->ecs, player_entity, COMPONENT_COLLIDER);
-
-        
-        // TODO: Only if colliding with something???
-        const float jump_height = pd->mass;
-        v3_add_eq_v3(&pd->impulses, v3_mul_f(up, jump_height));   
-    }
-
-    v3_t player_pos = v3_lerp(t->previous_position, t->position, engine->renderer.frame_data.physics_alpha);
-    if (third_person)
-    {
-        const static float cam_dist = 4.f;
-        const static float lateral_offset = 2.f;
-        const static float vertical_offset = 2.f;
-
-
-        v3_t pos = v3_sub_v3(player_pos, v3_mul_f(engine->renderer.camera.direction, cam_dist));
-        v3_add_eq_v3(&pos, v3_mul_f(right, lateral_offset));
-        v3_add_eq_v3(&pos, v3_mul_f(up, vertical_offset));
-        engine->renderer.camera.position = pos;
-    }
-    else
-    {
-        engine->renderer.camera.position = player_pos;
-    }
-    
-}
-
-static void update_billboard(engine_t* engine, float dt)
-{
-    // TODO: Should be a billboard tag component which you add to an entity, then a system does this for you.
-    // TODO: Could be an engine functon to create a billboard entity.
-    // TODO: We really want to support transparency in textures for this.
-
-
-    transform_t* transform = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_TRANSFORM);
-
-    v3_t dir = v3_sub_v3(transform->position, engine->renderer.camera.position);
-    v3_normalise(&dir);
-
-    direction_to_eulers(dir, &transform->rotation.x, &transform->rotation.y);
-    transform->rotation.x = 0;
-}
 
 void create_map(engine_t* engine)
 {
@@ -323,8 +229,8 @@ void engine_on_update(engine_t* engine, float dt)
 
     }
 
-    player_controller(engine, dt);
-    update_billboard(engine, dt);
+    player_controller(engine, player_entity, dt);
+    update_billboard(engine, billboard_entity, dt);
 }
 
 void engine_on_keyup(engine_t* engine, WPARAM wParam)
