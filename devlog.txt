@@ -77,7 +77,7 @@ for starting physics implementation.
 - Implement basic billboard.
 
 25/10/25
-- Refactor player controller and billboards into modules.
+- Refactor player controller and billboards into scripts.
 
 TODOS:
 - Refactor player controller into some provided functionality area? 
