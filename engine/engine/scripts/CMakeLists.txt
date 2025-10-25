@@ -1,5 +1,5 @@
 add_subdirectory(gameplay)
-# add_subdirectory(rendering)
+add_subdirectory(rendering)
 
 add_library(scripts INTERFACE)
 
@@ -12,7 +12,7 @@ add_library(scripts INTERFACE)
 
 target_link_libraries(scripts
     INTERFACE
-        gameplay
+        gameplay rendering
 )
 
 set_target_properties(scripts PROPERTIES FOLDER "engine/scripts")

@@ -1,4 +1,5 @@
 add_library(gameplay STATIC
+    player_controller.h
     player_controller.c
 )
 
@@ -11,6 +12,7 @@ target_include_directories(gameplay
 
 target_link_libraries(gameplay  
     PRIVATE 
-        utils maths common)
+        utils maths common cecs::cecs chds::chds
+)
 
 set_target_properties(gameplay PROPERTIES FOLDER "engine/scripts")

@@ -10,6 +10,7 @@
 #include <engine/common/status.h>
 
 #include <engine/scripts/gameplay/player_controller.h>
+#include <engine/scripts/rendering/billboard.h>
 
 float* directions;
 
@@ -24,23 +25,6 @@ cecs_entity_id_t map_entity;
 cecs_entity_id_t monkey_entity;
 cecs_entity_id_t player_entity;
 cecs_entity_id_t billboard_entity;
-
-
-static void update_billboard(engine_t* engine, float dt)
-{
-    // TODO: Should be a billboard tag component which you add to an entity, then a system does this for you.
-    // TODO: Could be an engine functon to create a billboard entity.
-    // TODO: We really want to support transparency in textures for this.
-
-
-    transform_t* transform = cecs_add_component(engine->ecs, billboard_entity, COMPONENT_TRANSFORM);
-
-    v3_t dir = v3_sub_v3(transform->position, engine->renderer.camera.position);
-    v3_normalise(&dir);
-
-    direction_to_eulers(dir, &transform->rotation.x, &transform->rotation.y);
-    transform->rotation.x = 0;
-}
 
 void create_map(engine_t* engine)
 {
@@ -246,7 +230,7 @@ void engine_on_update(engine_t* engine, float dt)
     }
 
     player_controller(engine, player_entity, dt);
-    update_billboard(engine, dt);
+    update_billboard(engine, billboard_entity, dt);
 }
 
 void engine_on_keyup(engine_t* engine, WPARAM wParam)

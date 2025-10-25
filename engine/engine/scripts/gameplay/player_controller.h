@@ -1,6 +1,8 @@
 #ifndef PLAYER_CONTROLLER_H
 #define PLAYER_CONTROLLER_H
 
+#include <core/engine.h>
+
 #include <cecs/ecs.h>
 
 uint8_t third_person = 1;
